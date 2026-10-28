@@ -19,7 +19,10 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:e2e": "playwright test",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "docker:down": "node scripts/docker.mjs down",
+    "docker:logs": "node scripts/docker.mjs logs",
+    "docker:build": "node scripts/docker.mjs build"
   },
   "dependencies": {
     "@ant-design/cssinjs": "^2.1.2",
@@ -41,6 +44,7 @@
     "@commitlint/cli": "^21.2.4",
     "@commitlint/config-conventional": "^21.2.4",
     "@eslint/js": "^10.0.1",
+    "@inquirer/prompts": "^8.7.5",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/eslint-plugin-query": "^5.105.0",

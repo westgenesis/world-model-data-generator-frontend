@@ -34,6 +34,50 @@ pnpm dev
 | `pnpm test`                 | 单元测试（watch 模式）                                     |
 | `pnpm test:e2e`             | E2E 测试（首次需 `pnpm exec playwright install chromium`） |
 
+## Docker 部署
+
+镜像为多阶段构建：`node:24-alpine` 打包，`nginx:stable-alpine` 提供静态资源并反向代理 `/api`。
+后端地址在**容器启动时**注入，同一镜像可部署到任意环境。
+
+各环境配置位于 `deploy/env/<环境>.env`（已入库，只放地址、端口等非敏感配置）：
+
+| 文件                     | 环境   | 默认端口 |
+| ------------------------ | ------ | -------- |
+| `deploy/env/dev.env`     | 开发   | 8080     |
+| `deploy/env/staging.env` | 预发布 | 8081     |
+| `deploy/env/prod.env`    | 生产   | 80       |
+
+```bash
+pnpm docker:build    # 选择环境 → 构建镜像 → 询问是否启动
+pnpm docker:logs     # 选择环境 → 跟踪日志
+pnpm docker:down     # 选择环境 → 停止并移除容器
+```
+
+非交互（CI / 服务器脚本）：
+
+```bash
+pnpm docker:build --env prod --up      # 构建并启动
+pnpm docker:build --env prod --no-up   # 只构建
+pnpm docker:down --env prod
+```
+
+- **新增环境**：在 `deploy/env/` 下新建 `<名称>.env`，首行写 `# @label 显示名`，脚本会自动识别。
+- **本机覆盖 / 敏感配置**：新建 `deploy/env/<环境>.local.env`（不入库），其中的值会覆盖同名配置。
+- 各环境使用不同的 `COMPOSE_PROJECT_NAME` 与端口，可在同一台机器并存。
+
+| 变量                       | 说明                                                        |
+| -------------------------- | ----------------------------------------------------------- |
+| `API_UPSTREAM`             | `/api/*` 转发的后端地址（路径原样透传，不去掉 `/api` 前缀） |
+| `WEB_PORT`                 | 宿主机对外端口                                              |
+| `IMAGE_NAME` / `IMAGE_TAG` | 镜像名与标签                                                |
+| `COMPOSE_PROJECT_NAME`     | Compose 项目名，区分同机的多套环境                          |
+
+- 不使用脚本时：`docker compose -f deploy/docker-compose.yml --env-file deploy/env/dev.env up -d --build`。
+- 只用镜像时：`docker run -d -p 8080:80 -e API_UPSTREAM=http://backend:8080 <镜像>`。
+- 健康检查：`GET /healthz` 返回 `ok`，镜像已内置 `HEALTHCHECK`。
+- 缓存策略：`/assets/*` 长期缓存，`index.html` 不缓存，发版后刷新即生效。
+- 配置文件：`deploy/docker-compose.yml`、`deploy/nginx/default.conf.template`、`scripts/docker.mjs`。
+
 ## 目录结构
 
 ```

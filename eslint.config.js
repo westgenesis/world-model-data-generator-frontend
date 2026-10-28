@@ -56,5 +56,12 @@ export default defineConfig([
     files: ['src/routes/**/*.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
+  {
+    // Node 脚本
+    files: ['scripts/**/*.mjs'],
+    extends: [js.configs.recommended],
+    languageOptions: { ecmaVersion: 2023, globals: globals.node },
+    rules: { 'func-style': ['error', 'expression'] },
+  },
   prettier,
 ])

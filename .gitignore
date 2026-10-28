@@ -17,6 +17,9 @@ playwright/.cache
 .env.local
 .env.*.local
 
+# Docker 部署的本机覆盖配置
+deploy/env/*.local.env
+
 # 日志
 *.log
 
