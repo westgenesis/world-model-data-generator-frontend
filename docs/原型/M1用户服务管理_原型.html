@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>世界模型数据生成系统 · 用户服务管理原型 V1</title>
+<style>
+:root{
+  --primary:#009fe3; --primary-hover:#0086c2; --primary-light:#e6f7fd;
+  --bg:#f5f7fa; --card:#ffffff; --border:#e4e8ef; --border-strong:#cbd5e1;
+  --text:#1f2937; --text-2:#6b7280; --text-3:#9ca3af;
+  --success:#10b981; --success-bg:#ecfdf5;
+  --warning:#f59e0b; --warning-bg:#fffbeb;
+  --danger:#ef4444; --danger-bg:#fef2f2;
+  --info:#009fe3; --info-bg:#e6f7fd;
+  --purple:#8b5cf6; --purple-bg:#f5f3ff;
+  --radius:6px; --radius-lg:10px; --primary-grad:linear-gradient(135deg,#009fe3 0%,#0072c6 100%);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+  background:var(--bg); color:var(--text); font-size:13px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;font-size:13px;cursor:pointer;border:none;background:none;color:inherit;}
+input,select,textarea{font-family:inherit;font-size:13px;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+.topbar{
+  height:56px;background:var(--card);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:20px;
+  position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:600;white-space:nowrap;}
+.logo-mark{width:26px;height:26px;border-radius:6px;background:var(--primary-grad);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;}
+.nav-tabs{display:flex;gap:2px;flex:1;}
+.nav-tab{padding:7px 15px;border-radius:var(--radius);color:var(--text-2);font-size:13px;white-space:nowrap;transition:all .15s;}
+.nav-tab:hover{background:#f1f5f9;color:var(--text);}
+.nav-tab.active{background:var(--primary-light);color:var(--primary);font-weight:500;}
+.sidebar{transition:width .18s ease,padding .18s ease;}
+.sidebar.collapsed{width:0;padding-left:0;padding-right:0;border-right:none;overflow:hidden;}
+.nav-toggle{width:28px;height:28px;border-radius:var(--radius);color:var(--text-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.nav-toggle:hover{background:#f1f5f9;color:var(--text);}
+.gsearch{position:relative;width:236px;flex-shrink:0;}
+.gsearch .input{width:100%;padding-left:29px;padding-right:40px;}
+.gsearch .search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-3);}
+.gs-kbd{position:absolute;right:7px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-3);border:1px solid var(--border-strong);border-radius:3px;padding:0 4px;line-height:16px;}
+.gs-panel{position:absolute;top:36px;left:0;width:340px;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.12);padding:8px;display:none;z-index:120;}
+.gs-panel.show{display:block;}
+.gs-group{font-size:11px;color:var(--text-3);padding:6px 8px 3px;}
+.gs-item{padding:6px 8px;border-radius:5px;font-size:12.5px;display:flex;justify-content:space-between;gap:10px;cursor:pointer;align-items:center;}
+.gs-item:hover{background:#f1f5f9;}
+.gs-item em{font-style:normal;font-size:11px;color:var(--text-3);font-family:ui-monospace,Menlo,Consolas,monospace;}
+.gs-foot{padding:7px 8px 3px;border-top:1px solid #f1f5f9;margin-top:5px;font-size:11.5px;color:var(--text-3);}
+.topbar-right{display:flex;align-items:center;gap:14px;color:var(--text-2);font-size:12px;}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;}
+
+.layout{display:flex;min-height:calc(100vh - 56px);}
+.sidebar{width:196px;background:var(--card);border-right:1px solid var(--border);padding:14px 10px;flex-shrink:0;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;}
+.side-title{font-size:11px;color:var(--text-3);padding:0 10px;margin-bottom:8px;letter-spacing:.5px;}
+.side-item{padding:8px 10px;border-radius:var(--radius);color:var(--text-2);display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;transition:all .15s;}
+.side-item:hover{background:#f1f5f9;color:var(--text);}
+.side-item.active{background:var(--primary-light);color:var(--primary);font-weight:500;}
+.side-badge{background:#e2e8f0;color:var(--text-2);font-size:11px;padding:1px 6px;border-radius:8px;}
+.side-item.active .side-badge{background:#d2eef9;color:var(--primary);}
+.main{flex:1;padding:20px 24px;min-width:0;}
+
+.crumb{font-size:12px;color:var(--text-3);margin-bottom:10px;}
+.crumb span{color:var(--text-2);}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:16px;}
+.page-title{font-size:19px;font-weight:600;margin-bottom:4px;}
+.page-desc{font-size:12px;color:var(--text-2);}
+.btn{padding:7px 14px;border-radius:var(--radius);border:1px solid var(--border-strong);background:var(--card);color:var(--text);transition:all .15s;white-space:nowrap;}
+.btn:hover{border-color:var(--primary);color:var(--primary);}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover);color:#fff;}
+.btn-sm{padding:4px 10px;font-size:12px;}
+.btn-text{color:var(--primary);padding:2px 4px;font-size:12px;}
+.btn-text:hover{text-decoration:underline;}
+.btn-text.gray{color:var(--text-2);}
+.btn-text.gray:hover{color:var(--text);}
+.head-actions{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);}
+.card-pad{padding:16px;}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:13px 15px;}
+.stat-label{font-size:12px;color:var(--text-2);margin-bottom:5px;display:flex;align-items:center;gap:5px;}
+.stat-dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+.stat-value{font-size:21px;font-weight:600;line-height:1.2;}
+.stat-unit{font-size:12px;color:var(--text-3);font-weight:400;margin-left:3px;}
+.stat-sub{font-size:11px;color:var(--text-3);margin-top:3px;}
+
+.list-layout{display:flex;gap:14px;align-items:flex-start;}
+.group-panel{width:198px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;flex-shrink:0;}
+.group-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-2);margin-bottom:10px;}
+.group-item{padding:6px 9px;border-radius:var(--radius);font-size:12.5px;color:var(--text-2);display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .15s;}
+.group-item:hover{background:#f1f5f9;color:var(--text);}
+.group-item.active{background:var(--primary-light);color:var(--primary);font-weight:500;}
+.group-count{font-size:11px;color:var(--text-3);}
+.group-item.active .group-count{color:var(--primary);}
+.group-sub{padding-left:12px;}
+
+.filter-bar{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+.field{display:flex;align-items:center;gap:6px;}
+.field-label{font-size:12px;color:var(--text-2);white-space:nowrap;}
+.input,.select{height:30px;padding:0 9px;border:1px solid var(--border-strong);border-radius:var(--radius);background:var(--card);color:var(--text);outline:none;transition:border-color .15s;}
+.input:focus,.select:focus{border-color:var(--primary);}
+.input{width:200px;}
+.select{min-width:104px;}
+.search-wrap{position:relative;flex:1;min-width:200px;max-width:280px;}
+.search-wrap .input{width:100%;padding-left:29px;}
+.search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-3);}
+
+.batch-bar{background:var(--primary-light);border:1px solid #b6e3f4;border-radius:var(--radius-lg);padding:9px 14px;margin-bottom:12px;display:none;align-items:center;gap:12px;}
+.batch-bar.show{display:flex;}
+.batch-text{font-size:12.5px;color:var(--primary);}
+.batch-actions{display:flex;gap:8px;margin-left:auto;}
+
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:12px;font-weight:500;color:var(--text-2);background:#fafbfc;padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:11px 14px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+tbody tr{transition:background .12s;}
+tbody tr:hover{background:#fafbfc;}
+tbody tr:last-child td{border-bottom:none;}
+.col-check{width:38px;padding-right:0;}
+input[type=checkbox]{width:14px;height:14px;accent-color:var(--primary);cursor:pointer;}
+.clip-name{display:flex;flex-direction:column;gap:2px;}
+.clip-title{color:var(--text);font-weight:500;}
+.clip-title:hover{color:var(--primary);cursor:pointer;}
+.clip-id{font-size:11px;color:var(--text-3);font-family:ui-monospace,Menlo,Consolas,monospace;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:10px;font-size:11.5px;white-space:nowrap;}
+.badge-success{background:var(--success-bg);color:#047857;}
+.badge-info{background:var(--info-bg);color:#0086c2;}
+.badge-warning{background:var(--warning-bg);color:#b45309;}
+.badge-danger{background:var(--danger-bg);color:#b91c1c;}
+.badge-gray{background:#f1f5f9;color:var(--text-2);}
+.badge-purple{background:var(--purple-bg);color:#6d28d9;}
+.mods{display:flex;gap:3px;}
+.mod{min-width:22px;height:20px;padding:0 5px;border-radius:3px;font-size:10.5px;display:flex;align-items:center;justify-content:center;font-weight:500;}
+.mod-v{background:var(--info-bg);color:var(--info);}
+.mod-p{background:var(--purple-bg);color:var(--purple);}
+.mod-t{background:var(--success-bg);color:var(--success);}
+.tags{display:flex;gap:4px;flex-wrap:wrap;}
+.tag{padding:1px 7px;border-radius:3px;background:#f1f5f9;color:var(--text-2);font-size:11px;white-space:nowrap;}
+.tag-longtail{background:#fef2f2;color:#b91c1c;}
+.ops{display:flex;gap:10px;}
+.num{font-variant-numeric:tabular-nums;}
+.time{font-size:12px;color:var(--text-2);white-space:nowrap;}
+.pager{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-top:1px solid var(--border);font-size:12px;color:var(--text-2);}
+.pager-btns{display:flex;gap:5px;}
+.page-btn{min-width:26px;height:26px;padding:0 7px;border:1px solid var(--border-strong);border-radius:4px;font-size:12px;background:var(--card);}
+.page-btn:hover{border-color:var(--primary);color:var(--primary);}
+.page-btn.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+
+.detail-head{margin-bottom:14px;}
+.back-btn{display:inline-flex;align-items:center;gap:5px;color:var(--text-2);font-size:12.5px;margin-bottom:9px;transition:color .15s;}
+.back-btn:hover{color:var(--primary);}
+.detail-title-row{display:flex;align-items:center;gap:11px;flex-wrap:wrap;}
+.detail-title{font-size:18px;font-weight:600;}
+.detail-meta{font-size:12px;color:var(--text-3);margin-top:5px;display:flex;gap:16px;flex-wrap:wrap;}
+.detail-meta b{font-weight:500;color:var(--text-2);}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+.tab{padding:9px 16px;font-size:13px;color:var(--text-2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:500;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.two-col{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start;}
+.section{margin-bottom:14px;}
+.section-title{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.section-title .sub{font-weight:400;font-size:12px;color:var(--text-3);}
+.kv{display:grid;grid-template-columns:96px 1fr;gap:8px 12px;font-size:12.5px;}
+.kv dt{color:var(--text-2);}
+.kv dd{color:var(--text);word-break:break-all;}
+
+.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.cam{aspect-ratio:16/9;border-radius:4px;background:linear-gradient(160deg,#334155,#1e293b);display:flex;align-items:flex-end;padding:5px 6px;color:#cbd5e1;font-size:10px;position:relative;overflow:hidden;}
+.cam::before{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(148,163,184,.18) 0%,transparent 42%),repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,transparent 1px 22px);}
+.cam span{position:relative;}
+.cam-main{grid-column:span 3;aspect-ratio:16/6;}
+.lidar-box{margin-top:6px;aspect-ratio:16/7;border-radius:4px;background:#0f172a;position:relative;overflow:hidden;}
+.lidar-box svg{width:100%;height:100%;}
+.lidar-tag{position:absolute;left:7px;top:6px;color:#94a3b8;font-size:10px;}
+
+.check-list{display:flex;flex-direction:column;gap:10px;}
+.check{border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:flex-start;gap:12px;}
+.check.pass{background:var(--success-bg);border-color:#a7f3d0;}
+.check.warn{background:var(--warning-bg);border-color:#fde68a;}
+.check.fail{background:var(--danger-bg);border-color:#fecaca;}
+.check-icon{width:20px;height:20px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;margin-top:1px;}
+.check.pass .check-icon{background:var(--success);}
+.check.warn .check-icon{background:var(--warning);}
+.check.fail .check-icon{background:var(--danger);}
+.check-body{flex:1;min-width:0;}
+.check-title{font-size:13px;font-weight:500;margin-bottom:3px;display:flex;align-items:center;gap:8px;}
+.check-desc{font-size:12px;color:var(--text-2);}
+.metrics{display:flex;gap:18px;margin-top:8px;flex-wrap:wrap;}
+.metric{font-size:11.5px;color:var(--text-2);}
+.metric b{display:block;font-size:14px;color:var(--text);font-weight:600;font-variant-numeric:tabular-nums;}
+
+.lineage-box{border:1px solid var(--border);border-radius:var(--radius);padding:20px 12px;background:#fafbfc;}
+.tl{position:relative;padding-left:18px;}
+.tl::before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:1px;background:var(--border);}
+.tl-item{position:relative;padding-bottom:15px;font-size:12.5px;}
+.tl-item::before{content:"";position:absolute;left:-17px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--border-strong);}
+.tl-item.ok::before{background:var(--success);}
+.tl-title{color:var(--text);}
+.tl-time{font-size:11.5px;color:var(--text-3);font-family:ui-monospace,Menlo,Consolas,monospace;}
+.tl-desc{font-size:11.5px;color:var(--text-2);}
+
+.tip{background:var(--info-bg);border:1px solid #b6e3f4;border-radius:var(--radius);padding:9px 12px;font-size:12px;color:#006fa8;display:flex;gap:8px;align-items:flex-start;margin-bottom:14px;}
+.tip.warn{background:var(--warning-bg);border-color:#fde68a;color:#92400e;}
+.code{background:#0f172a;color:#cbd5e1;border-radius:var(--radius);padding:11px 13px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;line-height:1.7;overflow-x:auto;white-space:pre;}
+.flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.flow-node{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:16px;border:1px solid var(--border);font-size:12px;background:var(--card);color:var(--text-2);}
+.flow-node.done{border-color:#a7f3d0;background:var(--success-bg);color:#047857;}
+.flow-node.run{border-color:#b6e3f4;background:var(--info-bg);color:#0086c2;}
+.flow-arrow{color:var(--text-3);font-size:11px;}
+.rule{border:1px solid var(--border);border-radius:var(--radius);padding:11px 13px;display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.rule:hover{background:#fafbfc;}
+.rule-body{flex:1;min-width:0;}
+.rule-title{font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:8px;}
+.rule-desc{font-size:11.5px;color:var(--text-2);margin-top:2px;}
+.sw{width:34px;height:18px;border-radius:9px;background:var(--border-strong);position:relative;cursor:pointer;transition:background .15s;flex-shrink:0;}
+.sw::after{content:"";position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .15s;}
+.sw.on{background:var(--primary);}
+.sw.on::after{left:18px;}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.form-item{display:flex;flex-direction:column;gap:5px;}
+.form-item.full{grid-column:span 2;}
+.form-label{font-size:12px;color:var(--text-2);}
+.form-label .req{color:var(--danger);}
+.form-hint{font-size:11px;color:var(--text-3);}
+.checkbox-row{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text);align-items:center;}
+.checkbox-row label{display:flex;align-items:center;gap:6px;cursor:pointer;}
+.radio-card{border:1px solid var(--border-strong);border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:all .15s;}
+.radio-card:hover{border-color:var(--primary);}
+.radio-card.active{border-color:var(--primary);background:var(--primary-light);}
+.radio-card-title{font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;margin-bottom:3px;}
+.radio-card-desc{font-size:11.5px;color:var(--text-2);}
+
+.mask{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:200;display:none;}
+.mask.show{display:block;}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:720px;max-width:94vw;background:var(--card);z-index:201;transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column;}
+.drawer.show{transform:none;}
+.drawer-head{padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.drawer-title{font-size:15px;font-weight:600;}
+.drawer-body{flex:1;overflow-y:auto;padding:18px 20px;}
+.drawer-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;align-items:center;}
+.close-x{width:26px;height:26px;border-radius:var(--radius);color:var(--text-3);display:flex;align-items:center;justify-content:center;font-size:17px;}
+.close-x:hover{background:#f1f5f9;color:var(--text);}
+.steps{display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+.step{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-3);}
+.step-num{width:22px;height:22px;border-radius:50%;background:#f1f5f9;color:var(--text-3);display:flex;align-items:center;justify-content:center;font-size:12px;}
+.step.active{color:var(--primary);font-weight:500;}
+.step.active .step-num{background:var(--primary);color:#fff;}
+.step.done{color:var(--success);}
+.step.done .step-num{background:var(--success);color:#fff;}
+.step-line{width:36px;height:1px;background:var(--border);}
+
+.view{display:none;}
+.view.active{display:block;}
+
+.pn{position:fixed;left:8px;bottom:8px;width:190px;background:#1e293b;color:#e2e8f0;border-radius:10px;box-shadow:0 10px 28px rgba(15,23,42,.3);z-index:300;font-size:12px;overflow:hidden;}
+.pn-head{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:8px 10px;background:#0f172a;cursor:pointer;}
+.pn-head:hover{background:#16213a;}
+.pn-title{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;}
+.pn-note{background:#334155;color:#94a3b8;font-size:9.5px;padding:1px 4px;border-radius:3px;font-weight:400;white-space:nowrap;}
+.pn-toggle{color:#94a3b8;font-size:11px;}
+.pn-body{padding:8px;max-height:min(320px,48vh);overflow-y:auto;}
+.pn.collapsed .pn-body{display:none;}
+.pn-group{font-size:10.5px;color:#64748b;padding:6px 6px 3px;letter-spacing:.4px;}
+.pn-item{padding:5px 8px;border-radius:5px;color:#cbd5e1;cursor:pointer;transition:all .12s;}
+.pn-item:hover{background:#334155;color:#fff;}
+.pn-item.active{background:#009fe3;color:#fff;}
+.pn-foot{padding:7px 12px;background:#0f172a;font-size:10.5px;color:#64748b;}
+
+@media(max-width:1400px){
+  .stats{grid-template-columns:repeat(3,1fr);}
+  .two-col{grid-template-columns:1fr;}
+}
+.proj-sw{position:relative;width:210px;flex-shrink:0;}
+.proj-sw .input{width:100%;padding-right:26px;cursor:pointer;background:#f8fafc;}
+.proj-sw .sw-caret{position:absolute;right:9px;top:50%;transform:translateY(-50%);color:var(--text-3);pointer-events:none;font-size:10px;}
+.proj-sw .gs-panel{top:36px;width:300px;}
+.proj-sw .gs-item.active{background:var(--primary-light);color:var(--primary);}
+.usage{height:8px;background:#eef2f7;border-radius:4px;overflow:hidden;margin-top:8px;}
+.usage>i{display:block;height:100%;background:var(--primary);border-radius:4px;}
+#toast{position:fixed;right:24px;bottom:24px;z-index:9999;max-width:420px;background:#1f2937;color:#fff;
+  padding:11px 16px;border-radius:8px;box-shadow:0 10px 30px rgba(15,23,42,.28);font-size:12.5px;line-height:1.7;
+  opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .18s,transform .18s;}
+#toast.show{opacity:1;transform:translateY(0);}
+.bell{position:relative;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text-2);cursor:pointer;flex-shrink:0;}
+.bell:hover{background:#f1f5f9;color:var(--text);}
+.bell-dot{position:absolute;top:-2px;right:-2px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:var(--danger);color:#fff;font-size:10px;line-height:15px;text-align:center;}
+.bell-panel{position:absolute;top:34px;right:0;width:336px;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.12);display:none;z-index:120;cursor:default;}
+.bell-panel.show{display:block;}
+.bell-head{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:500;}
+.msg-i{padding:9px 12px;border-bottom:1px solid #f1f5f9;cursor:pointer;}
+.msg-i:hover{background:#f8fafc;}
+.msg-i-t{font-size:12.5px;display:flex;justify-content:space-between;gap:8px;}
+.msg-i-d{font-size:11px;color:var(--text-3);margin-top:3px;}
+.msg-i.un .msg-i-t{font-weight:600;}
+.bell-foot{padding:8px 12px;font-size:11.5px;color:var(--text-3);text-align:center;}
+</style>
+</head>
+<body>
+<style>
+.mtx{border:1px solid var(--border);border-radius:var(--radius);overflow:auto;}
+.mtx table{border:none;}
+.mtx th,.mtx td{text-align:center;font-size:12px;padding:6px 8px;white-space:nowrap;}
+.mtx th:first-child,.mtx td:first-child{text-align:left;position:sticky;left:0;background:#fff;}
+.mtx thead th{background:#f8fafc;}
+.dot-y{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--primary);}
+.dot-n{display:inline-block;width:12px;height:12px;border-radius:3px;background:#e5e7eb;}
+.dot-p{display:inline-block;width:12px;height:12px;border-radius:3px;background:#b6e3f4;}
+</style>
+
+<div class="topbar">
+  <button class="nav-toggle" onclick="toggleNav()" title="收起 / 展开导航">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+  </button>
+  <div class="logo"><div class="logo-mark">W</div><span>世界模型数据生成系统</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-mod="用户服务管理">用户服务管理</button>
+    <button class="nav-tab" data-mod="数据生成">数据生成</button>
+    <button class="nav-tab" data-mod="数据集管理">数据集管理</button>
+  </div>
+  <div class="proj-sw" id="proj-sw">
+    <input class="input" id="proj-cur" value="雨天场景数据生产" readonly onfocus="projShow()" onblur="projHide()">
+    <span class="sw-caret">▼</span>
+    <div class="gs-panel" id="proj-panel">
+      <div class="gs-group">切换项目</div>
+      <div class="gs-item" onclick="switchProj(this,'全部项目')">全部项目</div>
+      <div class="gs-item active" onclick="switchProj(this,'雨天场景数据生产')">雨天场景数据生产 <em>PRJ-0001</em></div>
+      <div class="gs-item" onclick="switchProj(this,'夜间长尾数据采集')">夜间长尾数据采集 <em>PRJ-0002</em></div>
+      <div class="gs-item" onclick="switchProj(this,'施工占道场景集')">施工占道场景集 <em>PRJ-0003</em></div>
+      <div class="gs-item" onclick="switchProj(this,'高速匝道评测集')">高速匝道评测集 <em>PRJ-0004</em></div>
+      <div class="gs-foot">列表数据随所选项目过滤；未指定归属的数据归入默认项目</div>
+    </div>
+  </div>
+  <div class="gsearch">
+    <svg class="search-icon" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+    <input class="input" placeholder="搜索用户 / 角色 / 接口" onfocus="gsShow()" onblur="gsHide()">
+    <span class="gs-kbd">Ctrl K</span>
+    <div class="gs-panel" id="gs-panel">
+      <div class="gs-group">用户</div>
+      <div class="gs-item">李工 <em>U-0021</em></div>
+      <div class="gs-item">王工 <em>U-0034</em></div>
+      <div class="gs-foot">输入关键词后回车查看全部结果 · 支持按 ID 精确匹配</div>
+    </div>
+  </div>
+<div class="topbar-right">
+  <span>算力集群 正常</span><span>存储使用率 63%</span>
+  <div class="bell" id="bell" onclick="bellToggle(event)">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 0 0-4 4v3l-1.2 2h10.4L12 9V6a4 4 0 0 0-4-4z"/><path d="M6.5 13a1.6 1.6 0 0 0 3 0"/></svg>
+    <span class="bell-dot">12</span>
+    <div class="bell-panel" id="bell-panel">
+      <div class="bell-head"><span>消息中心</span><button class="btn-text" onclick="go('m1-msg')">查看全部</button></div>
+      <div class="msg-i un"><div class="msg-i-t"><span>检测到 3 次越权访问尝试</span><span class="badge badge-danger">紧急</span></div><div class="msg-i-d">安全告警 · 09-14 10:22</div></div>
+      <div class="msg-i un"><div class="msg-i-t"><span>生成任务 T-20260913-07 执行失败</span><span class="badge badge-warning">重要</span></div><div class="msg-i-d">任务通知 · 09-13 22:06</div></div>
+      <div class="msg-i un"><div class="msg-i-t"><span>项目内角色已调整为数据管理员</span><span class="badge badge-gray">普通</span></div><div class="msg-i-d">权限变更 · 09-12 09:40</div></div>
+      <div class="msg-i"><div class="msg-i-t"><span>片段 SY-20260912-0031 待人工复核</span><span class="badge badge-gray">普通</span></div><div class="msg-i-d">质检提醒 · 09-12 08:15</div></div>
+      <div class="msg-i"><div class="msg-i-t"><span>系统将于 09-20 02:00–04:00 维护</span><span class="badge badge-warning">重要</span></div><div class="msg-i-d">系统公告 · 09-10 16:00</div></div>
+      <div class="bell-foot">未读 12 条 · 消息保留 90 天</div>
+    </div>
+  </div>
+  <div class="avatar" style="cursor:pointer;" onclick="openDrawer('d-my-perm')" title="我的权限">李</div>
+</div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="side-title">用户服务管理</div>
+    <div class="side-item active" data-page="m1-user">用户管理</div>
+    <div class="side-item" data-page="m1-perm">权限管理</div>
+    <div class="side-item" data-page="m1-portal">门户个性化</div>
+    <div class="side-item" data-page="m1-sec">安全管理</div>
+    <div class="side-item" data-page="m1-log">日志管理</div>
+    <div class="side-item" data-page="m1-proj">项目管理</div>
+    <div class="side-item" data-page="m1-msg">消息中心</div>
+    <div class="side-item" data-page="m1-cfg">统一配置管理</div>
+  </aside>
+
+  <main class="main">
+  <!-- 用户管理 -->
+  <section class="view active" id="v-m1-user">
+    <div class="page-head">
+      <div><h1 class="page-title">用户管理</h1><p class="page-desc">维护平台用户身份与角色体系，用户通过角色获得权限。</p></div>
+      <div class="head-actions"><button class="btn" onclick="openDrawer('d-user-import')">批量导入</button><button class="btn btn-primary" onclick="openDrawer('d-user-add')">+ 新增用户</button></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">用户总数</div><div class="stat-value">86</div></div>
+      <div class="stat"><div class="stat-label"><i class="stat-dot" style="background:var(--success)"></i>活跃</div><div class="stat-value">64</div></div>
+      <div class="stat"><div class="stat-label"><i class="stat-dot" style="background:var(--text-3)"></i>停用</div><div class="stat-value">22</div></div>
+      <div class="stat"><div class="stat-label">角色数</div><div class="stat-value">8</div></div>
+      <div class="stat"><div class="stat-label">本月新增</div><div class="stat-value">6</div></div>
+      <div class="stat"><div class="stat-label">未分配角色</div><div class="stat-value">3</div></div>
+    </div>
+    <div class="filter-bar">
+      <div class="field"><span class="field-label">角色</span><select class="select"><option>全部</option><option>系统管理员</option><option>数据管理员</option><option>算法工程师</option><option>标注员</option><option>访客</option></select></div>
+      <div class="field"><span class="field-label">状态</span><select class="select"><option>全部</option><option>启用</option><option>停用</option></select></div>
+      <div class="field"><span class="field-label">关键词</span><input class="input" placeholder="姓名 / 账号"></div>
+      <button class="btn btn-sm">重置</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>用户</th><th>账号</th><th>角色</th><th>所属部门</th><th>状态</th><th>最后登录</th><th>操作</th></tr></thead>
+        <tbody>
+          <tr><td>李工</td><td class="clip-id">li.gong</td><td><span class="badge badge-info">数据管理员</span></td><td>数据平台部</td><td><span class="badge badge-success">启用</span></td><td class="time">09-14 09:02</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-user-edit')">编辑</button><button class="btn-text" onclick="openDrawer('d-user-auth')">授权</button><button class="btn-text gray" onclick="tip('已触发停用确认流程')">停用</button></div></td></tr>
+          <tr><td>王工</td><td class="clip-id">wang.gong</td><td><span class="badge badge-purple">算法工程师</span></td><td>算法研发部</td><td><span class="badge badge-success">启用</span></td><td class="time">09-14 08:40</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-user-edit')">编辑</button><button class="btn-text" onclick="openDrawer('d-user-auth')">授权</button><button class="btn-text gray" onclick="tip('已触发停用确认流程')">停用</button></div></td></tr>
+          <tr><td>陈工</td><td class="clip-id">chen.gong</td><td><span class="badge badge-purple">算法工程师</span></td><td>算法研发部</td><td><span class="badge badge-success">启用</span></td><td class="time">09-13 18:22</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-user-edit')">编辑</button><button class="btn-text" onclick="openDrawer('d-user-auth')">授权</button><button class="btn-text gray" onclick="tip('已触发停用确认流程')">停用</button></div></td></tr>
+          <tr><td>刘工</td><td class="clip-id">liu.gong</td><td><span class="badge badge-gray">标注员</span></td><td>数据运营部</td><td><span class="badge badge-success">启用</span></td><td class="time">09-13 16:05</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-user-edit')">编辑</button><button class="btn-text" onclick="openDrawer('d-user-auth')">授权</button><button class="btn-text gray" onclick="tip('已触发停用确认流程')">停用</button></div></td></tr>
+          <tr><td>张工</td><td class="clip-id">zhang.gong</td><td><span class="badge badge-danger">系统管理员</span></td><td>平台运维部</td><td><span class="badge badge-success">启用</span></td><td class="time">09-14 07:55</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-user-edit')">编辑</button><button class="btn-text" onclick="openDrawer('d-user-auth')">授权</button><button class="btn-text gray" onclick="tip('已触发停用确认流程')">停用</button></div></td></tr>
+        </tbody>
+      </table>
+      <div class="pager"><span>共 86 条 · 每页 20 条</span><div class="pager-btns"><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">3</button></div></div>
+    </div>
+    <div class="card card-pad section">
+      <div class="section-title">角色体系</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>角色</th><th>说明</th><th>关联权限数</th><th>用户数</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td>系统管理员</td><td>平台全部功能与配置权限</td><td class="num">128</td><td class="num">3</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-role-perm')">配置权限</button><button class="btn-text">查看成员</button></div></td></tr>
+            <tr><td>数据管理员</td><td>数据接入、处理、数据集与分发管理</td><td class="num">64</td><td class="num">12</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-role-perm')">配置权限</button><button class="btn-text">查看成员</button></div></td></tr>
+            <tr><td>算法工程师</td><td>场景编辑、模板管理、生成任务与质检</td><td class="num">52</td><td class="num">38</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-role-perm')">配置权限</button><button class="btn-text">查看成员</button></div></td></tr>
+            <tr><td>标注员</td><td>质检复核与人工标注作业</td><td class="num">18</td><td class="num">26</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-role-perm')">配置权限</button><button class="btn-text">查看成员</button></div></td></tr>
+            <tr><td>访客</td><td>只读访问已授权数据集</td><td class="num">8</td><td class="num">7</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-role-perm')">配置权限</button><button class="btn-text">查看成员</button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 权限管理 -->
+  <section class="view" id="v-m1-perm">
+    <div class="page-head">
+      <div><h1 class="page-title">权限管理</h1><p class="page-desc">权限定义、角色授权、用户授权与访问校验的全链路管理。</p></div>
+      <div class="head-actions"><button class="btn">权限校验日志</button><button class="btn btn-primary" onclick="openDrawer('d-perm-add')">+ 新增权限</button></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="pm-def">权限定义</button>
+      <button class="tab" data-tab="pm-role">角色权限分配</button>
+      <button class="tab" data-tab="pm-user">用户权限分配</button>
+      <button class="tab" data-tab="pm-chk">权限校验</button>
+      <button class="tab" data-tab="pm-scope">数据范围</button>
+    </div>
+    <div class="tab-panel active" id="pm-def">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>权限项</th><th>所属模块</th><th>权限类型</th><th>作用说明</th><th>状态</th></tr></thead>
+          <tbody>
+            <tr><td>scene:create</td><td>场景生成</td><td>操作权限</td><td>创建与编辑场景</td><td><span class="badge badge-success">启用</span></td></tr>
+            <tr><td>scene:submit</td><td>场景生成</td><td>操作权限</td><td>提交场景生成任务</td><td><span class="badge badge-success">启用</span></td></tr>
+            <tr><td>data:export</td><td>数据集管理</td><td>操作权限</td><td>导出与分发数据</td><td><span class="badge badge-success">启用</span></td></tr>
+            <tr><td>data:delete</td><td>数据集管理</td><td>操作权限</td><td>删除数据集与片段</td><td><span class="badge badge-success">启用</span></td></tr>
+            <tr><td>task:terminate</td><td>数据生成</td><td>操作权限</td><td>终止正在执行的任务</td><td><span class="badge badge-success">启用</span></td></tr>
+            <tr><td>system:config</td><td>统一配置</td><td>操作权限</td><td>修改系统运行参数</td><td><span class="badge badge-success">启用</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="tab-panel" id="pm-role">
+      <div class="card card-pad">
+        <div class="section-title">角色 × 权限矩阵</div>
+        <div class="mtx">
+          <table>
+            <thead><tr><th>权限项</th><th>系统管理员</th><th>数据管理员</th><th>算法工程师</th><th>标注员</th><th>访客</th></tr></thead>
+            <tbody>
+              <tr><td>scene:create</td><td><span class="dot-y"></span></td><td><span class="dot-y"></span></td><td><span class="dot-y"></span></td><td><span class="dot-n"></span></td><td><span class="dot-n"></span></td></tr>
+              <tr><td>scene:submit</td><td><span class="dot-y"></span></td><td><span class="dot-p"></span></td><td><span class="dot-y"></span></td><td><span class="dot-n"></span></td><td><span class="dot-n"></span></td></tr>
+              <tr><td>data:export</td><td><span class="dot-y"></span></td><td><span class="dot-y"></span></td><td><span class="dot-p"></span></td><td><span class="dot-n"></span></td><td><span class="dot-n"></span></td></tr>
+              <tr><td>data:delete</td><td><span class="dot-y"></span></td><td><span class="dot-y"></span></td><td><span class="dot-n"></span></td><td><span class="dot-n"></span></td><td><span class="dot-n"></span></td></tr>
+              <tr><td>task:terminate</td><td><span class="dot-y"></span></td><td><span class="dot-p"></span></td><td><span class="dot-y"></span></td><td><span class="dot-n"></span></td><td><span class="dot-n"></span></td></tr>
+              <tr><td>system:config</td><td><span class="dot-y"></span></td><td><span class="dot-n"></span></td><td><span class="dot-n"></span></td><td><span class="dot-n"></span></td><td><span class="dot-n"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tip" style="margin-top:10px;"><span>深色为完全授权，浅色为受限授权（如仅本人创建的对象），灰色为无权限。</span></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="pm-user">
+      <div class="card card-pad">
+        <div class="section-title">个性化授权</div>
+        <div class="form-grid">
+          <div class="form-item"><span class="form-label">用户</span><select class="select"><option>王工（算法工程师）</option><option>李工（数据管理员）</option></select></div>
+          <div class="form-item"><span class="form-label">附加权限</span><select class="select"><option>data:export（临时）</option><option>data:delete</option></select></div>
+          <div class="form-item"><span class="form-label">生效期</span><input class="input" value="2026-09-14 ~ 2026-10-14"></div>
+          <div class="form-item"><span class="form-label">审批人</span><input class="input" value="张工"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>用户</th><th>基础角色</th><th>附加权限</th><th>生效期</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td>王工</td><td>算法工程师</td><td>data:export</td><td>09-14 ~ 10-14</td><td><span class="badge badge-success">生效中</span></td><td><div class="ops"><button class="btn-text">延期</button><button class="btn-text gray">收回</button></div></td></tr>
+              <tr><td>刘工</td><td>标注员</td><td>scene:create</td><td>08-20 ~ 09-20</td><td><span class="badge badge-warning">即将到期</span></td><td><div class="ops"><button class="btn-text">延期</button><button class="btn-text gray">收回</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" id="pm-chk">
+      <div class="card card-pad">
+        <div class="section-title">权限校验记录</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>时间</th><th>用户</th><th>访问资源</th><th>请求权限</th><th>结果</th><th>来源 IP</th></tr></thead>
+            <tbody>
+              <tr><td class="time">09-14 09:31</td><td>刘工</td><td>数据集 DS-0047</td><td>data:export</td><td><span class="badge badge-danger">拒绝</span></td><td>10.2.31.88</td></tr>
+              <tr><td class="time">09-14 09:12</td><td>李工</td><td>数据集 DS-0047</td><td>data:export</td><td><span class="badge badge-success">通过</span></td><td>10.2.31.24</td></tr>
+              <tr><td class="time">09-14 08:57</td><td>王工</td><td>任务 GEN-12</td><td>task:terminate</td><td><span class="badge badge-success">通过</span></td><td>10.2.31.51</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tip" style="margin-top:10px;"><span>用户与设备访问资源时实时校验，越权访问将被拒绝并计入安全审计。</span></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="pm-scope">
+      <div class="card card-pad">
+        <div style="display:flex;align-items:center;margin-bottom:10px;">
+          <div class="section-title" style="margin:0;">数据范围规则 <span class="sub">按维度组合定义可见数据</span></div>
+          <div style="flex:1"></div>
+          <button class="btn btn-sm btn-primary" onclick="openDrawer('d-scope-add')">+ 新建规则</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>规则名称</th><th>维度组合</th><th>逻辑</th><th>应用对象</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td>算法组数据范围</td><td class="clip-id">项目 = 雨天场景数据生产<br>数据类型 ∈ {种子数据, 合成数据}</td><td>AND</td><td>角色 · 算法工程师</td><td><span class="badge badge-success">启用</span></td><td class="time">09-12 09:40</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-scope-add')">编辑</button><button class="btn-text gray">停用</button></div></td></tr>
+              <tr><td>标注组数据范围</td><td class="clip-id">项目 = 全部<br>数据类型 = 质检数据</td><td>—</td><td>角色 · 标注员</td><td><span class="badge badge-success">启用</span></td><td class="time">08-26 14:12</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-scope-add')">编辑</button><button class="btn-text gray">停用</button></div></td></tr>
+              <tr><td>访客只读范围</td><td class="clip-id">数据集状态 = 已发布</td><td>—</td><td>角色 · 访客</td><td><span class="badge badge-success">启用</span></td><td class="time">07-18 10:05</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-scope-add')">编辑</button><button class="btn-text gray">停用</button></div></td></tr>
+              <tr><td>外部协作范围</td><td class="clip-id">项目 = 高速匝道评测集<br>标签 ∋ 高速匝道</td><td>AND</td><td>用户 · 孙工</td><td><span class="badge badge-gray">停用</span></td><td class="time">06-30 16:44</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-scope-add')">编辑</button><button class="btn-text">启用</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tip" style="margin-top:10px;"><span>规则与用户的全局角色叠加生效，取两者中较窄的范围；项目成员在项目内可单独设置。</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 门户个性化 -->
+  <section class="view" id="v-m1-portal">
+    <div class="page-head">
+      <div><h1 class="page-title">门户个性化管理</h1><p class="page-desc">为不同用户群体提供适配的门户模板与个性化配置。</p></div>
+      <div class="head-actions"><button class="btn btn-primary">+ 新建模板</button></div>
+    </div>
+    <div class="two-col">
+      <div class="card card-pad">
+        <div class="section-title">门户模板</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>模板</th><th>适用角色</th><th>默认布局</th><th>使用人数</th><th>状态</th></tr></thead>
+            <tbody>
+              <tr><td>数据运营门户</td><td>数据管理员</td><td>数据概览 + 待办 + 快捷入口</td><td class="num">12</td><td><span class="badge badge-success">启用</span></td></tr>
+              <tr><td>算法研发门户</td><td>算法工程师</td><td>任务监控 + 场景入口 + 质检待办</td><td class="num">38</td><td><span class="badge badge-success">启用</span></td></tr>
+              <tr><td>标注作业门户</td><td>标注员</td><td>作业队列 + 个人统计</td><td class="num">26</td><td><span class="badge badge-success">启用</span></td></tr>
+              <tr><td>默认门户</td><td>其他</td><td>通用概览</td><td class="num">10</td><td><span class="badge badge-success">启用</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card card-pad">
+        <div class="section-title">个性化配置 · 算法研发门户</div>
+        <div class="prop-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-2);width:88px;">默认落地页</span><select class="select" style="flex:1;"><option>生成任务监控</option><option>场景编辑</option><option>质检待办</option></select></div>
+        <div class="prop-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-2);width:88px;">快捷入口</span><input class="input" style="flex:1;" value="新建场景, 模板管理, 我的任务"></div>
+        <div class="prop-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-2);width:88px;">卡片顺序</span><input class="input" style="flex:1;" value="任务监控 → 质检待办 → 数据概览"></div>
+        <div class="section-title" style="margin-top:12px;">个人覆盖</div>
+        <div class="rule">
+          <div class="rule-body"><div class="rule-title">允许用户自行调整</div><div class="rule-desc">用户可在模板基础上调整卡片与顺序</div></div>
+          <div class="sw on" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 安全管理 -->
+  <section class="view" id="v-m1-sec">
+    <div class="page-head">
+      <div><h1 class="page-title">安全管理</h1><p class="page-desc">账号安全、数据安全与安全审计的全方位保障。</p></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="sc-acct">账号安全</button>
+      <button class="tab" data-tab="sc-data">数据安全</button>
+      <button class="tab" data-tab="sc-audit">安全审计</button>
+    </div>
+    <div class="tab-panel active" id="sc-acct">
+      <div class="card card-pad">
+        <div class="section-title">账号安全策略</div>
+        <div class="prop-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-2);width:120px;">密码最小长度</span><input class="input" style="width:100px;" value="10"></div>
+        <div class="prop-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-2);width:120px;">密码有效期</span><input class="input" style="width:100px;" value="90"><span style="font-size:12px;color:var(--text-3);">天</span></div>
+        <div class="prop-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-2);width:120px;">登录失败锁定</span><input class="input" style="width:100px;" value="5"><span style="font-size:12px;color:var(--text-3);">次后锁定 30 分钟</span></div>
+        <div class="prop-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-2);width:120px;">双因子认证</span><select class="select" style="width:160px;"><option>管理员强制开启</option><option>全员开启</option><option>关闭</option></select></div>
+        <div class="prop-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-2);width:120px;">会话超时</span><input class="input" style="width:100px;" value="30"><span style="font-size:12px;color:var(--text-3);">分钟</span></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="sc-data">
+      <div class="card card-pad">
+        <div class="section-title">数据安全策略</div>
+        <div class="rule">
+          <div class="rule-body"><div class="rule-title">敏感信息自动脱敏</div><div class="rule-desc">接入数据时自动执行人脸与车牌脱敏</div></div>
+          <div class="sw on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="rule">
+          <div class="rule-body"><div class="rule-title">导出数据水印</div><div class="rule-desc">导出文件附带操作者与时间水印信息</div></div>
+          <div class="sw on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="rule">
+          <div class="rule-body"><div class="rule-title">下载链接访问限制</div><div class="rule-desc">分发链接默认 7 天有效，可配置访问限制</div></div>
+          <div class="sw on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="rule">
+          <div class="rule-body"><div class="rule-title">存储加密</div><div class="rule-desc">数据落盘使用国密算法加密</div></div>
+          <div class="sw on" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" id="sc-audit">
+      <div class="card card-pad">
+        <div class="section-title">安全审计</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>时间</th><th>用户</th><th>事件类型</th><th>描述</th><th>风险等级</th><th>处理</th></tr></thead>
+            <tbody>
+              <tr><td class="time">09-14 09:31</td><td>刘工</td><td>越权访问</td><td>尝试导出未授权数据集 DS-0047</td><td><span class="badge badge-warning">中</span></td><td><div class="ops"><button class="btn-text">详情</button></div></td></tr>
+              <tr><td class="time">09-13 22:14</td><td>未知</td><td>异常登录</td><td>非常用地段登录，已触发双因子验证</td><td><span class="badge badge-danger">高</span></td><td><div class="ops"><button class="btn-text">详情</button><button class="btn-text">处置</button></div></td></tr>
+              <tr><td class="time">09-13 16:02</td><td>李工</td><td>批量导出</td><td>导出数据集 DS-0044，共 864 条</td><td><span class="badge badge-gray">低</span></td><td><div class="ops"><button class="btn-text">详情</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 日志管理 -->
+  <section class="view" id="v-m1-log">
+    <div class="page-head">
+      <div><h1 class="page-title">日志管理</h1><p class="page-desc">日志的收集、存储、分析、查询与告警全生命周期管理。</p></div>
+      <div class="head-actions"><button class="btn">导出日志</button><button class="btn btn-primary">+ 新增告警规则</button></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">今日日志量</div><div class="stat-value">2.4<span class="stat-unit">GB</span></div></div>
+      <div class="stat"><div class="stat-label">日志总量</div><div class="stat-value">186<span class="stat-unit">GB</span></div></div>
+      <div class="stat"><div class="stat-label"><i class="stat-dot" style="background:var(--danger)"></i>错误日志</div><div class="stat-value">1,284</div></div>
+      <div class="stat"><div class="stat-label"><i class="stat-dot" style="background:var(--warning)"></i>告警</div><div class="stat-value">36</div></div>
+      <div class="stat"><div class="stat-label">采集源</div><div class="stat-value">18</div></div>
+      <div class="stat"><div class="stat-label">保留期</div><div class="stat-value">180<span class="stat-unit">天</span></div></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="lg-q">日志查询</button>
+      <button class="tab" data-tab="lg-c">收集与存储</button>
+      <button class="tab" data-tab="lg-a">分析与告警</button>
+    </div>
+    <div class="tab-panel active" id="lg-q">
+      <div class="card card-pad">
+        <div class="filter-bar" style="margin-bottom:10px;">
+          <div class="field"><span class="field-label">来源</span><select class="select"><option>全部</option><option>业务服务</option><option>任务执行</option><option>中间件</option></select></div>
+          <div class="field"><span class="field-label">级别</span><select class="select"><option>全部</option><option>ERROR</option><option>WARN</option><option>INFO</option></select></div>
+          <div class="field"><span class="field-label">时间范围</span><input class="input" value="2026-09-14 00:00 ~ 23:59"></div>
+          <div class="field"><span class="field-label">关键词</span><input class="input" placeholder="TraceID / 关键字"></div>
+          <button class="btn btn-sm btn-primary">查询</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>时间</th><th>级别</th><th>来源</th><th>内容</th><th>TraceID</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td class="time">09-38-05</td><td><span class="badge badge-danger">ERROR</span></td><td>任务执行</td><td>片段 00621 显存溢出</td><td class="clip-id">tr-8f2a91</td><td><div class="ops"><button class="btn-text">详情</button><button class="btn-text">上下文</button></div></td></tr>
+              <tr><td class="time">09-12-22</td><td><span class="badge badge-warning">WARN</span></td><td>任务执行</td><td>片段 00418 生成耗时异常</td><td class="clip-id">tr-71c0d3</td><td><div class="ops"><button class="btn-text">详情</button><button class="btn-text">上下文</button></div></td></tr>
+              <tr><td class="time">08-26-12</td><td><span class="badge badge-info">INFO</span></td><td>业务服务</td><td>节点「种子数据输入」完成</td><td class="clip-id">tr-4ab882</td><td><div class="ops"><button class="btn-text">详情</button><button class="btn-text">上下文</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" id="lg-c">
+      <div class="two-col">
+        <div class="card card-pad">
+          <div class="section-title">采集源</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>来源</th><th>类型</th><th>采集状态</th><th>今日量</th></tr></thead>
+              <tbody>
+                <tr><td>业务服务</td><td>应用日志</td><td><span class="badge badge-success">正常</span></td><td class="num">1.1 GB</td></tr>
+                <tr><td>任务执行</td><td>应用日志</td><td><span class="badge badge-success">正常</span></td><td class="num">0.9 GB</td></tr>
+                <tr><td>中间件</td><td>组件日志</td><td><span class="badge badge-success">正常</span></td><td class="num">0.3 GB</td></tr>
+                <tr><td>操作系统</td><td>系统日志</td><td><span class="badge badge-warning">延迟 4 分钟</span></td><td class="num">0.1 GB</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card card-pad">
+          <div class="section-title">存储策略</div>
+          <div class="prop-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-2);width:100px;">热数据保留</span><input class="input" style="width:90px;" value="7"><span style="font-size:12px;color:var(--text-3);">天（可秒级检索）</span></div>
+          <div class="prop-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-2);width:100px;">温数据保留</span><input class="input" style="width:90px;" value="30"><span style="font-size:12px;color:var(--text-3);">天</span></div>
+          <div class="prop-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-2);width:100px;">冷数据保留</span><input class="input" style="width:90px;" value="180"><span style="font-size:12px;color:var(--text-3);">天（归档存储）</span></div>
+          <div class="tip" style="margin-top:10px;"><span>分级存储在检索效率与存储成本之间平衡，超期数据自动清理并保留清理记录。</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" id="lg-a">
+      <div class="card card-pad">
+        <div class="section-title">告警规则</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>规则</th><th>条件</th><th>级别</th><th>通知方式</th><th>今日触发</th><th>状态</th></tr></thead>
+            <tbody>
+              <tr><td>错误日志突增</td><td>5 分钟内 ERROR &gt; 50 条</td><td><span class="badge badge-danger">紧急</span></td><td>站内 + 短信</td><td class="num">2</td><td><span class="badge badge-success">启用</span></td></tr>
+              <tr><td>任务执行异常</td><td>出现显存溢出 / 中断关键字</td><td><span class="badge badge-warning">重要</span></td><td>站内 + 邮件</td><td class="num">14</td><td><span class="badge badge-success">启用</span></td></tr>
+              <tr><td>采集延迟</td><td>采集延迟 &gt; 5 分钟</td><td><span class="badge badge-warning">重要</span></td><td>站内</td><td class="num">1</td><td><span class="badge badge-success">启用</span></td></tr>
+              <tr><td>存储容量预警</td><td>日志存储 &gt; 80%</td><td><span class="badge badge-gray">提示</span></td><td>邮件</td><td class="num">0</td><td><span class="badge badge-success">启用</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 项目管理 -->
+  <section class="view" id="v-m1-proj">
+    <div class="page-head">
+      <div><h1 class="page-title">项目管理</h1><p class="page-desc">项目是数据的归属容器与权限作用域，单层不嵌套。</p></div>
+      <div class="head-actions"><button class="btn" onclick="openDrawer('d-proj-add')">+ 新建项目</button></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">项目总数</div><div class="stat-value">12</div></div>
+      <div class="stat"><div class="stat-label"><i class="stat-dot" style="background:var(--success)"></i>进行中</div><div class="stat-value">8</div></div>
+      <div class="stat"><div class="stat-label"><i class="stat-dot" style="background:var(--text-3)"></i>已归档</div><div class="stat-value">3</div></div>
+      <div class="stat"><div class="stat-label"><i class="stat-dot" style="background:var(--primary)"></i>默认项目</div><div class="stat-value">1</div></div>
+      <div class="stat"><div class="stat-label">参与人数</div><div class="stat-value">62</div></div>
+      <div class="stat"><div class="stat-label">存储已用</div><div class="stat-value">58.7<span class="stat-unit">TB</span></div><div class="stat-sub">参考值 120 TB</div></div>
+    </div>
+    <div class="filter-bar">
+      <div class="field"><span class="field-label">状态</span><select class="select"><option>全部</option><option>进行中</option><option>已归档</option><option>默认项目</option></select></div>
+      <div class="field"><span class="field-label">负责人</span><select class="select"><option>全部</option><option>李工</option><option>王工</option><option>陈工</option><option>张工</option></select></div>
+      <div class="field"><span class="field-label">关键词</span><input class="input" placeholder="项目名称 / 标识"></div>
+      <button class="btn btn-sm">重置</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>项目名称 / 标识</th><th>负责人</th><th>成员数</th><th>数据量</th><th>任务数</th><th>场景数</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div class="clip-name"><span class="clip-title">雨天场景数据生产</span><span class="clip-id">PRJ-0001</span></div></td>
+            <td>李工</td><td class="num">14</td><td class="num">18.2 TB</td><td class="num">36</td><td class="num">128</td>
+            <td><span class="badge badge-success">进行中</span></td><td class="time">2026-03-12</td>
+            <td><div class="ops"><button class="btn-text" onclick="go('m1-proj-detail')">详情</button><button class="btn-text" onclick="openDrawer('d-proj-add')">编辑</button><button class="btn-text gray" onclick="openDrawer('d-proj-archive')">归档</button></div></td>
+          </tr>
+          <tr>
+            <td><div class="clip-name"><span class="clip-title">夜间长尾数据采集</span><span class="clip-id">PRJ-0002</span></div></td>
+            <td>王工</td><td class="num">9</td><td class="num">15.6 TB</td><td class="num">24</td><td class="num">96</td>
+            <td><span class="badge badge-success">进行中</span></td><td class="time">2026-04-02</td>
+            <td><div class="ops"><button class="btn-text" onclick="go('m1-proj-detail')">详情</button><button class="btn-text" onclick="openDrawer('d-proj-add')">编辑</button><button class="btn-text gray" onclick="openDrawer('d-proj-archive')">归档</button></div></td>
+          </tr>
+          <tr>
+            <td><div class="clip-name"><span class="clip-title">施工占道场景集</span><span class="clip-id">PRJ-0003</span></div></td>
+            <td>陈工</td><td class="num">7</td><td class="num">14.1 TB</td><td class="num">18</td><td class="num">74</td>
+            <td><span class="badge badge-success">进行中</span></td><td class="time">2026-05-18</td>
+            <td><div class="ops"><button class="btn-text" onclick="go('m1-proj-detail')">详情</button><button class="btn-text" onclick="openDrawer('d-proj-add')">编辑</button><button class="btn-text gray" onclick="openDrawer('d-proj-archive')">归档</button></div></td>
+          </tr>
+          <tr>
+            <td><div class="clip-name"><span class="clip-title">高速匝道评测集</span><span class="clip-id">PRJ-0004</span></div></td>
+            <td>张工</td><td class="num">5</td><td class="num">8.4 TB</td><td class="num">12</td><td class="num">42</td>
+            <td><span class="badge badge-success">进行中</span></td><td class="time">2026-06-06</td>
+            <td><div class="ops"><button class="btn-text" onclick="go('m1-proj-detail')">详情</button><button class="btn-text" onclick="openDrawer('d-proj-add')">编辑</button><button class="btn-text gray" onclick="openDrawer('d-proj-archive')">归档</button></div></td>
+          </tr>
+          <tr>
+            <td><div class="clip-name"><span class="clip-title">环岛场景预研</span><span class="clip-id">PRJ-0005</span></div></td>
+            <td>刘工</td><td class="num">3</td><td class="num">2.1 TB</td><td class="num">4</td><td class="num">16</td>
+            <td><span class="badge badge-gray">已归档</span></td><td class="time">2026-01-20</td>
+            <td><div class="ops"><button class="btn-text" onclick="go('m1-proj-detail')">详情</button><button class="btn-text">恢复</button></div></td>
+          </tr>
+          <tr>
+            <td><div class="clip-name"><span class="clip-title">默认项目</span><span class="clip-id">PRJ-0000</span></div></td>
+            <td>系统</td><td class="num">86</td><td class="num">0.4 TB</td><td class="num">—</td><td class="num">—</td>
+            <td><span class="badge badge-info">默认</span></td><td class="time">2026-01-01</td>
+            <td><div class="ops"><button class="btn-text" onclick="go('m1-proj-detail')">详情</button><button class="btn-text" onclick="openDrawer('d-proj-add')">编辑</button></div></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pager"><span>共 12 条 · 每页 20 条</span><div class="pager-btns"><button class="page-btn active">1</button></div></div>
+    </div>
+  </section>
+
+  <!-- 项目详情（非导航子页） -->
+  <section class="view" id="v-m1-proj-detail">
+    <div class="crumb">用户服务管理 / 项目管理 / <span>雨天场景数据生产</span></div>
+    <div class="detail-head">
+      <div class="detail-title-row">
+        <h1 class="detail-title">雨天场景数据生产</h1>
+        <span class="badge badge-success">进行中</span>
+      </div>
+      <div class="detail-meta">PRJ-0001 · 负责人 李工 · 创建于 2026-03-12 · 成员 14</div>
+      <div class="head-actions">
+        <button class="btn" onclick="go('m1-proj')">返回列表</button>
+        <button class="btn" onclick="openDrawer('d-proj-add')">编辑项目</button>
+        <button class="btn btn-primary" onclick="openDrawer('d-proj-mem')">添加成员</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="pj-ov">概览</button>
+      <button class="tab" data-tab="pj-mem">成员</button>
+      <button class="tab" data-tab="pj-res">资源消耗</button>
+    </div>
+
+    <div class="tab-panel active" id="pj-ov">
+      <div class="stats">
+        <div class="stat"><div class="stat-label">数据量</div><div class="stat-value">18.2<span class="stat-unit">TB</span></div></div>
+        <div class="stat"><div class="stat-label">生成任务</div><div class="stat-value">36</div></div>
+        <div class="stat"><div class="stat-label">场景数</div><div class="stat-value">128</div></div>
+        <div class="stat"><div class="stat-label">数据集</div><div class="stat-value">6</div></div>
+        <div class="stat"><div class="stat-label">合成片段</div><div class="stat-value">8,642</div></div>
+        <div class="stat"><div class="stat-label">成员</div><div class="stat-value">14</div></div>
+      </div>
+      <div class="two-col">
+        <div>
+          <div class="card card-pad section">
+            <div class="section-title">数据量增长 <span class="sub">近 6 个月</span></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>月份</th><th>新增数据量</th><th>生成条数</th><th>环比</th></tr></thead>
+                <tbody>
+                  <tr><td>2026-09</td><td class="num">3.4 TB</td><td class="num">1,842</td><td><span class="badge badge-success">+18%</span></td></tr>
+                  <tr><td>2026-08</td><td class="num">2.9 TB</td><td class="num">1,560</td><td><span class="badge badge-success">+9%</span></td></tr>
+                  <tr><td>2026-07</td><td class="num">2.6 TB</td><td class="num">1,428</td><td><span class="badge badge-gray">-4%</span></td></tr>
+                  <tr><td>2026-06</td><td class="num">2.7 TB</td><td class="num">1,486</td><td><span class="badge badge-success">+22%</span></td></tr>
+                  <tr><td>2026-05</td><td class="num">2.2 TB</td><td class="num">1,214</td><td><span class="badge badge-success">+31%</span></td></tr>
+                  <tr><td>2026-04</td><td class="num">1.7 TB</td><td class="num">928</td><td><span class="badge badge-gray">—</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card card-pad section">
+            <div class="section-title">最近动态</div>
+            <div class="tl">
+              <div class="tl-item ok">
+                <div class="tl-title">数据集「雨天场景集 v3」发布 <span class="tl-time">09-14 11:20</span></div>
+                <div class="tl-desc">864 条 · 李工</div>
+              </div>
+              <div class="tl-item done">
+                <div class="tl-title">生成任务 T-20260913-07 完成 <span class="tl-time">09-13 22:06</span></div>
+                <div class="tl-desc">产出 320 条 · 合格 318 条</div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-title">陈工加入项目 <span class="tl-time">09-12 09:40</span></div>
+                <div class="tl-desc">项目内角色 算法工程师 · 李工邀请</div>
+              </div>
+              <div class="tl-item warn">
+                <div class="tl-title">存储已用量达到参考值 80% <span class="tl-time">09-12 10:22</span></div>
+                <div class="tl-desc">已提醒项目负责人与系统管理员</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="pj-mem">
+      <div class="card card-pad">
+        <div style="display:flex;align-items:center;margin-bottom:10px;">
+          <div class="section-title" style="margin:0;">成员列表 <span class="sub">14 人</span></div>
+          <div style="flex:1"></div>
+          <button class="btn btn-sm btn-primary" onclick="openDrawer('d-proj-mem')">+ 添加成员</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>成员</th><th>账号</th><th>项目内角色</th><th>数据范围</th><th>加入时间</th><th>最近活跃</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td>李工</td><td class="clip-id">li.gong</td><td><span class="badge badge-danger">项目负责人</span></td><td>全部数据</td><td class="time">2026-03-12</td><td class="time">09-14 09:02</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-proj-mem')">编辑</button></div></td></tr>
+              <tr><td>王工</td><td class="clip-id">wang.gong</td><td><span class="badge badge-info">数据管理员</span></td><td>种子数据 + 合成数据</td><td class="time">2026-03-12</td><td class="time">09-14 08:40</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-proj-mem')">编辑</button><button class="btn-text gray">移除</button></div></td></tr>
+              <tr><td>陈工</td><td class="clip-id">chen.gong</td><td><span class="badge badge-purple">算法工程师</span></td><td>合成数据</td><td class="time">2026-09-12</td><td class="time">09-13 18:22</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-proj-mem')">编辑</button><button class="btn-text gray">移除</button></div></td></tr>
+              <tr><td>刘工</td><td class="clip-id">liu.gong</td><td><span class="badge badge-gray">标注员</span></td><td>质检数据</td><td class="time">2026-04-08</td><td class="time">09-13 16:05</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-proj-mem')">编辑</button><button class="btn-text gray">移除</button></div></td></tr>
+              <tr><td>张工</td><td class="clip-id">zhang.gong</td><td><span class="badge badge-gray">访客</span></td><td>已发布数据集</td><td class="time">2026-06-20</td><td class="time">09-14 07:55</td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-proj-mem')">编辑</button><button class="btn-text gray">移除</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tip" style="margin-top:10px;"><span>成员在项目内的数据范围可单独设置，与用户的全局角色叠加生效：取两者中较窄的范围。</span></div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="pj-res">
+      <div class="tip"><span>此处仅记录用量并在达到参考值时提醒，不拦截、不扣减、不限制项目内任何操作。</span></div>
+      <div class="two-col">
+        <div class="card card-pad section">
+          <div class="section-title">存储 <span class="sub">已用 18.2 TB / 参考值 30 TB</span></div>
+          <div class="usage"><i style="width:61%"></i></div>
+          <div class="metrics" style="margin-top:12px;">
+            <div class="metric">视频<b>12.4 TB</b></div>
+            <div class="metric">点云<b>4.1 TB</b></div>
+            <div class="metric">真值标签<b>1.7 TB</b></div>
+          </div>
+        </div>
+        <div class="card card-pad section">
+          <div class="section-title">生成算力 <span class="sub">已用 1,284 卡时 / 参考值 2,000 卡时</span></div>
+          <div class="usage"><i style="width:64%"></i></div>
+          <div class="metrics" style="margin-top:12px;">
+            <div class="metric">本月<b>486 卡时</b></div>
+            <div class="metric">生成任务<b>36 个</b></div>
+            <div class="metric">平均单任务<b>35.7 卡时</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="card card-pad section">
+        <div class="section-title">提醒记录</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>时间</th><th>类型</th><th>内容</th><th>提醒对象</th><th>状态</th></tr></thead>
+            <tbody>
+              <tr><td class="time">09-12 10:22</td><td>存储</td><td>已用量达到参考值 80%（14.4 TB）</td><td>项目负责人 · 系统管理员</td><td><span class="badge badge-success">已读</span></td></tr>
+              <tr><td class="time">09-08 16:40</td><td>算力</td><td>本月生成算力已达参考值 65%</td><td>项目负责人</td><td><span class="badge badge-success">已读</span></td></tr>
+              <tr><td class="time">08-26 09:15</td><td>存储</td><td>连续 7 日无新增数据，可考虑归档</td><td>项目负责人</td><td><span class="badge badge-gray">已忽略</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 消息中心 -->
+  <section class="view" id="v-m1-msg">
+    <div class="page-head">
+      <div><h1 class="page-title">消息中心</h1><p class="page-desc">系统通知与个人消息的统一入口，点击消息可直达关联对象。</p></div>
+      <div class="head-actions"><button class="btn" onclick="openDrawer('d-msg-sub')">订阅设置</button><button class="btn btn-primary">全部标记已读</button></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">未读</div><div class="stat-value">12</div></div>
+      <div class="stat"><div class="stat-label">今日</div><div class="stat-value">34</div></div>
+      <div class="stat"><div class="stat-label"><i class="stat-dot" style="background:var(--danger)"></i>紧急</div><div class="stat-value">2</div></div>
+      <div class="stat"><div class="stat-label"><i class="stat-dot" style="background:var(--warning)"></i>重要</div><div class="stat-value">9</div></div>
+      <div class="stat"><div class="stat-label">已归档</div><div class="stat-value">156</div></div>
+      <div class="stat"><div class="stat-label">保留期</div><div class="stat-value">90<span class="stat-unit">天</span></div><div class="stat-sub">到期自动清理</div></div>
+    </div>
+    <div class="filter-bar">
+      <div class="field"><span class="field-label">分类</span><select class="select"><option>全部</option><option>系统公告</option><option>任务通知</option><option>安全告警</option><option>权限变更</option><option>质检提醒</option></select></div>
+      <div class="field"><span class="field-label">级别</span><select class="select"><option>全部</option><option>紧急</option><option>重要</option><option>普通</option></select></div>
+      <div class="field"><span class="field-label">状态</span><select class="select"><option>全部</option><option>未读</option><option>已读</option><option>已归档</option></select></div>
+      <div class="field"><span class="field-label">关键词</span><input class="input" placeholder="消息标题 / 关联对象"></div>
+      <button class="btn btn-sm">重置</button>
+    </div>
+    <div class="batch-bar">
+      <span class="batch-text">已选 <b id="msg-sel">0</b> 条</span>
+      <button class="btn btn-sm">标记已读</button>
+      <button class="btn btn-sm">归档</button>
+      <button class="btn btn-sm" style="color:var(--danger);">删除</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th class="col-check"><input type="checkbox" id="msg-all"></th><th>级别</th><th>分类</th><th>消息标题</th><th>关联对象</th><th>发送时间</th><th>状态</th><th>操作</th></tr></thead>
+        <tbody>
+          <tr><td class="col-check"><input type="checkbox" class="msg-chk"></td><td><span class="badge badge-danger">紧急</span></td><td>安全告警</td><td>检测到 3 次越权访问尝试</td><td>用户 · 赵工</td><td class="time">09-14 10:22</td><td><span class="badge badge-info">未读</span></td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-msg-detail')">查看</button><button class="btn-text">标记已读</button></div></td></tr>
+          <tr><td class="col-check"><input type="checkbox" class="msg-chk"></td><td><span class="badge badge-warning">重要</span></td><td>任务通知</td><td>生成任务 T-20260913-07 执行失败</td><td>任务 · T-20260913-07</td><td class="time">09-13 22:06</td><td><span class="badge badge-info">未读</span></td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-msg-detail')">查看</button><button class="btn-text">标记已读</button></div></td></tr>
+          <tr><td class="col-check"><input type="checkbox" class="msg-chk"></td><td><span class="badge badge-gray">普通</span></td><td>权限变更</td><td>你的项目内角色已调整为数据管理员</td><td>项目 · 雨天场景数据生产</td><td class="time">09-12 09:40</td><td><span class="badge badge-info">未读</span></td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-msg-detail')">查看</button><button class="btn-text">标记已读</button></div></td></tr>
+          <tr><td class="col-check"><input type="checkbox" class="msg-chk"></td><td><span class="badge badge-gray">普通</span></td><td>质检提醒</td><td>片段 SY-20260912-0031 待人工复核</td><td>合成数据 · SY-20260912-0031</td><td class="time">09-12 08:15</td><td><span class="badge badge-gray">已读</span></td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-msg-detail')">查看</button><button class="btn-text">归档</button></div></td></tr>
+          <tr><td class="col-check"><input type="checkbox" class="msg-chk"></td><td><span class="badge badge-warning">重要</span></td><td>系统公告</td><td>系统将于 09-20 02:00–04:00 维护</td><td>系统</td><td class="time">09-10 16:00</td><td><span class="badge badge-gray">已读</span></td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-msg-detail')">查看</button><button class="btn-text">归档</button></div></td></tr>
+          <tr><td class="col-check"><input type="checkbox" class="msg-chk"></td><td><span class="badge badge-gray">普通</span></td><td>任务通知</td><td>分发任务 DLV-20260907-08 已完成</td><td>数据集 · 雨天场景集 v3</td><td class="time">09-07 18:22</td><td><span class="badge badge-gray">已归档</span></td><td><div class="ops"><button class="btn-text" onclick="openDrawer('d-msg-detail')">查看</button></div></td></tr>
+        </tbody>
+      </table>
+      <div class="pager"><span>共 1,284 条 · 每页 20 条</span><div class="pager-btns"><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">3</button></div></div>
+    </div>
+    <div class="card card-pad section">
+      <div class="section-title">推送配置 <span class="sub">系统级</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>配置项</th><th>当前值</th><th>说明</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td>默认订阅策略</td><td>新用户默认接收「重要」及以上</td><td>用户可在订阅设置中自行调整</td><td><div class="ops"><button class="btn-text">编辑</button></div></td></tr>
+            <tr><td>邮件服务</td><td>已启用 · smtp.corp.cn</td><td>发往用户绑定邮箱，未绑定则仅站内</td><td><div class="ops"><button class="btn-text">编辑</button></div></td></tr>
+            <tr><td>消息保留期</td><td class="num">90 天</td><td>到期自动清理，已归档消息同样适用</td><td><div class="ops"><button class="btn-text">编辑</button></div></td></tr>
+            <tr><td>免打扰时段</td><td>22:00 – 08:00</td><td>该时段内仅「紧急」消息即时推送</td><td><div class="ops"><button class="btn-text">编辑</button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 统一配置管理 -->
+  <section class="view" id="v-m1-cfg">
+    <div class="page-head">
+      <div><h1 class="page-title">统一配置管理</h1><p class="page-desc">平台运行参数与对外接口的集中管理。</p></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="cf-sys">系统配置</button>
+      <button class="tab" data-tab="cf-api">接口管理</button>
+      <button class="tab" data-tab="cf-apitest">接口测试</button>
+    </div>
+    <div class="tab-panel active" id="cf-sys">
+      <div class="card card-pad">
+        <div class="section-title">运行参数</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>配置项</th><th>当前值</th><th>说明</th><th>生效方式</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td>任务最大并发数</td><td class="num">512</td><td>单租户下可同时调度的任务上限</td><td>动态生效</td><td><div class="ops"><button class="btn-text">编辑</button></div></td></tr>
+              <tr><td>单任务最大节点数</td><td class="num">16</td><td>流程编排节点上限</td><td>动态生效</td><td><div class="ops"><button class="btn-text">编辑</button></div></td></tr>
+              <tr><td>默认导出链接有效期</td><td>7 天</td><td>分发任务生成链接的默认有效期</td><td>动态生效</td><td><div class="ops"><button class="btn-text">编辑</button></div></td></tr>
+              <tr><td>质检合格阈值</td><td class="num">60 分</td><td>低于该分值进入低效隔离</td><td>动态生效</td><td><div class="ops"><button class="btn-text">编辑</button></div></td></tr>
+              <tr><td>对象存储接入点</td><td class="clip-id">obs.wmgen.cn</td><td>数据接入与分发的存储地址</td><td>重启生效</td><td><div class="ops"><button class="btn-text">编辑</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" id="cf-api">
+      <div class="card card-pad">
+        <div style="display:flex;align-items:center;margin-bottom:10px;">
+          <div class="section-title" style="margin:0;">接口列表</div>
+          <div style="flex:1"></div>
+          <button class="btn btn-sm">+ 注册接口</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>接口名称</th><th>路径</th><th>类型</th><th>鉴权</th><th>今日调用</th><th>平均耗时</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td>创建生成任务</td><td class="clip-id">/api/v1/tasks</td><td>POST</td><td>Token</td><td class="num">1,284</td><td class="num">128 ms</td><td><span class="badge badge-success">正常</span></td><td><div class="ops"><button class="btn-text">详情</button><button class="btn-text">测试</button><button class="btn-text gray">停用</button></div></td></tr>
+              <tr><td>查询任务状态</td><td class="clip-id">/api/v1/tasks/{id}</td><td>GET</td><td>Token</td><td class="num">18,642</td><td class="num">24 ms</td><td><span class="badge badge-success">正常</span></td><td><div class="ops"><button class="btn-text">详情</button><button class="btn-text">测试</button><button class="btn-text gray">停用</button></div></td></tr>
+              <tr><td>数据导出</td><td class="clip-id">/api/v1/export</td><td>POST</td><td>Token</td><td class="num">86</td><td class="num">1.2 s</td><td><span class="badge badge-success">正常</span></td><td><div class="ops"><button class="btn-text">详情</button><button class="btn-text">测试</button><button class="btn-text gray">停用</button></div></td></tr>
+              <tr><td>质检结果回调</td><td class="clip-id">/api/v1/qc/callback</td><td>POST</td><td>签名</td><td class="num">3,180</td><td class="num">46 ms</td><td><span class="badge badge-warning">错误率 2.1%</span></td><td><div class="ops"><button class="btn-text">详情</button><button class="btn-text">测试</button><button class="btn-text gray">停用</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tip" style="margin-top:10px;"><span>接口支持全生命周期管理：注册、鉴权配置、测试、发布、停用与下线，调用情况进入日志与告警体系。</span></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="cf-apitest">
+      <div class="stats">
+        <div class="stat"><div class="stat-label">用例总数</div><div class="stat-value">18</div></div>
+        <div class="stat"><div class="stat-label">今日执行</div><div class="stat-value">42<span class="stat-unit">次</span></div></div>
+        <div class="stat"><div class="stat-label"><i class="stat-dot" style="background:var(--success)"></i>通过</div><div class="stat-value">40</div></div>
+        <div class="stat"><div class="stat-label"><i class="stat-dot" style="background:var(--danger)"></i>失败</div><div class="stat-value">2</div></div>
+        <div class="stat"><div class="stat-label">通过率</div><div class="stat-value">95.2<span class="stat-unit">%</span></div></div>
+        <div class="stat"><div class="stat-label">平均耗时</div><div class="stat-value">186<span class="stat-unit">ms</span></div></div>
+      </div>
+      <div class="card card-pad">
+        <div style="display:flex;align-items:center;margin-bottom:10px;">
+          <div class="section-title" style="margin:0;">测试用例</div>
+          <div style="flex:1"></div>
+          <button class="btn btn-sm">批量执行</button>
+          <button class="btn btn-sm btn-primary" onclick="openDrawer('d-api-case')">+ 新建用例</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>用例名称</th><th>接口</th><th>方法</th><th>断言项</th><th>最近结果</th><th>最近执行</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td>创建任务-正常</td><td class="clip-id">/api/v1/tasks</td><td>POST</td><td>状态码 200 · taskId 非空</td><td><span class="badge badge-success">通过</span></td><td class="time">09-14 10:02</td><td><div class="ops"><button class="btn-text">执行</button><button class="btn-text" onclick="openDrawer('d-api-case')">编辑</button><button class="btn-text gray">删除</button></div></td></tr>
+              <tr><td>创建任务-参数缺失</td><td class="clip-id">/api/v1/tasks</td><td>POST</td><td>状态码 400 · errorCode 非空</td><td><span class="badge badge-success">通过</span></td><td class="time">09-14 10:02</td><td><div class="ops"><button class="btn-text">执行</button><button class="btn-text" onclick="openDrawer('d-api-case')">编辑</button><button class="btn-text gray">删除</button></div></td></tr>
+              <tr><td>查询任务状态</td><td class="clip-id">/api/v1/tasks/{id}</td><td>GET</td><td>status ∈ 枚举值</td><td><span class="badge badge-success">通过</span></td><td class="time">09-14 10:01</td><td><div class="ops"><button class="btn-text">执行</button><button class="btn-text" onclick="openDrawer('d-api-case')">编辑</button><button class="btn-text gray">删除</button></div></td></tr>
+              <tr><td>数据导出-大包</td><td class="clip-id">/api/v1/export</td><td>POST</td><td>状态码 200 · 耗时 &lt; 3 s</td><td><span class="badge badge-danger">失败</span></td><td class="time">09-14 09:58</td><td><div class="ops"><button class="btn-text">执行</button><button class="btn-text" onclick="openDrawer('d-api-case')">编辑</button><button class="btn-text gray">删除</button></div></td></tr>
+              <tr><td>质检回调-签名校验</td><td class="clip-id">/api/v1/qc/callback</td><td>POST</td><td>状态码 401 · 签名错误可识别</td><td><span class="badge badge-danger">失败</span></td><td class="time">09-14 09:57</td><td><div class="ops"><button class="btn-text">执行</button><button class="btn-text" onclick="openDrawer('d-api-case')">编辑</button><button class="btn-text gray">删除</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card card-pad section">
+        <div class="section-title">执行记录</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>执行时间</th><th>用例</th><th>结果</th><th>耗时</th><th>失败原因</th><th>执行人</th></tr></thead>
+            <tbody>
+              <tr><td class="time">09-14 10:02</td><td>创建任务-正常</td><td><span class="badge badge-success">通过</span></td><td class="num">142 ms</td><td>—</td><td>张工</td></tr>
+              <tr><td class="time">09-14 09:58</td><td>数据导出-大包</td><td><span class="badge badge-danger">失败</span></td><td class="num">3.4 s</td><td>响应耗时超过断言阈值</td><td>张工</td></tr>
+              <tr><td class="time">09-14 09:57</td><td>质检回调-签名校验</td><td><span class="badge badge-danger">失败</span></td><td class="num">58 ms</td><td>实际返回 200，与断言 401 不符</td><td>张工</td></tr>
+              <tr><td class="time">09-13 17:40</td><td>创建任务-参数缺失</td><td><span class="badge badge-success">通过</span></td><td class="num">96 ms</td><td>—</td><td>李工</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </main>
+</div>
+
+<div class="mask" id="drawer-mask" onclick="closeAllDrawers()"></div>
+
+<div class="drawer" id="d-user-add">
+  <div class="drawer-head"><span class="drawer-title">新增用户</span><button class="close-x" onclick="closeAllDrawers()">×</button></div>
+  <div class="drawer-body">
+    <div class="form-grid">
+      <div class="form-item"><span class="form-label">姓名 <span class="req">*</span></span><input class="input" placeholder="请输入真实姓名"></div>
+      <div class="form-item"><span class="form-label">登录账号 <span class="req">*</span></span><input class="input" placeholder="建议使用拼音或工号"></div>
+      <div class="form-item"><span class="form-label">手机号</span><input class="input" placeholder="用于接收安全通知"></div>
+      <div class="form-item"><span class="form-label">邮箱</span><input class="input" placeholder="example@company.com"></div>
+      <div class="form-item"><span class="form-label">所属部门 <span class="req">*</span></span><select class="select"><option>请选择</option><option>数据平台部</option><option>算法研发部</option><option>数据运营部</option><option>平台运维部</option></select></div>
+      <div class="form-item"><span class="form-label">角色 <span class="req">*</span></span><select class="select"><option>请选择</option><option>系统管理员</option><option>数据管理员</option><option>算法工程师</option><option>标注员</option><option>访客</option></select></div>
+      <div class="form-item full">
+        <span class="form-label">初始密码</span>
+        <div class="checkbox-row">
+          <label><input type="checkbox" checked> 首次登录强制修改密码</label>
+          <label><input type="checkbox"> 发送账号信息到邮箱</label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-foot"><button class="btn" onclick="closeAllDrawers()">取消</button><button class="btn btn-primary" onclick="closeAllDrawers()">保存</button></div>
+</div>
+
+<div class="drawer" id="d-user-edit">
+  <div class="drawer-head"><span class="drawer-title">编辑用户 · 李工</span><button class="close-x" onclick="closeAllDrawers()">×</button></div>
+  <div class="drawer-body">
+    <div class="form-grid">
+      <div class="form-item"><span class="form-label">姓名 <span class="req">*</span></span><input class="input" value="李工"></div>
+      <div class="form-item"><span class="form-label">登录账号 <span class="req">*</span></span><input class="input" value="li.gong" disabled style="background:#f8fafc;color:var(--text-3);"></div>
+      <div class="form-item"><span class="form-label">手机号</span><input class="input" value="138****1234"></div>
+      <div class="form-item"><span class="form-label">邮箱</span><input class="input" value="li.gong@company.com"></div>
+      <div class="form-item"><span class="form-label">所属部门 <span class="req">*</span></span><select class="select"><option>数据平台部</option><option>算法研发部</option><option>数据运营部</option><option>平台运维部</option></select></div>
+      <div class="form-item"><span class="form-label">角色 <span class="req">*</span></span><select class="select"><option>数据管理员</option><option>系统管理员</option><option>算法工程师</option><option>标注员</option><option>访客</option></select></div>
+      <div class="form-item full">
+        <span class="form-label">账号状态</span>
+        <div class="checkbox-row">
+          <label><input type="radio" name="user-status" checked> 启用</label>
+          <label><input type="radio" name="user-status"> 停用</label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-foot"><button class="btn" onclick="closeAllDrawers()">取消</button><button class="btn btn-primary" onclick="closeAllDrawers()">保存</button></div>
+</div>
+
+<div class="drawer" id="d-user-auth">
+  <div class="drawer-head"><span class="drawer-title">用户授权 · 李工</span><button class="close-x" onclick="closeAllDrawers()">×</button></div>
+  <div class="drawer-body">
+    <div class="form-grid">
+      <div class="form-item"><span class="form-label">当前角色</span><input class="input" value="数据管理员" disabled style="background:#f8fafc;color:var(--text-3);"></div>
+      <div class="form-item"><span class="form-label">调整后角色</span><select class="select"><option>保持不变</option><option>系统管理员</option><option>算法工程师</option><option>标注员</option><option>访客</option></select></div>
+      <div class="form-item"><span class="form-label">附加权限</span><select class="select"><option>无</option><option>task:terminate（临时）</option><option>system:config（临时）</option><option>data:delete（临时）</option></select></div>
+      <div class="form-item"><span class="form-label">有效期</span><input class="input" value="2026-09-16 ~ 2026-12-16"></div>
+      <div class="form-item full"><span class="form-label">授权原因</span><input class="input" placeholder="简要说明授权原因，便于审计"></div>
+    </div>
+    <div class="tip" style="margin-top:14px;"><span>角色变更立即生效；附加权限仅在有效期内生效，到期自动收回。</span></div>
+  </div>
+  <div class="drawer-foot"><button class="btn" onclick="closeAllDrawers()">取消</button><button class="btn btn-primary" onclick="closeAllDrawers()">确认授权</button></div>
+</div>
+
+<div class="drawer" id="d-user-import">
+  <div class="drawer-head"><span class="drawer-title">批量导入用户</span><button class="close-x" onclick="closeAllDrawers()">×</button></div>
+  <div class="drawer-body">
+    <div class="card card-pad" style="background:#fafbfc;border-style:dashed;text-align:center;padding:28px;">
+      <div style="font-size:14px;font-weight:500;margin-bottom:6px;">拖拽文件到此处，或点击上传</div>
+      <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">支持 .xlsx / .csv，单次最多 500 条</div>
+      <button class="btn btn-primary">选择文件</button>
+      <div style="margin-top:12px;"><button class="btn-text">下载导入模板</button></div>
+    </div>
+    <div class="section-title" style="margin-top:16px;">导入预览</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>姓名</th><th>账号</th><th>部门</th><th>角色</th><th>校验结果</th></tr></thead>
+        <tbody>
+          <tr><td>赵工</td><td>zhao.gong</td><td>算法研发部</td><td>算法工程师</td><td><span class="badge badge-success">通过</span></td></tr>
+          <tr><td>钱工</td><td>qian.gong</td><td>数据运营部</td><td>标注员</td><td><span class="badge badge-success">通过</span></td></tr>
+          <tr><td>孙工</td><td></td><td>数据平台部</td><td>数据管理员</td><td><span class="badge badge-danger">账号为空</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="drawer-foot"><button class="btn" onclick="closeAllDrawers()">取消</button><button class="btn btn-primary" onclick="closeAllDrawers()">确认导入（2 条）</button></div>
+</div>
+
+<div class="drawer" id="d-perm-add">
+  <div class="drawer-head"><span class="drawer-title">新增权限</span><button class="close-x" onclick="closeAllDrawers()">×</button></div>
+  <div class="drawer-body">
+    <div class="form-grid">
+      <div class="form-item"><span class="form-label">权限名称 <span class="req">*</span></span><input class="input" placeholder="例如：导出合成数据"></div>
+      <div class="form-item"><span class="form-label">权限标识 <span class="req">*</span></span><input class="input" placeholder="例如：data:synthetic:export"></div>
+      <div class="form-item"><span class="form-label">所属模块 <span class="req">*</span></span><select class="select"><option>请选择</option><option>用户服务管理</option><option>数据生成</option><option>场景生成</option><option>数据集管理</option></select></div>
+      <div class="form-item"><span class="form-label">权限类型 <span class="req">*</span></span><select class="select"><option>操作权限</option><option>数据权限</option><option>菜单权限</option></select></div>
+      <div class="form-item full"><span class="form-label">作用说明</span><input class="input" placeholder="描述该权限控制的具体操作范围"></div>
+    </div>
+  </div>
+  <div class="drawer-foot"><button class="btn" onclick="closeAllDrawers()">取消</button><button class="btn btn-primary" onclick="closeAllDrawers()">保存</button></div>
+</div>
+
+<div class="drawer" id="d-role-perm">
+  <div class="drawer-head"><span class="drawer-title">配置角色权限 · 数据管理员</span><button class="close-x" onclick="closeAllDrawers()">×</button></div>
+  <div class="drawer-body">
+    <div class="section-title">数据集管理</div>
+    <div class="checkbox-row" style="margin-bottom:12px;">
+      <label><input type="checkbox" checked> 数据接入</label>
+      <label><input type="checkbox" checked> 数据处理</label>
+      <label><input type="checkbox" checked> 种子数据管理</label>
+      <label><input type="checkbox" checked> 合成数据管理</label>
+      <label><input type="checkbox" checked> 数据导出</label>
+      <label><input type="checkbox"> 数据删除</label>
+    </div>
+    <div class="section-title">场景生成</div>
+    <div class="checkbox-row" style="margin-bottom:12px;">
+      <label><input type="checkbox" checked> 场景编辑</label>
+      <label><input type="checkbox" checked> 提交生成</label>
+      <label><input type="checkbox"> 调试试跑</label>
+      <label><input type="checkbox"> 模板管理</label>
+    </div>
+    <div class="section-title">数据生成</div>
+    <div class="checkbox-row" style="margin-bottom:12px;">
+      <label><input type="checkbox" checked> 查看任务</label>
+      <label><input type="checkbox"> 终止任务</label>
+      <label><input type="checkbox" checked> 查看质检</label>
+      <label><input type="checkbox"> 质量反馈</label>
+    </div>
+    <div class="section-title">用户服务管理</div>
+    <div class="checkbox-row" style="margin-bottom:12px;">
+      <label><input type="checkbox"> 用户管理</label>
+      <label><input type="checkbox"> 权限管理</label>
+      <label><input type="checkbox"> 系统配置</label>
+    </div>
+  </div>
+  <div class="drawer-foot"><button class="btn" onclick="closeAllDrawers()">取消</button><button class="btn btn-primary" onclick="closeAllDrawers()">保存</button></div>
+</div>
+
+<div class="drawer" id="d-proj-add">
+  <div class="drawer-head"><span class="drawer-title">新建项目</span><button class="close-x" onclick="closeAllDrawers()">×</button></div>
+  <div class="drawer-body">
+    <div class="form-grid">
+      <div class="form-item"><span class="form-label">项目名称 <span class="req">*</span></span><input class="input" placeholder="例如：雨天场景数据生产"></div>
+      <div class="form-item"><span class="form-label">项目标识 <span class="req">*</span></span><input class="input" placeholder="例如：PRJ-0006"></div>
+      <div class="form-item"><span class="form-label">负责人 <span class="req">*</span></span><select class="select"><option>请选择</option><option>李工</option><option>王工</option><option>陈工</option><option>张工</option></select></div>
+      <div class="form-item"><span class="form-label">参与部门</span><select class="select"><option>数据平台部</option><option>算法研发部</option><option>数据运营部</option><option>平台运维部</option></select></div>
+      <div class="form-item full"><span class="form-label">项目描述</span><input class="input" placeholder="说明项目目标与数据用途"></div>
+      <div class="form-item full">
+        <span class="form-label">可见范围</span>
+        <div class="checkbox-row">
+          <label><input type="radio" name="proj-vis" checked> 项目成员可见</label>
+          <label><input type="radio" name="proj-vis"> 全平台可见（只读）</label>
+        </div>
+      </div>
+      <div class="form-item full">
+        <span class="form-label">存储参考值</span>
+        <div class="grid2">
+          <div><input class="input" value="30" style="width:100%;"><span class="form-hint">TB · 仅用于用量提醒</span></div>
+          <div><input class="input" value="2000" style="width:100%;"><span class="form-hint">卡时 · 仅用于用量提醒</span></div>
+        </div>
+      </div>
+      <div class="form-item full">
+        <span class="form-label">设为默认项目</span>
+        <div class="checkbox-row"><label><input type="checkbox"> 未指定归属的数据自动归入本项目</label></div>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-foot"><button class="btn" onclick="closeAllDrawers()">取消</button><button class="btn btn-primary" onclick="closeAllDrawers()">保存</button></div>
+</div>
+
+<div class="drawer" id="d-proj-mem">
+  <div class="drawer-head"><span class="drawer-title">添加成员</span><button class="close-x" onclick="closeAllDrawers()">×</button></div>
+  <div class="drawer-body">
+    <div class="form-grid">
+      <div class="form-item full">
+        <span class="form-label">选择用户 <span class="req">*</span></span>
+        <div class="search-wrap"><input class="input" placeholder="按姓名 / 账号搜索"></div>
+        <div class="table-wrap" style="margin-top:8px;">
+          <table>
+            <thead><tr><th class="col-check"><input type="checkbox"></th><th>用户</th><th>账号</th><th>全局角色</th><th>所属部门</th></tr></thead>
+            <tbody>
+              <tr><td class="col-check"><input type="checkbox" class="mem-chk"></td><td>赵工</td><td class="clip-id">zhao.gong</td><td><span class="badge badge-purple">算法工程师</span></td><td>算法研发部</td></tr>
+              <tr><td class="col-check"><input type="checkbox" class="mem-chk" checked></td><td>钱工</td><td class="clip-id">qian.gong</td><td><span class="badge badge-gray">标注员</span></td><td>数据运营部</td></tr>
+              <tr><td class="col-check"><input type="checkbox" class="mem-chk"></td><td>孙工</td><td class="clip-id">sun.gong</td><td><span class="badge badge-info">数据管理员</span></td><td>数据平台部</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="form-item">
+        <span class="form-label">项目内角色 <span class="req">*</span></span>
+        <select class="select" style="width:100%;"><option>项目负责人</option><option>数据管理员</option><option selected>算法工程师</option><option>标注员</option><option>访客</option></select>
+      </div>
+      <div class="form-item">
+        <span class="form-label">数据范围 <span class="req">*</span></span>
+        <select class="select" style="width:100%;"><option>全部数据</option><option>种子数据 + 合成数据</option><option>合成数据</option><option>质检数据</option><option>已发布数据集</option></select>
+      </div>
+      <div class="form-item"><span class="form-label">有效期</span><input class="input" placeholder="留空为长期有效"></div>
+      <div class="form-item"><span class="form-label">到期前提醒</span><select class="select" style="width:100%;"><option>提前 7 天</option><option>提前 3 天</option><option>不提醒</option></select></div>
+      <div class="form-item full"><span class="form-label">备注</span><input class="input" placeholder="便于审计追溯"></div>
+    </div>
+    <div class="tip" style="margin-top:14px;"><span>成员的数据范围与用户全局角色叠加生效，取两者中较窄的范围；添加后立即生效并留痕。</span></div>
+  </div>
+  <div class="drawer-foot"><button class="btn" onclick="closeAllDrawers()">取消</button><button class="btn btn-primary" onclick="closeAllDrawers()">确认添加（1 人）</button></div>
+</div>
+
+<div class="drawer" id="d-proj-archive">
+  <div class="drawer-head"><span class="drawer-title">归档项目 · 雨天场景数据生产</span><button class="close-x" onclick="closeAllDrawers()">×</button></div>
+  <div class="drawer-body">
+    <div class="tip"><span>归档后项目内的任务不再新增，已有数据保留可查；需要时可恢复。</span></div>
+    <div class="section-title" style="margin-top:14px;">归档影响</div>
+    <dl class="kv">
+      <dt>在跑任务</dt><dd>2 个（将继续执行至结束）</dd>
+      <dt>项目成员</dt><dd>14 人（保留成员关系）</dd>
+      <dt>已有数据</dt><dd>18.2 TB（保留，可导出）</dd>
+      <dt>关联数据集</dt><dd>6 个（不变）</dd>
+    </dl>
+    <div class="form-item full" style="margin-top:14px;">
+      <span class="form-label">请输入项目名称以确认 <span class="req">*</span></span>
+      <input class="input" placeholder="雨天场景数据生产">
+    </div>
+  </div>
+  <div class="drawer-foot"><button class="btn" onclick="closeAllDrawers()">取消</button><button class="btn btn-primary" onclick="closeAllDrawers()">确认归档</button></div>
+</div>
+
+<div id="toast"></div>
+
+<div class="drawer" id="d-msg-sub">
+  <div class="drawer-head"><span class="drawer-title">消息订阅设置</span><button class="close-x" onclick="closeAllDrawers()">×</button></div>
+  <div class="drawer-body">
+    <div class="tip"><span>设置仅对当前账号生效；系统公告为必收项，不可关闭。</span></div>
+    <div class="section-title" style="margin-top:14px;">按分类选择接收渠道</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>分类</th><th>站内信</th><th>邮件</th><th>免打扰时段外</th></tr></thead>
+        <tbody>
+          <tr><td>系统公告</td><td><input type="checkbox" checked disabled></td><td><input type="checkbox" checked disabled></td><td>必收</td></tr>
+          <tr><td>安全告警</td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td></tr>
+          <tr><td>任务通知</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
+          <tr><td>权限变更</td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox"></td></tr>
+          <tr><td>质检提醒</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="form-item full" style="margin-top:14px;">
+      <span class="form-label">接收邮箱</span>
+      <input class="input" value="li.gong@company.com">
+      <span class="form-hint">未绑定邮箱时，邮件渠道自动降级为站内信</span>
+    </div>
+  </div>
+  <div class="drawer-foot"><button class="btn" onclick="closeAllDrawers()">取消</button><button class="btn btn-primary" onclick="closeAllDrawers()">保存</button></div>
+</div>
+
+<div class="drawer" id="d-msg-detail">
+  <div class="drawer-head"><span class="drawer-title">消息详情</span><button class="close-x" onclick="closeAllDrawers()">×</button></div>
+  <div class="drawer-body">
+    <dl class="kv">
+      <dt>分类 / 级别</dt><dd>安全告警 · <span class="badge badge-danger">紧急</span></dd>
+      <dt>发送时间</dt><dd>2026-09-14 10:22</dd>
+      <dt>关联对象</dt><dd>用户 · 赵工（U-0042）</dd>
+      <dt>触发规则</dt><dd>越权访问检测 · 5 分钟内 3 次</dd>
+    </dl>
+    <div class="section-title" style="margin-top:14px;">消息内容</div>
+    <div class="card card-pad">检测到账号 zhao.gong 在 10:18–10:22 期间连续 3 次访问项目「高速匝道评测集」下未授权的数据集，已记录并阻断。请确认是否为正常业务诉求。</div>
+    <div class="section-title" style="margin-top:14px;">处理建议</div>
+    <div class="tip"><span>可在「安全管理 / 审计日志」中查看完整越权记录；如为正常诉求，请为该用户补充数据范围规则。</span></div>
+  </div>
+  <div class="drawer-foot"><button class="btn" onclick="closeAllDrawers()">关闭</button><button class="btn btn-primary" onclick="closeAllDrawers()">直达关联对象</button></div>
+</div>
+
+<div class="drawer" id="d-my-perm">
+  <div class="drawer-head"><span class="drawer-title">我的权限 · 李工</span><button class="close-x" onclick="closeAllDrawers()">×</button></div>
+  <div class="drawer-body">
+    <div class="section-title">角色</div>
+    <div class="tags" style="margin-bottom:14px;"><span class="tag">数据管理员</span><span class="tag">项目负责人（雨天场景数据生产）</span></div>
+    <div class="section-title">功能权限</div>
+    <div class="table-wrap" style="margin-bottom:14px;">
+      <table>
+        <thead><tr><th>模块</th><th>权限</th><th>来源</th></tr></thead>
+        <tbody>
+          <tr><td>数据接入</td><td>上传 / 拉取 / 下载</td><td>角色</td></tr>
+          <tr><td>数据处理</td><td>清洗 / 解析 / 脱敏</td><td>角色</td></tr>
+          <tr><td>数据集管理</td><td>创建 / 编辑 / 导出</td><td>角色</td></tr>
+          <tr><td>数据删除</td><td>仅本项目内</td><td>项目内角色</td></tr>
+          <tr><td>系统配置</td><td>只读</td><td>角色</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section-title">可访问数据范围</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>维度</th><th>范围</th></tr></thead>
+        <tbody>
+          <tr><td>项目</td><td>雨天场景数据生产 · 夜间长尾数据采集 · 默认项目</td></tr>
+          <tr><td>数据类型</td><td>种子数据 · 合成数据 · 质检数据</td></tr>
+          <tr><td>数据集状态</td><td>全部（含未发布）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="tip" style="margin-top:14px;"><span>此处为只读查看。如需调整，请联系系统管理员或在对应项目中由项目负责人修改。</span></div>
+  </div>
+  <div class="drawer-foot"><button class="btn" onclick="closeAllDrawers()">关闭</button></div>
+</div>
+
+<div class="drawer" id="d-scope-add">
+  <div class="drawer-head"><span class="drawer-title">新建数据范围规则</span><button class="close-x" onclick="closeAllDrawers()">×</button></div>
+  <div class="drawer-body">
+    <div class="form-grid">
+      <div class="form-item full"><span class="form-label">规则名称 <span class="req">*</span></span><input class="input" placeholder="例如：算法组数据范围"></div>
+      <div class="form-item"><span class="form-label">应用对象类型 <span class="req">*</span></span><select class="select" style="width:100%;"><option>角色</option><option>用户</option><option>项目内角色</option></select></div>
+      <div class="form-item"><span class="form-label">应用对象 <span class="req">*</span></span><select class="select" style="width:100%;"><option>算法工程师</option><option>数据管理员</option><option>标注员</option><option>访客</option></select></div>
+      <div class="form-item full">
+        <span class="form-label">维度条件 <span class="req">*</span></span>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>维度</th><th>运算符</th><th>取值</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td><select class="select" style="width:100%;"><option>项目</option><option>数据类型</option><option>数据集状态</option><option>标签</option></select></td><td><select class="select" style="width:100%;"><option>=</option><option>∈</option><option>∋</option><option>≠</option></select></td><td><input class="input" value="雨天场景数据生产"></td><td><div class="ops"><button class="btn-text gray">删除</button></div></td></tr>
+              <tr><td><select class="select" style="width:100%;"><option selected>数据类型</option><option>项目</option><option>数据集状态</option><option>标签</option></select></td><td><select class="select" style="width:100%;"><option selected>∈</option><option>=</option><option>∋</option><option>≠</option></select></td><td><input class="input" value="种子数据, 合成数据"></td><td><div class="ops"><button class="btn-text gray">删除</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="btn btn-sm" style="margin-top:8px;">+ 添加条件</button>
+      </div>
+      <div class="form-item full">
+        <span class="form-label">条件逻辑</span>
+        <div class="checkbox-row">
+          <label><input type="radio" name="scope-op" checked> 全部满足（AND）</label>
+          <label><input type="radio" name="scope-op"> 任一满足（OR）</label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-foot"><button class="btn" onclick="closeAllDrawers()">取消</button><button class="btn btn-primary" onclick="closeAllDrawers()">保存</button></div>
+</div>
+
+<div class="drawer" id="d-api-case">
+  <div class="drawer-head"><span class="drawer-title">新建测试用例</span><button class="close-x" onclick="closeAllDrawers()">×</button></div>
+  <div class="drawer-body">
+    <div class="form-grid">
+      <div class="form-item full"><span class="form-label">用例名称 <span class="req">*</span></span><input class="input" placeholder="例如：创建任务-参数缺失"></div>
+      <div class="form-item"><span class="form-label">接口 <span class="req">*</span></span><select class="select" style="width:100%;"><option>/api/v1/tasks</option><option>/api/v1/tasks/{id}</option><option>/api/v1/export</option><option>/api/v1/qc/callback</option></select></div>
+      <div class="form-item"><span class="form-label">方法 <span class="req">*</span></span><select class="select" style="width:100%;"><option>POST</option><option>GET</option><option>PUT</option><option>DELETE</option></select></div>
+      <div class="form-item full"><span class="form-label">请求头</span><input class="input" value="Authorization: Bearer ${token}"></div>
+      <div class="form-item full"><span class="form-label">请求体</span><input class="input" placeholder="JSON 格式，支持变量引用"></div>
+      <div class="form-item full">
+        <span class="form-label">断言项 <span class="req">*</span></span>
+        <div class="checkbox-row">
+          <label><input type="checkbox" checked> 状态码 200</label>
+          <label><input type="checkbox" checked> 关键字段非空</label>
+          <label><input type="checkbox"> 响应耗时 &lt; 3 s</label>
+          <label><input type="checkbox"> 错误码匹配</label>
+        </div>
+      </div>
+      <div class="form-item full"><span class="form-label">预期响应</span><input class="input" placeholder="留空则仅校验断言项"></div>
+    </div>
+  </div>
+  <div class="drawer-foot"><button class="btn" onclick="closeAllDrawers()">取消</button><button class="btn" onclick="closeAllDrawers()">保存并执行</button><button class="btn btn-primary" onclick="closeAllDrawers()">保存</button></div>
+</div>
+
+<div class="pn collapsed" id="pn">
+  <div class="pn-head" onclick="pnToggle()">
+    <span class="pn-title">原型页面索引 <span class="pn-note">非设计内容</span></span>
+    <span class="pn-toggle" id="pn-toggle">展开</span>
+  </div>
+  <div class="pn-body">
+    <div class="pn-group">用户服务管理</div>
+    <div class="pn-item active" data-page="m1-user">用户管理</div>
+    <div class="pn-item" data-page="m1-perm">权限管理</div>
+    <div class="pn-item" data-page="m1-portal">门户个性化</div>
+    <div class="pn-item" data-page="m1-sec">安全管理</div>
+    <div class="pn-item" data-page="m1-log">日志管理</div>
+    <div class="pn-item" data-page="m1-proj">项目管理</div>
+    <div class="pn-item" data-page="m1-msg">消息中心</div>
+    <div class="pn-item" data-page="m1-cfg">统一配置管理</div>
+    <div class="pn-group">独立页面</div>
+    <div class="pn-item" onclick="location.href='M2场景编辑器_原型.html'">场景编辑器 ↗</div>
+    <div class="pn-foot">仅用于原型演示跳转，正式设计中不存在</div>
+  </div>
+</div>
+
+<script>
+function go(id){
+if (!id || id === 'none'){ tip('该页面尚未产出，将在后续迭代中补充。'); return; }
+  var views = document.querySelectorAll('.view');
+  for (var i=0;i<views.length;i++){ views[i].classList.remove('active'); }
+  var target = document.getElementById('v-' + id);
+  if (target){ target.classList.add('active'); }
+  syncPn(id);
+  window.scrollTo(0,0);
+}
+var pnItems = document.querySelectorAll('.pn-item[data-page]');
+for (var q=0;q<pnItems.length;q++){
+  pnItems[q].addEventListener('click', function(){ go(this.getAttribute('data-page')); });
+}
+function syncPn(pg){
+  var list = document.querySelectorAll('.pn-item[data-page]');
+  for (var i=0;i<list.length;i++){
+    list[i].classList.toggle('active', list[i].getAttribute('data-page') === pg);
+  }
+}
+function pnToggle(){
+  var box = document.getElementById('pn');
+  box.classList.toggle('collapsed');
+  document.getElementById('pn-toggle').textContent = box.classList.contains('collapsed') ? '展开' : '收起';
+}
+function toggleNav(){ document.querySelector('.sidebar').classList.toggle('collapsed'); }
+function gsShow(){ var p=document.getElementById('gs-panel'); if(p){p.classList.add('show');} }
+function gsHide(){ var p=document.getElementById('gs-panel'); if(p){setTimeout(function(){p.classList.remove('show');},140);} }
+document.addEventListener('keydown', function(e){
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){
+    e.preventDefault();
+    var inp = document.querySelector('.gsearch .input');
+    if (inp){ inp.focus(); }
+  }
+});
+
+var sideItems = document.querySelectorAll('.side-item');
+for (var m=0;m<sideItems.length;m++){
+  sideItems[m].addEventListener('click', function(){
+    var pg = this.getAttribute('data-page');
+    var href = this.getAttribute('data-href');
+    var todo = this.getAttribute('data-todo');
+    for (var n=0;n<sideItems.length;n++){ sideItems[n].classList.remove('active'); }
+    if (href){ location.href = href; return; }
+if (todo){ tip('「' + todo + '」页面尚未产出，将在后续迭代中补充。'); return; }
+    if (pg){ this.classList.add('active'); go(pg); }
+  });
+}
+
+var tabs = document.querySelectorAll('.tab');
+for (var t=0;t<tabs.length;t++){
+  tabs[t].addEventListener('click', function(){
+    var key = this.getAttribute('data-tab');
+    if (!key || key === 'none'){ return; }
+    var box = this.parentNode;
+    var sib = box.querySelectorAll('.tab');
+    for (var s=0;s<sib.length;s++){ sib[s].classList.remove('active'); }
+    this.classList.add('active');
+    var panels = box.parentNode.querySelectorAll('.tab-panel');
+    for (var p=0;p<panels.length;p++){ panels[p].classList.remove('active'); }
+    var panel = document.getElementById(key);
+    if (panel){ panel.classList.add('active'); }
+  });
+}
+
+function bindCheckAll(allId, itemCls, barId, countId){
+  var all = document.getElementById(allId);
+  var bar = document.getElementById(barId);
+  var cnt = document.getElementById(countId);
+  function upd(){
+    var boxes = document.querySelectorAll('.' + itemCls);
+    var n = 0;
+    for (var i=0;i<boxes.length;i++){ if (boxes[i].checked){ n++; } }
+    if (cnt){ cnt.textContent = n; }
+    if (bar){ bar.classList.toggle('show', n > 0); }
+    if (all){ all.checked = (n === boxes.length && n > 0); }
+  }
+  if (all){
+    all.addEventListener('change', function(){
+      var boxes = document.querySelectorAll('.' + itemCls);
+      for (var i=0;i<boxes.length;i++){ boxes[i].checked = this.checked; }
+      upd();
+    });
+  }
+  var boxes = document.querySelectorAll('.' + itemCls);
+  for (var b=0;b<boxes.length;b++){ boxes[b].addEventListener('change', upd); }
+  return upd;
+}
+
+function pickCard(el, group){
+  var all = el.parentNode.querySelectorAll('.radio-card');
+  for (var i=0;i<all.length;i++){ all[i].classList.remove('active'); }
+  el.classList.add('active');
+}
+function pickChip(el){
+  el.classList.toggle('on');
+}
+function tip(msg){
+  var el = document.getElementById('toast');
+  if (!el){
+    el = document.createElement('div');
+    el.id = 'toast';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = String(msg).replace(/\n/g, '<br>');
+  el.className = 'show';
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.className = ''; }, 2800);
+}
+function bellToggle(e){
+  if (e){ e.stopPropagation(); }
+  var p = document.getElementById('bell-panel');
+  if (p){ p.classList.toggle('show'); }
+}
+document.addEventListener('click', function(e){
+  var b = document.getElementById('bell');
+  if (b && !b.contains(e.target)){
+    var p = document.getElementById('bell-panel');
+    if (p){ p.classList.remove('show'); }
+  }
+});
+
+function openDrawer(id){
+  var mask = document.getElementById('drawer-mask');
+  var drawers = document.querySelectorAll('.drawer');
+  for (var i=0;i<drawers.length;i++){ drawers[i].classList.remove('show'); }
+  var d = document.getElementById(id);
+  if (d){ d.classList.add('show'); }
+  if (mask){ mask.classList.add('show'); }
+}
+function closeAllDrawers(){
+  var mask = document.getElementById('drawer-mask');
+  var drawers = document.querySelectorAll('.drawer');
+  for (var i=0;i<drawers.length;i++){ drawers[i].classList.remove('show'); }
+  if (mask){ mask.classList.remove('show'); }
+}
+function projShow(){ var p=document.getElementById('proj-panel'); if(p){p.classList.add('show');} }
+function projHide(){ var p=document.getElementById('proj-panel'); if(p){setTimeout(function(){p.classList.remove('show');},140);} }
+function switchProj(el, name){
+  var inp = document.getElementById('proj-cur');
+  if (inp){ inp.value = name; }
+  var items = document.querySelectorAll('#proj-panel .gs-item');
+  for (var i=0;i<items.length;i++){ items[i].classList.remove('active'); }
+  el.classList.add('active');
+  projHide();
+}
+
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape'){ closeAllDrawers(); }
+});
+
+var TOPMAP = {
+  '用户服务管理':'M1用户服务管理_原型.html',
+  '数据生成':'M2数据生成_原型.html',
+  '数据集管理':'M4数据集管理_原型.html'
+};
+var navTabs = document.querySelectorAll('.nav-tab');
+for (var ni=0;ni<navTabs.length;ni++){
+  navTabs[ni].addEventListener('click', function(){
+    var m = this.getAttribute('data-mod');
+    var cur = decodeURIComponent(location.pathname).split('/').pop();
+    var tgt = TOPMAP[m];
+    if (tgt && tgt !== cur){ location.href = tgt; }
+  });
+}
+var hh = location.hash.replace('#','');
+if (hh){ go(hh); }
+</script>
+
+
+</body>
+</html>
