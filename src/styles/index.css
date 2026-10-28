@@ -1,0 +1,69 @@
+/* 层级顺序：antd 样式位于 base 之后、utilities 之前，便于 Tailwind 工具类覆盖组件样式 */
+@layer theme, base, antd, components, utilities;
+
+@import 'tailwindcss';
+
+/* 设计 token，取自 docs/原型 中的 :root 变量 */
+@theme {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  --font-mono: Consolas, Monaco, monospace;
+
+  --color-primary: #009fe3;
+  --color-primary-hover: #0086c2;
+  --color-primary-light: #e6f7fd;
+
+  --color-page: #f5f7fa;
+  --color-card: #ffffff;
+  --color-line: #e4e8ef;
+  --color-line-strong: #cbd5e1;
+
+  --color-fg: #1f2937;
+  --color-fg-2: #6b7280;
+  --color-fg-3: #9ca3af;
+
+  --color-success: #10b981;
+  --color-success-bg: #ecfdf5;
+  --color-warning: #f59e0b;
+  --color-warning-bg: #fffbeb;
+  --color-danger: #ef4444;
+  --color-danger-bg: #fef2f2;
+  --color-info: #009fe3;
+  --color-info-bg: #e6f7fd;
+  --color-purple: #8b5cf6;
+  --color-purple-bg: #f5f3ff;
+
+  --radius-sm: 6px;
+  --radius-lg: 10px;
+
+  --spacing-topbar: 56px;
+  --spacing-sidebar: 196px;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--color-page);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line-strong);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}

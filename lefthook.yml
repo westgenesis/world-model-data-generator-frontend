@@ -1,0 +1,20 @@
+# Git 钩子配置：https://lefthook.dev
+pre-commit:
+  parallel: true
+  jobs:
+    - name: eslint
+      glob: '*.{js,ts,tsx}'
+      run: pnpm exec eslint --fix {staged_files}
+      stage_fixed: true
+    - name: prettier
+      glob: '*.{js,ts,tsx,json,css,md,yml,html}'
+      exclude:
+        - pnpm-lock.yaml
+        - 'docs/**'
+      run: pnpm exec prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: pnpm exec commitlint --edit {1}
