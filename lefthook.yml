@@ -4,7 +4,7 @@ pre-commit:
   jobs:
     - name: eslint
       glob: '*.{js,ts,tsx}'
-      run: pnpm exec eslint --fix {staged_files}
+      run: pnpm exec eslint --fix --no-warn-ignored {staged_files}
       stage_fixed: true
     - name: prettier
       glob: '*.{js,ts,tsx,json,css,md,yml,html}'
