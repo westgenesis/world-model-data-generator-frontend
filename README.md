@@ -62,7 +62,9 @@ src/
 ## 约定
 
 - 原型位于 `docs/原型`，新页面先对照原型实现。
-- 新增菜单：在 `src/routes/_app/<模块>/` 下新建路由文件，并在 `src/config/navigation.ts` 与语言包中登记。
+- 新增菜单：在 `src/routes/_app/<模块>/` 下新建路由文件，并在 `src/config/navigation.ts` 的导航树与语言包中登记。导航树支持任意层级嵌套，面包屑与 ⌘K 搜索自动生效。
+- 图标统一使用 `lucide-react`，默认 `strokeWidth={1.75}`，菜单/按钮尺寸 16–18。
+- 颜色使用语义 token（如 `bg-card`、`text-fg-2`、`border-line`），不要写死色值，以保证暗色模式可用。
 - 全屏页面（如场景编辑器）放在 `src/routes` 根层级，不经过 `_app` 布局。
 - 注释使用中文，函数使用箭头函数并附 JSDoc，单文件不超过 500 行。
 - 提交信息遵循 Conventional Commits（如 `feat: 新增任务列表`）。

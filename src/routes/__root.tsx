@@ -20,7 +20,10 @@ const Devtools = import.meta.env.DEV
         default: () => (
           <>
             <TanStackRouterDevtools position="bottom-right" />
-            <ReactQueryDevtools buttonPosition="bottom-left" />
+            {/* 与路由调试按钮并排，避免遮挡侧栏 */}
+            <div className="fixed right-38 bottom-2 z-99999">
+              <ReactQueryDevtools buttonPosition="relative" />
+            </div>
           </>
         ),
       }

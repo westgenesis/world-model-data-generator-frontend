@@ -10,14 +10,14 @@ interface PageHeaderProps {
 }
 
 /**
- * 页面标题栏，样式对应原型中的 page-head
+ * 页面标题栏
  * @param props - 标题、说明与操作区
  */
 export const PageHeader = ({ title, description, extra }: PageHeaderProps) => (
-  <div className="mb-4 flex items-start gap-4">
+  <div className="mb-6 flex flex-wrap items-end gap-4">
     <div className="min-w-0 flex-1">
-      <h1 className="text-lg leading-7 font-semibold text-fg">{title}</h1>
-      {description && <p className="mt-0.5 text-fg-2">{description}</p>}
+      <h1 className="text-xl leading-8 font-semibold tracking-tight text-fg">{title}</h1>
+      {description && <p className="mt-1 text-fg-2">{description}</p>}
     </div>
     {extra && <div className="flex shrink-0 items-center gap-2">{extra}</div>}
   </div>

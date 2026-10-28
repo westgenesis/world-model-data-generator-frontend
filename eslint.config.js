@@ -39,6 +39,14 @@ export default defineConfig([
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+      // 统一使用 Lucide 图标库
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [{ name: '@ant-design/icons', message: '请使用 lucide-react 图标库' }],
+          patterns: [{ group: ['@ant-design/icons/*'], message: '请使用 lucide-react 图标库' }],
+        },
+      ],
       // 规范：单文件不超过 500 行
       'max-lines': ['warn', { max: 500, skipBlankLines: false, skipComments: false }],
     },

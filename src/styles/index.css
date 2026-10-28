@@ -3,40 +3,108 @@
 
 @import 'tailwindcss';
 
-/* 设计 token，取自 docs/原型 中的 :root 变量 */
+/* 暗色模式由 <html class="dark"> 控制 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* 设计 token 原始值：亮色 */
+:root {
+  --wm-primary: #0a9ee0;
+  --wm-primary-hover: #0787c2;
+  --wm-primary-soft: #e8f6fd;
+
+  --wm-page: #f4f6f9;
+  --wm-card: #ffffff;
+  --wm-sunken: #f1f4f8;
+  --wm-line: #e6e9ef;
+  --wm-line-strong: #d3d9e2;
+
+  --wm-fg: #111827;
+  --wm-fg-2: #4b5563;
+  --wm-fg-3: #8b95a5;
+
+  --wm-success: #12b76a;
+  --wm-success-soft: #e9f9f0;
+  --wm-warning: #f79009;
+  --wm-warning-soft: #fef6e7;
+  --wm-danger: #f04438;
+  --wm-danger-soft: #fef1f0;
+  --wm-purple: #7a5af8;
+  --wm-purple-soft: #f2efff;
+
+  --wm-shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
+  --wm-shadow-pop: 0 12px 32px -8px rgb(16 24 40 / 0.18);
+
+  color-scheme: light;
+}
+
+/* 设计 token 原始值：暗色 */
+.dark {
+  --wm-primary: #2bb3f0;
+  --wm-primary-hover: #57c3f4;
+  --wm-primary-soft: rgb(43 179 240 / 0.14);
+
+  --wm-page: #0b0f17;
+  --wm-card: #121823;
+  --wm-sunken: #0f141d;
+  --wm-line: #222a37;
+  --wm-line-strong: #2f3949;
+
+  --wm-fg: #e6eaf0;
+  --wm-fg-2: #a3adbd;
+  --wm-fg-3: #6b7587;
+
+  --wm-success: #32d583;
+  --wm-success-soft: rgb(50 213 131 / 0.14);
+  --wm-warning: #fdb022;
+  --wm-warning-soft: rgb(253 176 34 / 0.14);
+  --wm-danger: #f97066;
+  --wm-danger-soft: rgb(249 112 102 / 0.14);
+  --wm-purple: #9b8afb;
+  --wm-purple-soft: rgb(155 138 251 / 0.14);
+
+  --wm-shadow-card: 0 0 0 1px rgb(255 255 255 / 0.02);
+  --wm-shadow-pop: 0 12px 32px -8px rgb(0 0 0 / 0.6);
+
+  color-scheme: dark;
+}
+
+/* 暴露给 Tailwind 的语义 token，随亮/暗自动切换 */
+@theme inline {
+  --font-sans:
+    'Inter', system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', Consolas, Monaco, monospace;
+
+  --color-primary: var(--wm-primary);
+  --color-primary-hover: var(--wm-primary-hover);
+  --color-primary-soft: var(--wm-primary-soft);
+
+  --color-page: var(--wm-page);
+  --color-card: var(--wm-card);
+  --color-sunken: var(--wm-sunken);
+  --color-line: var(--wm-line);
+  --color-line-strong: var(--wm-line-strong);
+
+  --color-fg: var(--wm-fg);
+  --color-fg-2: var(--wm-fg-2);
+  --color-fg-3: var(--wm-fg-3);
+
+  --color-success: var(--wm-success);
+  --color-success-soft: var(--wm-success-soft);
+  --color-warning: var(--wm-warning);
+  --color-warning-soft: var(--wm-warning-soft);
+  --color-danger: var(--wm-danger);
+  --color-danger-soft: var(--wm-danger-soft);
+  --color-purple: var(--wm-purple);
+  --color-purple-soft: var(--wm-purple-soft);
+
+  --shadow-card: var(--wm-shadow-card);
+  --shadow-pop: var(--wm-shadow-pop);
+}
+
 @theme {
-  --font-sans: system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif;
-  --font-mono: Consolas, Monaco, monospace;
-
-  --color-primary: #009fe3;
-  --color-primary-hover: #0086c2;
-  --color-primary-light: #e6f7fd;
-
-  --color-page: #f5f7fa;
-  --color-card: #ffffff;
-  --color-line: #e4e8ef;
-  --color-line-strong: #cbd5e1;
-
-  --color-fg: #1f2937;
-  --color-fg-2: #6b7280;
-  --color-fg-3: #9ca3af;
-
-  --color-success: #10b981;
-  --color-success-bg: #ecfdf5;
-  --color-warning: #f59e0b;
-  --color-warning-bg: #fffbeb;
-  --color-danger: #ef4444;
-  --color-danger-bg: #fef2f2;
-  --color-info: #009fe3;
-  --color-info-bg: #e6f7fd;
-  --color-purple: #8b5cf6;
-  --color-purple-bg: #f5f3ff;
-
-  --radius-sm: 6px;
-  --radius-lg: 10px;
-
-  --spacing-topbar: 56px;
-  --spacing-sidebar: 196px;
+  --spacing-header: 56px;
+  --spacing-sidebar: 248px;
+  --spacing-sidebar-collapsed: 64px;
 }
 
 @layer base {
@@ -50,8 +118,8 @@
     background: var(--color-page);
     color: var(--color-fg);
     font-family: var(--font-sans);
-    font-size: 13px;
-    line-height: 1.6;
+    font-size: 14px;
+    line-height: 1.57;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -65,5 +133,13 @@
   }
   ::-webkit-scrollbar-track {
     background: transparent;
+  }
+}
+
+@layer components {
+  /* Lucide 图标在 antd 按钮/菜单中垂直居中 */
+  .ant-btn .lucide,
+  .ant-menu .lucide {
+    flex-shrink: 0;
   }
 }

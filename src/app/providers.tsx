@@ -6,10 +6,11 @@ import antdZhCN from 'antd/locale/zh_CN'
 import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
 import type { ReactNode } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useIsDark } from '@/hooks/use-is-dark'
 import { queryClient } from '@/lib/query-client'
-import { antdTheme } from '@/theme/antd-theme'
+import { createAntdTheme } from '@/theme/antd-theme'
 
 /** 各语言对应的 antd 与 dayjs 语言配置 */
 const LOCALE_MAP = {
@@ -18,17 +19,23 @@ const LOCALE_MAP = {
 } as const
 
 /**
- * 全局 Provider：数据请求、antd 主题与语言、样式层级
+ * 全局 Provider：数据请求、antd 主题与语言、亮/暗模式、样式层级
  * @param props.children - 子节点
  */
 export const AppProviders = ({ children }: { children: ReactNode }) => {
   const { i18n } = useTranslation()
+  const isDark = useIsDark()
   const locale = LOCALE_MAP[i18n.resolvedLanguage as keyof typeof LOCALE_MAP] ?? LOCALE_MAP['zh-CN']
+  const antdTheme = useMemo(() => createAntdTheme(isDark), [isDark])
 
   useEffect(() => {
     dayjs.locale(locale.dayjs)
     document.documentElement.lang = i18n.resolvedLanguage ?? 'zh-CN'
   }, [locale, i18n.resolvedLanguage])
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark)
+  }, [isDark])
 
   return (
     <QueryClientProvider client={queryClient}>

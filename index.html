@@ -5,6 +5,16 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>世界模型数据生成系统</title>
+    <script>
+      // 首屏前应用暗色模式，避免闪烁
+      try {
+        const mode = JSON.parse(localStorage.getItem('wmdg-app') || '{}').state?.themeMode
+        const dark =
+          mode === 'dark' ||
+          (mode !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+        if (dark) document.documentElement.classList.add('dark')
+      } catch {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

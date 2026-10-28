@@ -40,6 +40,7 @@ export const zhCN = {
   },
   topbar: {
     toggleNav: '收起 / 展开导航',
+    home: '首页',
     project: {
       hint: '切换项目后，各列表只显示该项目的数据',
       footer: '项目由「用户服务管理 → 项目管理」维护',
@@ -47,18 +48,31 @@ export const zhCN = {
       allDesc: '汇总视图',
     },
     search: {
-      placeholder: '搜索任务 / 质检 / 批次',
+      placeholder: '搜索页面、任务、批次…',
+      trigger: '搜索',
+      empty: '没有匹配的页面',
+      pages: '页面',
+      hintNavigate: '选择',
+      hintOpen: '打开',
+      hintClose: '关闭',
+    },
+    theme: {
+      label: '外观',
+      system: '跟随系统',
+      light: '亮色',
+      dark: '暗色',
     },
     notice: {
       title: '消息',
       viewAll: '查看全部消息',
       empty: '暂无消息',
     },
-    cluster: '算力集群 {{status}}',
-    clusterOk: '正常',
-    queue: '队列 {{count}}',
+    cluster: '算力集群',
+    clusterOk: '运行正常',
+    queue: '排队任务 {{count}} 个',
     language: '语言',
     logout: '退出登录',
+    profile: '个人设置',
   },
   sceneEditor: {
     title: '场景编辑器',

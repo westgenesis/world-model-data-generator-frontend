@@ -42,6 +42,7 @@ export const enUS: LocaleResource = {
   },
   topbar: {
     toggleNav: 'Toggle navigation',
+    home: 'Home',
     project: {
       hint: 'Lists only show data of the selected project',
       footer: 'Projects are managed in User Services → Projects',
@@ -49,18 +50,31 @@ export const enUS: LocaleResource = {
       allDesc: 'Summary view',
     },
     search: {
-      placeholder: 'Search tasks / QC / batches',
+      placeholder: 'Search pages, tasks, batches…',
+      trigger: 'Search',
+      empty: 'No matching pages',
+      pages: 'Pages',
+      hintNavigate: 'Navigate',
+      hintOpen: 'Open',
+      hintClose: 'Close',
+    },
+    theme: {
+      label: 'Appearance',
+      system: 'System',
+      light: 'Light',
+      dark: 'Dark',
     },
     notice: {
       title: 'Notifications',
       viewAll: 'View all',
       empty: 'No notifications',
     },
-    cluster: 'Cluster {{status}}',
-    clusterOk: 'healthy',
-    queue: 'Queue {{count}}',
+    cluster: 'Compute cluster',
+    clusterOk: 'Healthy',
+    queue: '{{count}} tasks queued',
     language: 'Language',
     logout: 'Sign out',
+    profile: 'Profile',
   },
   sceneEditor: {
     title: 'Scene Editor',

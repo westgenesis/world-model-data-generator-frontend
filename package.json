@@ -23,7 +23,6 @@
   },
   "dependencies": {
     "@ant-design/cssinjs": "^2.1.2",
-    "@ant-design/icons": "^6.3.4",
     "@tanstack/react-query": "^5.105.0",
     "@tanstack/react-router": "^1.170.46",
     "antd": "^6.6.8",
@@ -31,6 +30,7 @@
     "i18next": "^26.5.11",
     "i18next-browser-languagedetector": "^8.2.3",
     "ky": "^2.2.0",
+    "lucide-react": "^1.62.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-i18next": "^17.1.9",
