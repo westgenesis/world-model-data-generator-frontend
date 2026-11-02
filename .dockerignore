@@ -7,6 +7,7 @@ blob-report
 docs
 .git
 .github
+.woodpecker.yaml
 .vscode
 .idea
 .claude
