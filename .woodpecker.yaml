@@ -1,0 +1,30 @@
+# Woodpecker 流水线：PR 只做检查；main 分支检查通过后，部署到 CI 所在服务器
+# 部署步骤挂载 docker.sock，需在项目设置中开启 Trusted → Volumes
+when:
+  - event: pull_request
+  - event: [push, manual]
+    branch: main
+
+steps:
+  - name: check
+    image: node:24-alpine
+    commands:
+      - corepack enable
+      - pnpm install --frozen-lockfile --ignore-scripts
+      - pnpm format:check
+      - pnpm lint
+      - pnpm typecheck
+      - pnpm test:run
+      - pnpm build
+
+  # 通过宿主机 docker 构建并启动，--wait 会等待容器健康检查通过，失败则流水线失败
+  # 切换部署环境时修改 --env-file，可选 deploy/env 下的 dev / staging / prod
+  - name: deploy
+    image: docker:29-cli
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    commands:
+      - docker compose -f deploy/docker-compose.yml --env-file deploy/env/dev.env up -d --build --wait
+    when:
+      - event: [push, manual]
+        branch: main

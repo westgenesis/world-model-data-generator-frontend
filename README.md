@@ -78,6 +78,20 @@ pnpm docker:down --env prod
 - 缓存策略：`/assets/*` 长期缓存，`index.html` 不缓存，发版后刷新即生效。
 - 配置文件：`deploy/docker-compose.yml`、`deploy/nginx/default.conf.template`、`scripts/docker.mjs`。
 
+## CI/CD
+
+流水线使用 Woodpecker（配置文件 `.woodpecker.yaml`），应用部署在 Woodpecker 所在的服务器上：
+
+| 触发方式             | 检查 | 部署         |
+| -------------------- | ---- | ------------ |
+| Pull Request         | 执行 | 不执行       |
+| 推送到 `main`        | 执行 | 部署开发环境 |
+| 在 `main` 上手动触发 | 执行 | 部署开发环境 |
+
+- 检查内容：`format:check`、`lint`、`typecheck`、`test:run`、`build`。
+- 启用条件：实例管理员需在项目设置中开启 Trusted → Volumes，部署步骤要挂载 `docker.sock`。
+- 切换环境：修改 `.woodpecker.yaml` 中的 `--env-file`，`staging` / `prod` 需先填写实际后端地址。
+
 ## 目录结构
 
 ```
