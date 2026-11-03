@@ -12,8 +12,8 @@ services:
     image: ${IMAGE_NAME:-world-model-data-generator-frontend}:${IMAGE_TAG:-latest}
     restart: unless-stopped
     ports:
-      - '${WEB_PORT:-8080}:80'
+      - '${WEB_PORT:-8081}:80'
     environment:
-      API_UPSTREAM: ${API_UPSTREAM:-http://host.docker.internal:8080}
+      API_UPSTREAM: ${API_UPSTREAM:-http://host.docker.internal:8081}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
