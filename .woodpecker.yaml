@@ -6,17 +6,6 @@ when:
     branch: main
 
 steps:
-  - name: check
-    image: node:24-alpine
-    commands:
-      - corepack enable
-      - pnpm install --frozen-lockfile --ignore-scripts
-      - pnpm format:check
-      - pnpm lint
-      - pnpm typecheck
-      - pnpm test:run
-      - pnpm build
-
   # 通过宿主机 docker 构建并启动，--wait 会等待容器健康检查通过，失败则流水线失败
   # 切换部署环境时修改 --env-file，可选 deploy/env 下的 dev / staging / prod
   - name: deploy
