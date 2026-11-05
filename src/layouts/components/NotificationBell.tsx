@@ -5,7 +5,6 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import type { LucideIcon } from 'lucide-react'
 import { Bell, CircleAlert, CircleCheck, CircleX, Info } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import type { Notification } from '@/api/notifications'
 import { latestNotificationsQueryOptions } from '@/api/notifications'
 
@@ -21,13 +20,12 @@ const LEVEL_STYLE: Record<Notification['level'], { icon: LucideIcon; className: 
 
 /** 顶栏消息铃铛：展示最新消息，入口跳转消息中心 */
 export const NotificationBell = () => {
-  const { t } = useTranslation()
   const { data = [] } = useQuery(latestNotificationsQueryOptions)
 
   const content = (
     <div className="-mx-1 w-90">
       {data.length === 0 ? (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('topbar.notice.empty')} />
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无消息" />
       ) : (
         <ul className="max-h-96 overflow-y-auto">
           {data.map((n) => {
@@ -53,22 +51,17 @@ export const NotificationBell = () => {
         to="/user-service/messages"
         className="mt-1 block border-t border-line pt-2.5 text-center text-[13px] text-primary!"
       >
-        {t('topbar.notice.viewAll')}
+        查看全部消息
       </Link>
     </div>
   )
 
   return (
-    <Popover
-      trigger="click"
-      placement="bottomRight"
-      title={t('topbar.notice.title')}
-      content={content}
-    >
+    <Popover trigger="click" placement="bottomRight" title="消息" content={content}>
       <Badge count={data.length} size="small" offset={[-6, 6]}>
         <Button
           type="text"
-          aria-label={t('topbar.notice.title')}
+          aria-label="消息"
           icon={<Bell size={18} strokeWidth={1.75} />}
           className="text-fg-2!"
         />

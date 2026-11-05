@@ -7,12 +7,12 @@ describe('navigation', () => {
     const tree: NavNode[] = [
       {
         key: 'a',
-        labelKey: 'module.dataGen',
+        label: '数据生成',
         children: [
           {
             key: 'b',
-            labelKey: 'group.production',
-            children: [{ key: 'c', labelKey: 'menu.tasks', to: '/data-gen/tasks' }],
+            label: '生产编排',
+            children: [{ key: 'c', label: '任务管理', to: '/data-gen/tasks' }],
           },
         ],
       },

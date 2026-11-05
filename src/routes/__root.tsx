@@ -2,7 +2,6 @@ import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, Link, Outlet } from '@tanstack/react-router'
 import { Button, Result } from 'antd'
 import { lazy, Suspense } from 'react'
-import { useTranslation } from 'react-i18next'
 
 /** 路由上下文 */
 interface RouterContext {
@@ -42,15 +41,14 @@ const RootComponent = () => (
 
 /** 全局 404 页面 */
 const NotFound = () => {
-  const { t } = useTranslation()
   return (
     <Result
       status="404"
       title="404"
-      subTitle={t('common.notFound')}
+      subTitle="页面不存在"
       extra={
         <Link to="/">
-          <Button type="primary">{t('common.backHome')}</Button>
+          <Button type="primary">返回首页</Button>
         </Link>
       }
     />

@@ -1,10 +1,8 @@
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import type { MenuProps } from 'antd'
 import { Button, Menu, Tooltip } from 'antd'
-import type { TFunction } from 'i18next'
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import type { AppPath, NavNode } from '@/config/navigation'
 import { matchLeaf, NAV_TREE } from '@/config/navigation'
 import { useAppStore } from '@/stores/app-store'
@@ -16,10 +14,9 @@ type MenuItem = Required<MenuProps>['items'][number]
 /**
  * 递归地将导航树转换为 antd Menu items，支持任意层级
  * @param nodes - 导航节点
- * @param t - 翻译函数
  * @returns Menu items
  */
-const toMenuItems = (nodes: NavNode[], t: TFunction): MenuItem[] =>
+const toMenuItems = (nodes: NavNode[]): MenuItem[] =>
   nodes.map((node): MenuItem => {
     const Icon = node.icon
     const icon = Icon ? <Icon size={18} strokeWidth={1.75} /> : undefined
@@ -27,11 +24,11 @@ const toMenuItems = (nodes: NavNode[], t: TFunction): MenuItem[] =>
       return {
         key: node.key,
         icon,
-        label: t(node.labelKey),
-        children: toMenuItems(node.children, t),
+        label: node.label,
+        children: toMenuItems(node.children),
       }
     }
-    return { key: node.to ?? node.key, icon, label: t(node.labelKey) }
+    return { key: node.to ?? node.key, icon, label: node.label }
   })
 
 /**
@@ -46,7 +43,6 @@ const ancestorKeysOf = (pathname: string): string[] =>
 
 /** 左侧导航栏：Logo、多级菜单、集群状态与收起按钮 */
 export const Sidebar = () => {
-  const { t } = useTranslation()
   const navigate = useNavigate()
   const pathname = useLocation({ select: (l) => l.pathname })
   const collapsed = useAppStore((s) => s.sidebarCollapsed)
@@ -77,7 +73,9 @@ export const Sidebar = () => {
           W
         </span>
         {!collapsed && (
-          <span className="truncate text-[15px] leading-tight font-semibold">{t('app.title')}</span>
+          <span className="truncate text-[15px] leading-tight font-semibold">
+            世界模型数据生成系统
+          </span>
         )}
       </Link>
 
@@ -90,18 +88,18 @@ export const Sidebar = () => {
           inlineIndent={16}
           selectedKeys={selectedKey ? [selectedKey] : []}
           {...(collapsed ? {} : { openKeys, onOpenChange: setOpenKeys })}
-          items={toMenuItems(NAV_TREE, t)}
+          items={toMenuItems(NAV_TREE)}
           onClick={({ key }) => void navigate({ to: key as AppPath })}
         />
       </nav>
 
       <div className="shrink-0 space-y-2 border-t border-line p-3">
         <ClusterStatus compact={collapsed} />
-        <Tooltip title={t('topbar.toggleNav')} placement="right">
+        <Tooltip title="收起 / 展开导航" placement="right">
           <Button
             type="text"
             block
-            aria-label={t('topbar.toggleNav')}
+            aria-label="收起 / 展开导航"
             icon={<ToggleIcon size={18} strokeWidth={1.75} />}
             className="text-fg-3!"
             onClick={toggleSidebar}

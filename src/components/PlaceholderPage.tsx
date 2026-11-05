@@ -1,6 +1,5 @@
 import { Construction } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
 import { PageHeader } from './PageHeader'
 
 interface PlaceholderPageProps {
@@ -13,7 +12,6 @@ interface PlaceholderPageProps {
  * @param props.title - 页面标题
  */
 export const PlaceholderPage = ({ title }: PlaceholderPageProps) => {
-  const { t } = useTranslation()
   return (
     <>
       <PageHeader title={title} />
@@ -21,8 +19,10 @@ export const PlaceholderPage = ({ title }: PlaceholderPageProps) => {
         <span className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
           <Construction size={24} strokeWidth={1.75} />
         </span>
-        <div className="text-base font-medium text-fg">{t('common.placeholder')}</div>
-        <p className="mt-1 max-w-md text-fg-3">{t('common.placeholderDesc')}</p>
+        <div className="text-base font-medium text-fg">页面开发中</div>
+        <p className="mt-1 max-w-md text-fg-3">
+          该页面尚未实现，可参考 docs/原型 中对应的原型文件。
+        </p>
       </div>
     </>
   )
