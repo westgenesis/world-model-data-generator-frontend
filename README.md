@@ -12,7 +12,6 @@
 | 数据请求  | TanStack Query + ky + Zod 校验                          |
 | 全局状态  | Zustand                                                 |
 | 表单      | AntD Form + Zod                                         |
-| 国际化    | i18next + react-i18next                                 |
 | 接口 Mock | MSW                                                     |
 | 代码规范  | ESLint + Prettier，lefthook + commitlint                |
 | 测试      | Vitest + Testing Library，Playwright（E2E）             |
@@ -100,7 +99,6 @@ src/
 ├── app/          # 全局 Provider 与路由实例
 ├── components/   # 通用组件
 ├── config/       # 导航等静态配置
-├── i18n/         # 国际化配置与语言包
 ├── layouts/      # 布局（顶栏 / 侧栏）
 ├── lib/          # http、queryClient、环境变量等基础设施
 ├── mocks/        # MSW Mock 接口

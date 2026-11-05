@@ -1,4 +1,3 @@
-import type { ParseKeys } from 'i18next'
 import type { LucideIcon } from 'lucide-react'
 import { Database, Sparkles, UsersRound } from 'lucide-react'
 import type { FileRouteTypes } from '@/routeTree.gen'
@@ -14,8 +13,8 @@ export type AppPath = FileRouteTypes['to']
 export interface NavNode {
   /** 全局唯一键；叶子节点默认使用路径 */
   key: string
-  /** 菜单文案的 i18n 键 */
-  labelKey: ParseKeys
+  /** 菜单文案 */
+  label: string
   /** 图标，建议仅一级节点配置 */
   icon?: LucideIcon
   /** 跳转路径（叶子节点必填） */
@@ -33,77 +32,77 @@ export interface NavLeaf {
 
 /**
  * 创建页面节点
- * @param labelKey - 菜单文案 i18n 键
+ * @param label - 菜单文案
  * @param to - 路由路径
  * @returns 叶子导航节点
  */
-const page = (labelKey: ParseKeys, to: AppPath): NavNode => ({ key: to, labelKey, to })
+const page = (label: string, to: AppPath): NavNode => ({ key: to, label, to })
 
 /** 全站导航树 */
 export const NAV_TREE: NavNode[] = [
   {
     key: 'data-gen',
-    labelKey: 'module.dataGen',
+    label: '数据生成',
     icon: Sparkles,
     children: [
       {
         key: 'data-gen/prepare',
-        labelKey: 'group.prepareScene',
-        children: [page('menu.sceneResources', '/data-gen/scene-resources')],
+        label: '准备场景',
+        children: [page('场景资源', '/data-gen/scene-resources')],
       },
       {
         key: 'data-gen/production',
-        labelKey: 'group.production',
+        label: '生产编排',
         children: [
-          page('menu.tasks', '/data-gen/tasks'),
-          page('menu.taskTemplates', '/data-gen/task-templates'),
-          page('menu.flows', '/data-gen/flows'),
+          page('任务管理', '/data-gen/tasks'),
+          page('任务模板', '/data-gen/task-templates'),
+          page('流程编排方案', '/data-gen/flows'),
         ],
       },
       {
         key: 'data-gen/monitoring',
-        labelKey: 'group.monitoring',
+        label: '执行监控',
         children: [
-          page('menu.schedules', '/data-gen/schedules'),
-          page('menu.monitor', '/data-gen/monitor'),
-          page('menu.notifications', '/data-gen/notifications'),
+          page('调度策略', '/data-gen/schedules'),
+          page('任务监控', '/data-gen/monitor'),
+          page('日志与通知', '/data-gen/notifications'),
         ],
       },
       {
         key: 'data-gen/qc',
-        labelKey: 'group.qcArchive',
+        label: '质检归档',
         children: [
-          page('menu.quality', '/data-gen/quality'),
-          page('menu.categories', '/data-gen/categories'),
+          page('数据质量检验', '/data-gen/quality'),
+          page('数据分类管理', '/data-gen/categories'),
         ],
       },
     ],
   },
   {
     key: 'dataset',
-    labelKey: 'module.dataset',
+    label: '数据集管理',
     icon: Database,
     children: [
-      page('menu.ingestion', '/dataset/ingestion'),
-      page('menu.processing', '/dataset/processing'),
-      page('menu.seedData', '/dataset/seed'),
-      page('menu.syntheticData', '/dataset/synthetic'),
-      page('menu.feedback', '/dataset/feedback'),
+      page('数据接入', '/dataset/ingestion'),
+      page('数据处理', '/dataset/processing'),
+      page('种子数据', '/dataset/seed'),
+      page('合成数据', '/dataset/synthetic'),
+      page('质量与反馈', '/dataset/feedback'),
     ],
   },
   {
     key: 'user-service',
-    labelKey: 'module.userService',
+    label: '用户服务管理',
     icon: UsersRound,
     children: [
-      page('menu.users', '/user-service/users'),
-      page('menu.permissions', '/user-service/permissions'),
-      page('menu.portal', '/user-service/portal'),
-      page('menu.security', '/user-service/security'),
-      page('menu.logs', '/user-service/logs'),
-      page('menu.projects', '/user-service/projects'),
-      page('menu.messages', '/user-service/messages'),
-      page('menu.config', '/user-service/config'),
+      page('用户管理', '/user-service/users'),
+      page('权限管理', '/user-service/permissions'),
+      page('门户个性化', '/user-service/portal'),
+      page('安全管理', '/user-service/security'),
+      page('日志管理', '/user-service/logs'),
+      page('项目管理', '/user-service/projects'),
+      page('消息中心', '/user-service/messages'),
+      page('统一配置管理', '/user-service/config'),
     ],
   },
 ]

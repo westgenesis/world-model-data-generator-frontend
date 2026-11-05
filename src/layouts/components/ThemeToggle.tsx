@@ -2,7 +2,6 @@ import type { MenuProps } from 'antd'
 import { Button, Dropdown, Tooltip } from 'antd'
 import type { LucideIcon } from 'lucide-react'
 import { Monitor, Moon, Sun } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import { useIsDark } from '@/hooks/use-is-dark'
 import type { ThemeMode } from '@/stores/app-store'
 import { useAppStore } from '@/stores/app-store'
@@ -14,9 +13,15 @@ const MODE_ICONS: Record<ThemeMode, LucideIcon> = {
   dark: Moon,
 }
 
+/** 各主题模式的文案 */
+const MODE_LABELS: Record<ThemeMode, string> = {
+  system: '跟随系统',
+  light: '亮色',
+  dark: '暗色',
+}
+
 /** 顶栏外观切换：跟随系统 / 亮色 / 暗色 */
 export const ThemeToggle = () => {
-  const { t } = useTranslation()
   const isDark = useIsDark()
   const themeMode = useAppStore((s) => s.themeMode)
   const setThemeMode = useAppStore((s) => s.setThemeMode)
@@ -27,7 +32,7 @@ export const ThemeToggle = () => {
     return {
       key: mode,
       icon: <Icon size={15} strokeWidth={1.75} />,
-      label: t(`topbar.theme.${mode}`),
+      label: MODE_LABELS[mode],
     }
   })
 
@@ -41,10 +46,10 @@ export const ThemeToggle = () => {
         onClick: ({ key }) => setThemeMode(key as ThemeMode),
       }}
     >
-      <Tooltip title={t('topbar.theme.label')}>
+      <Tooltip title="外观">
         <Button
           type="text"
-          aria-label={t('topbar.theme.label')}
+          aria-label="外观"
           icon={<CurrentIcon size={18} strokeWidth={1.75} />}
           className="text-fg-2!"
         />

@@ -1,6 +1,5 @@
 import { Tooltip } from 'antd'
 import { Cpu } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 
 interface ClusterStatusProps {
   /** 是否紧凑模式（侧栏收起时只显示图标） */
@@ -12,7 +11,6 @@ interface ClusterStatusProps {
  * @param props.compact - 是否紧凑模式
  */
 export const ClusterStatus = ({ compact }: ClusterStatusProps) => {
-  const { t } = useTranslation()
   const queued = 3
 
   const dot = (
@@ -24,10 +22,7 @@ export const ClusterStatus = ({ compact }: ClusterStatusProps) => {
 
   if (compact) {
     return (
-      <Tooltip
-        placement="right"
-        title={`${t('topbar.cluster')} · ${t('topbar.clusterOk')} · ${t('topbar.queue', { count: queued })}`}
-      >
+      <Tooltip placement="right" title={`算力集群 · 运行正常 · 排队任务 ${queued} 个`}>
         <div className="flex h-8 items-center justify-center">{dot}</div>
       </Tooltip>
     )
@@ -41,10 +36,10 @@ export const ClusterStatus = ({ compact }: ClusterStatusProps) => {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 text-[13px] font-medium text-fg">
           {dot}
-          {t('topbar.cluster')}
-          <span className="font-normal text-success">{t('topbar.clusterOk')}</span>
+          算力集群
+          <span className="font-normal text-success">运行正常</span>
         </div>
-        <div className="text-xs text-fg-3">{t('topbar.queue', { count: queued })}</div>
+        <div className="text-xs text-fg-3">排队任务 {queued} 个</div>
       </div>
     </div>
   )

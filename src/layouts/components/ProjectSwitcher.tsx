@@ -2,13 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import type { MenuProps } from 'antd'
 import { Dropdown } from 'antd'
 import { ChevronsUpDown, FolderKanban, Layers } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import { projectsQueryOptions } from '@/api/projects'
 import { ALL_PROJECTS_ID, useAppStore } from '@/stores/app-store'
 
 /** 顶栏项目切换器：切换后各列表只显示该项目的数据 */
 export const ProjectSwitcher = () => {
-  const { t } = useTranslation()
   const { data: projects = [] } = useQuery(projectsQueryOptions)
   const currentProjectId = useAppStore((s) => s.currentProjectId)
   const setCurrentProject = useAppStore((s) => s.setCurrentProject)
@@ -32,7 +30,7 @@ export const ProjectSwitcher = () => {
     {
       key: 'projects',
       type: 'group',
-      label: t('topbar.project.hint'),
+      label: '切换项目后，各列表只显示该项目的数据',
       children: projects.map((p) => ({
         key: p.id,
         icon: <FolderKanban size={16} strokeWidth={1.75} />,
@@ -43,10 +41,10 @@ export const ProjectSwitcher = () => {
     {
       key: ALL_PROJECTS_ID,
       icon: <Layers size={16} strokeWidth={1.75} />,
-      label: renderItem(t('topbar.project.all'), t('topbar.project.allDesc')),
+      label: renderItem('全部项目', '汇总视图'),
     },
     { type: 'divider' },
-    { key: 'footer', type: 'group', label: t('topbar.project.footer') },
+    { key: 'footer', type: 'group', label: '项目由「用户服务管理 → 项目管理」维护' },
   ]
 
   return (
@@ -70,7 +68,7 @@ export const ProjectSwitcher = () => {
         >
           {isAll ? <Layers size={13} /> : <FolderKanban size={13} />}
         </span>
-        <span className="truncate">{current?.name ?? t('topbar.project.all')}</span>
+        <span className="truncate">{current?.name ?? '全部项目'}</span>
         <ChevronsUpDown size={14} className="shrink-0 text-fg-3" />
       </button>
     </Dropdown>

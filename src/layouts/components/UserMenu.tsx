@@ -1,13 +1,9 @@
 import type { MenuProps } from 'antd'
 import { Avatar, Dropdown } from 'antd'
-import { ChevronDown, Languages, LogOut, UserRound } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
-import { SUPPORTED_LANGUAGES } from '@/i18n'
+import { ChevronDown, LogOut, UserRound } from 'lucide-react'
 
-/** 顶栏用户菜单：个人设置、语言切换、退出登录 */
+/** 顶栏用户菜单：个人设置、退出登录 */
 export const UserMenu = () => {
-  const { t, i18n } = useTranslation()
-
   const items: MenuProps['items'] = [
     {
       key: 'info',
@@ -23,36 +19,22 @@ export const UserMenu = () => {
     {
       key: 'profile',
       icon: <UserRound size={15} strokeWidth={1.75} />,
-      label: t('topbar.profile'),
-    },
-    {
-      key: 'language',
-      icon: <Languages size={15} strokeWidth={1.75} />,
-      label: t('topbar.language'),
-      children: SUPPORTED_LANGUAGES.map((l) => ({ key: `lang:${l.value}`, label: l.label })),
+      label: '个人设置',
     },
     { type: 'divider' },
     {
       key: 'logout',
       icon: <LogOut size={15} strokeWidth={1.75} />,
-      label: t('topbar.logout'),
+      label: '退出登录',
       danger: true,
     },
   ]
 
-  /**
-   * 处理菜单点击
-   * @param info.key - 被点击的菜单键
-   */
-  const onClick: MenuProps['onClick'] = ({ key }) => {
-    if (key.startsWith('lang:')) void i18n.changeLanguage(key.slice(5))
-    // TODO: 接入登录体系后实现个人设置与退出登录
-  }
-
   return (
     <Dropdown
       trigger={['click']}
-      menu={{ items, onClick, selectable: true, selectedKeys: [`lang:${i18n.resolvedLanguage}`] }}
+      // TODO: 接入登录体系后实现个人设置与退出登录
+      menu={{ items }}
     >
       <button
         type="button"

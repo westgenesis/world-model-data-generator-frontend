@@ -4,7 +4,6 @@ import { Input, Modal } from 'antd'
 import { CornerDownLeft, FileText, Search } from 'lucide-react'
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import type { NavLeaf } from '@/config/navigation'
 import { NAV_LEAVES } from '@/config/navigation'
 
@@ -23,7 +22,6 @@ const Kbd = ({ children }: { children: string }) => (
 
 /** 全局命令面板：⌘/Ctrl + K 打开，快速搜索并跳转到任意页面 */
 export const CommandPalette = () => {
-  const { t } = useTranslation()
   const navigate = useNavigate()
   const inputRef = useRef<InputRef>(null)
   const [open, setOpen] = useState(false)
@@ -49,13 +47,13 @@ export const CommandPalette = () => {
     const kw = keyword.trim().toLowerCase()
     return NAV_LEAVES.map((leaf) => ({
       leaf,
-      label: t(leaf.node.labelKey),
+      label: leaf.node.label,
       path: leaf.trail
         .slice(0, -1)
-        .map((n) => t(n.labelKey))
+        .map((n) => n.label)
         .join(' / '),
     })).filter(({ label, path }) => !kw || `${label} ${path}`.toLowerCase().includes(kw))
-  }, [keyword, t])
+  }, [keyword])
 
   /**
    * 关闭面板并重置状态
@@ -97,7 +95,7 @@ export const CommandPalette = () => {
         className="hidden h-8.5 w-64 items-center gap-2 rounded-lg border border-line bg-sunken px-3 text-[13px] text-fg-3 transition-colors hover:border-line-strong lg:flex"
       >
         <Search size={15} strokeWidth={1.75} />
-        <span className="flex-1 text-left">{t('topbar.search.placeholder')}</span>
+        <span className="flex-1 text-left">搜索页面、任务、批次…</span>
         <Kbd>{IS_MAC ? '⌘K' : 'Ctrl K'}</Kbd>
       </button>
 
@@ -118,7 +116,7 @@ export const CommandPalette = () => {
             variant="borderless"
             size="large"
             prefix={<Search size={18} strokeWidth={1.75} className="mr-1 text-fg-3" />}
-            placeholder={t('topbar.search.placeholder')}
+            placeholder="搜索页面、任务、批次…"
             value={keyword}
             onChange={(e) => {
               setKeyword(e.target.value)
@@ -130,10 +128,10 @@ export const CommandPalette = () => {
 
         <div className="max-h-90 overflow-y-auto p-2">
           {results.length === 0 ? (
-            <div className="py-10 text-center text-fg-3">{t('topbar.search.empty')}</div>
+            <div className="py-10 text-center text-fg-3">没有匹配的页面</div>
           ) : (
             <>
-              <div className="px-2 py-1.5 text-xs text-fg-3">{t('topbar.search.pages')}</div>
+              <div className="px-2 py-1.5 text-xs text-fg-3">页面</div>
               {results.map(({ leaf, label, path }, i) => (
                 <button
                   key={leaf.node.key}
@@ -157,13 +155,13 @@ export const CommandPalette = () => {
         <div className="flex items-center gap-4 border-t border-line bg-sunken px-4 py-2 text-xs text-fg-3">
           <span className="flex items-center gap-1">
             <Kbd>↑</Kbd>
-            <Kbd>↓</Kbd> {t('topbar.search.hintNavigate')}
+            <Kbd>↓</Kbd> 选择
           </span>
           <span className="flex items-center gap-1">
-            <Kbd>↵</Kbd> {t('topbar.search.hintOpen')}
+            <Kbd>↵</Kbd> 打开
           </span>
           <span className="flex items-center gap-1">
-            <Kbd>Esc</Kbd> {t('topbar.search.hintClose')}
+            <Kbd>Esc</Kbd> 关闭
           </span>
         </div>
       </Modal>
