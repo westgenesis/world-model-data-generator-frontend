@@ -152,6 +152,43 @@
     font-size: 13px;
   }
 
+  /* 收起态弹出层：四周留白一致，菜单项不贴边 */
+  .app-nav-popup > .ant-menu {
+    min-width: 184px;
+    padding: 6px;
+  }
+  .app-nav-popup .ant-menu-item,
+  .app-nav-popup .ant-menu-submenu-title {
+    margin-inline: 0;
+    width: 100%;
+  }
+  .app-nav-popup .ant-menu-item:first-child,
+  .app-nav-popup .ant-menu-submenu:first-child > .ant-menu-submenu-title {
+    margin-top: 0;
+  }
+  .app-nav-popup .ant-menu-item:last-child,
+  .app-nav-popup .ant-menu-submenu:last-child > .ant-menu-submenu-title {
+    margin-bottom: 0;
+  }
+
+  /* 弹出层顶部模块名标题 */
+  .app-nav-popup .ant-menu-item-group-title {
+    padding: 4px 10px 6px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 18px;
+    color: var(--color-fg-3);
+  }
+
+  /* antd 会给分组内菜单项额外缩进，这里与标题左对齐 */
+  .app-nav-popup .ant-menu-item,
+  .app-nav-popup .ant-menu-submenu-title {
+    padding-inline: 10px 32px;
+  }
+  .app-nav-popup .ant-menu-item {
+    padding-inline-end: 12px;
+  }
+
   /* 图标：颜色随文字过渡，悬停时轻微放大 */
   .app-nav .ant-menu-item-icon,
   .app-nav-popup .ant-menu-item-icon {

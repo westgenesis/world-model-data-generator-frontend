@@ -16,29 +16,35 @@ type MenuItem = Required<MenuProps>['items'][number]
  * 递归地将导航树转换为 antd Menu items，支持任意层级；
  * 一级图标稍大以突出模块，子级图标缩小以保持紧凑
  * @param nodes - 导航节点
+ * @param collapsed - 是否为收起态；收起态下一级弹出层顶部显示模块名标题
  * @param depth - 当前层级，从 0 开始
  * @returns Menu items
  */
-const toMenuItems = (nodes: NavNode[], depth = 0): MenuItem[] =>
+const toMenuItems = (nodes: NavNode[], collapsed: boolean, depth = 0): MenuItem[] =>
   nodes.map((node): MenuItem => {
     const Icon = node.icon
     const icon = Icon ? (
       <Icon size={depth === 0 ? 17 : 15} strokeWidth={depth === 0 ? 1.85 : 1.75} />
     ) : undefined
     if (node.children?.length) {
+      const children = toMenuItems(node.children, collapsed, depth + 1)
       return {
         key: node.key,
         icon,
         label: node.label,
         popupClassName: 'app-nav-popup',
-        children: toMenuItems(node.children, depth + 1),
+        children:
+          collapsed && depth === 0
+            ? [{ key: `${node.key}/title`, type: 'group', label: node.label, children }]
+            : children,
       }
     }
     return { key: node.to ?? node.key, icon, label: node.label }
   })
 
-/** 导航菜单项（静态，避免每次渲染重建） */
-const MENU_ITEMS = toMenuItems(NAV_TREE)
+/** 导航菜单项：展开态 / 收起态（静态，避免每次渲染重建） */
+const MENU_ITEMS = toMenuItems(NAV_TREE, false)
+const MENU_ITEMS_COLLAPSED = toMenuItems(NAV_TREE, true)
 
 /**
  * 计算当前路径对应页面的所有祖先目录 key
@@ -101,7 +107,7 @@ export const Sidebar = () => {
           inlineIndent={14}
           selectedKeys={selectedKey ? [selectedKey] : []}
           {...(collapsed ? {} : { openKeys, onOpenChange: setOpenKeys })}
-          items={MENU_ITEMS}
+          items={collapsed ? MENU_ITEMS_COLLAPSED : MENU_ITEMS}
           onClick={({ key }) => void navigate({ to: key as AppPath })}
         />
       </nav>
