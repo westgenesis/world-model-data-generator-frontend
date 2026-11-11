@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>世界模型数据生成系统 · 标注作业页原型 V1</title>
+<style>
+:root{
+  --dk-bg:#11151c; --dk-panel:#1a202b; --dk-panel2:#212936; --dk-line:#2c3542;
+  --dk-text:#e5eaf1; --dk-text2:#9aa5b4; --dk-text3:#5f6b7a;
+  --pri:#3b82f6; --pri-hover:#2563eb; --warn:#f59e0b; --ok:#22c55e; --danger:#ef4444;
+  --r:6px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;background:var(--dk-bg);color:var(--dk-text);font-size:13px;line-height:1.55;}
+button{font-family:inherit;font-size:12.5px;cursor:pointer;border:none;background:none;color:inherit;}
+input,select{font-family:inherit;font-size:12.5px;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:#3a4454;border-radius:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* 顶栏 */
+.top{height:46px;background:var(--dk-panel);border-bottom:1px solid var(--dk-line);display:flex;align-items:center;gap:10px;padding:0 14px;}
+.top .logo{font-weight:700;font-size:14px;color:#c9d4e3;}
+.top .badge{padding:2px 9px;border-radius:10px;font-size:11.5px;white-space:nowrap;}
+.b-gray{background:#2a3442;color:var(--dk-text2);}
+.b-blue{background:#1e3a5f;color:#7ab8ff;}
+.b-warn{background:#3f2f10;color:#fbbf24;}
+.top .sp{flex:1;}
+.modsw{display:flex;border:1px solid var(--dk-line);border-radius:6px;overflow:hidden;flex-shrink:0;}
+.modsw button{padding:6px 12px;color:var(--dk-text2);background:var(--dk-panel2);white-space:nowrap;}
+.modsw button:hover{color:#fff;}
+.modsw button.on{background:var(--pri);color:#fff;}
+.tbtn{padding:6px 12px;border-radius:var(--r);background:var(--dk-panel2);border:1px solid var(--dk-line);color:var(--dk-text);}
+.tbtn:hover{border-color:var(--pri);color:#fff;}
+.tbtn.primary{background:var(--pri);border-color:var(--pri);color:#fff;}
+.tbtn.primary:hover{background:var(--pri-hover);}
+
+/* 主体三栏 */
+.body{display:flex;height:calc(100vh - 46px - 44px);}
+/* 左：相机视频列 */
+.cams{width:158px;background:var(--dk-panel);border-right:1px solid var(--dk-line);overflow-y:auto;flex-shrink:0;}
+.cams-h{padding:8px 10px;font-size:12px;color:var(--dk-text2);border-bottom:1px solid var(--dk-line);}
+.cam-th{position:relative;margin:8px 10px;border-radius:var(--r);overflow:hidden;background:#2a3442;height:74px;cursor:pointer;border:1px solid var(--dk-line);}
+.cam-th:hover{border-color:var(--pri);}
+.cam-th.active{border-color:var(--pri);box-shadow:0 0 0 1px var(--pri);}
+.cam-th .nm{position:absolute;left:5px;top:4px;font-size:10.5px;color:#dbe4ef;background:rgba(10,14,20,.6);padding:1px 5px;border-radius:3px;}
+.cam-th .eye{position:absolute;right:4px;top:4px;font-size:10.5px;color:var(--dk-text2);}
+.cam-th .pic{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#55637a;font-size:10.5px;letter-spacing:1px;}
+.cam-th .pic.v{background:linear-gradient(135deg,#2c3a4d 0%,#1c2531 60%,#243240 100%);}
+/* 中：点云画布区 */
+.center{flex:1;display:flex;min-width:0;position:relative;background:#0c0f15;}
+.pcd{flex:1;position:relative;min-width:0;
+  background:radial-gradient(ellipse 60% 50% at 50% 58%, rgba(180,200,40,.28) 0%, rgba(110,150,30,.12) 45%, transparent 70%),
+             radial-gradient(ellipse 30% 22% at 62% 55%, rgba(220,230,60,.30) 0%, transparent 70%),
+             radial-gradient(ellipse 20% 16% at 40% 62%, rgba(160,190,50,.25) 0%, transparent 70%),
+             #0c0f15;}
+.pcd .grid{position:absolute;inset:0;background:
+  linear-gradient(rgba(70,90,120,.12) 1px, transparent 1px) 0 0/100% 12.5%,
+  linear-gradient(90deg, rgba(70,90,120,.12) 1px, transparent 1px) 0 0/8.33% 100%;}
+.pcd svg{position:absolute;inset:0;width:100%;height:100%;}
+/* 标注信息面板（左上浮层） */
+.anno-info{position:absolute;left:12px;top:12px;width:196px;background:rgba(20,26,36,.92);border:1px solid var(--dk-line);border-radius:var(--r);padding:10px 12px;font-size:12px;z-index:5;}
+.anno-info .t{font-weight:600;margin-bottom:6px;display:flex;justify-content:space-between;}
+.anno-info .t .x{color:var(--dk-text3);cursor:pointer;}
+.anno-info .row{display:flex;justify-content:space-between;color:var(--dk-text2);padding:1.5px 0;}
+.anno-info .row b{color:var(--dk-text);font-weight:500;}
+.anno-info .slider{margin-top:6px;}
+.anno-info .gh{margin-top:8px;display:flex;align-items:center;gap:6px;color:var(--dk-text2);}
+.anno-info input[type=checkbox]{accent-color:var(--pri);}
+.anno-info .rng{width:100%;accent-color:var(--pri);}
+/* 已选框（左下浮层） */
+.sel-box{position:absolute;left:12px;bottom:14px;background:rgba(20,26,36,.92);border:1px solid var(--dk-line);border-radius:var(--r);padding:8px 12px;font-size:12px;z-index:5;}
+.sel-box .h{display:flex;justify-content:space-between;color:var(--dk-text2);margin-bottom:5px;}
+.chip{display:inline-block;padding:2px 8px;border-radius:4px;background:#2a3442;color:#7ab8ff;font-size:11.5px;margin-right:5px;}
+/* 坐标轴指示（右下） */
+.axis{position:absolute;right:14px;bottom:12px;z-index:5;}
+/* 右侧小视图列 */
+.minis{width:150px;border-left:1px solid var(--dk-line);background:var(--dk-panel);flex-shrink:0;display:flex;flex-direction:column;}
+.mini{flex:1;border-bottom:1px solid var(--dk-line);position:relative;background:#0c0f15;}
+.mini:last-child{border-bottom:none;}
+.mini .cap{position:absolute;left:6px;top:5px;font-size:10.5px;color:var(--dk-text2);z-index:2;}
+.mini .dim{position:absolute;right:6px;top:5px;font-size:10px;color:var(--dk-text3);z-index:2;}
+.mini .box{position:absolute;border:1px solid var(--danger);border-radius:2px;}
+/* 右：对象列表面板 */
+.side{width:250px;background:var(--dk-panel);border-left:1px solid var(--dk-line);display:flex;flex-direction:column;flex-shrink:0;}
+.side .hd{padding:12px 14px;font-size:14px;font-weight:600;border-bottom:1px solid var(--dk-line);}
+.side .tabs2{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid var(--dk-line);}
+.tabs2 button{flex:1;padding:6px 0;border-radius:var(--r);background:var(--dk-panel2);color:var(--dk-text2);border:1px solid var(--dk-line);}
+.tabs2 button.active{background:var(--pri);border-color:var(--pri);color:#fff;}
+.side .acts{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid var(--dk-line);}
+.acts button{flex:1;padding:6px 0;border-radius:var(--r);background:var(--dk-panel2);border:1px solid var(--dk-line);}
+.acts button.on{background:var(--pri);border-color:var(--pri);color:#fff;}
+.tree{flex:1;overflow-y:auto;padding:6px 0;}
+.tr-g{display:flex;align-items:center;gap:6px;padding:5px 12px;color:var(--dk-text2);font-size:12px;cursor:pointer;}
+.tr-g:hover{background:var(--dk-panel2);}
+.tr-g .n{flex:1;}
+.tr-g .c{color:var(--dk-text3);font-size:11px;}
+.tr-g .eye{color:var(--dk-text3);font-size:11px;}
+.tr-i{display:flex;align-items:center;gap:6px;padding:4px 12px 4px 26px;font-size:12.5px;cursor:pointer;color:var(--dk-text);}
+.tr-i:hover{background:var(--dk-panel2);}
+.tr-i.active{background:#1e3a5f;outline:1px solid var(--pri);border-radius:4px;}
+.tr-i .arrow{color:var(--dk-text3);font-size:10px;width:10px;}
+.tr-i .dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+.tr-i .n{flex:1;}
+.tr-i .ops{display:flex;gap:4px;color:var(--dk-text3);font-size:11px;}
+.tr-i .ops span{cursor:pointer;}
+.tr-i .ops span:hover{color:#7ab8ff;}
+.tr-sub{padding:2px 12px 4px 44px;font-size:11.5px;color:var(--dk-text2);display:flex;align-items:center;gap:6px;background:#171d27;}
+.tr-sub .chip{font-size:10.5px;padding:1px 6px;}
+/* 底部帧条 */
+.foot{height:44px;background:var(--dk-panel);border-top:1px solid var(--dk-line);display:flex;align-items:center;gap:10px;padding:0 14px;}
+.foot .tg{display:flex;align-items:center;gap:6px;color:var(--dk-text2);font-size:12px;}
+.sw{width:30px;height:16px;border-radius:9px;background:#3a4454;position:relative;cursor:pointer;transition:all .15s;}
+.sw.on{background:var(--pri);}
+.sw i{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:all .15s;}
+.sw.on i{left:16px;}
+.foot .fc{display:flex;align-items:center;gap:6px;color:var(--dk-text2);}
+.foot .fc .pg{background:var(--dk-panel2);border:1px solid var(--dk-line);border-radius:4px;padding:3px 8px;color:var(--dk-text);}
+.foot .frames{flex:1;display:flex;gap:4px;overflow-x:auto;padding:2px 0;}
+.foot .frames button{min-width:26px;height:24px;padding:0 6px;border-radius:4px;background:var(--dk-panel2);border:1px solid var(--dk-line);color:var(--dk-text2);font-size:11px;flex-shrink:0;}
+.foot .frames button.active{background:var(--pri);border-color:var(--pri);color:#fff;}
+/* 质量检查面板 */
+.qc-i{padding:10px 12px;border-bottom:1px solid var(--dk-line);}
+.qc-i .t{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.qc-i .t .n{font-size:12.5px;color:var(--dk-text);}
+.qc-i .seg{display:flex;gap:4px;}
+.qc-i .seg button{padding:3px 9px;border-radius:4px;background:var(--dk-panel2);border:1px solid var(--dk-line);color:var(--dk-text2);font-size:11.5px;}
+.qc-i .seg button.on{background:var(--pri);border-color:var(--pri);color:#fff;}
+.qc-i input.rk{width:100%;height:26px;background:var(--dk-panel2);border:1px solid var(--dk-line);border-radius:4px;color:var(--dk-text);padding:0 8px;margin-top:6px;}
+.qc-act{padding:12px;display:flex;flex-direction:column;gap:8px;}
+.qc-act .tbtn{text-align:center;}
+/* 视频网格（无点云模式） */
+.vgrid{flex:1;display:flex;gap:8px;padding:10px;min-width:0;}
+.vmain{flex:1.9;position:relative;border:1px solid var(--dk-line);border-radius:var(--r);background:linear-gradient(135deg,#2c3a4d 0%,#1c2531 60%,#243240 100%);min-width:0;}
+.vmain .nm{position:absolute;left:8px;top:6px;font-size:11px;color:#dbe4ef;background:rgba(10,14,20,.55);padding:2px 7px;border-radius:3px;}
+.vmain .fm{position:absolute;right:8px;top:6px;font-size:11px;color:var(--dk-text2);}
+.vmain .box{position:absolute;border:1.5px solid var(--danger);border-radius:2px;}
+.vmain .box span{position:absolute;top:-16px;left:0;font-size:10px;color:var(--danger);white-space:nowrap;}
+.vmain .ctr{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#55637a;font-size:12px;letter-spacing:1px;}
+.vside{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);gap:8px;min-width:0;}
+.vside .v{position:relative;border:1px solid var(--dk-line);border-radius:var(--r);background:linear-gradient(135deg,#2c3a4d 0%,#1c2531 60%,#243240 100%);}
+.vside .v .nm{position:absolute;left:5px;top:4px;font-size:10px;color:#dbe4ef;background:rgba(10,14,20,.55);padding:1px 5px;border-radius:3px;}
+.vside .v .box{position:absolute;border:1px solid var(--danger);border-radius:2px;}
+/* 弹层 */
+.mask{position:fixed;inset:0;background:rgba(5,8,12,.55);z-index:100;display:none;}
+.dlg{position:fixed;left:50%;top:16%;transform:translateX(-50%);width:460px;max-width:90vw;background:var(--dk-panel);border:1px solid var(--dk-line);border-radius:10px;z-index:101;display:none;}
+.dlg.show,.mask.show{display:block;}
+.dlg .h{padding:13px 16px;border-bottom:1px solid var(--dk-line);font-weight:600;}
+.dlg .b{padding:14px 16px;font-size:12.5px;color:var(--dk-text2);max-height:50vh;overflow:auto;}
+.dlg .f{padding:11px 16px;border-top:1px solid var(--dk-line);display:flex;justify-content:flex-end;gap:8px;}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <span class="logo">标注作业页</span>
+  <span class="badge b-gray" id="crumb">M2 · 作业面</span>
+  <span class="badge b-gray">QL-0918-07 · 片段 SY-0184</span>
+  <span class="badge b-blue">环节① 质量检查与标注</span>
+  <span class="sp"></span>
+  <div class="modsw">
+    <button id="mod-pc" class="on" onclick="setModality(1)">视频 + 点云</button>
+    <button id="mod-v" onclick="setModality(0)">仅多路视频（无点云）</button>
+  </div>
+  <span style="font-size:11.5px;color:var(--dk-text3);">自动保存 · 14:32:06</span>
+  <button class="tbtn" onclick="tip('保存当前标注进度，不提交')">保存</button>
+  <button class="tbtn" onclick="tip('回到 M2 作业面，检查结论仍按第 1 步表单给出')">返回作业面</button>
+  <button class="tbtn primary" onclick="commitAnno()">提交</button>
+</div>
+
+<div class="body" id="body-pc">
+  <!-- 左：相机视频列（仅点云模式显示；无点云时多路视频平铺在中间区） -->
+  <div class="cams" id="cams">
+    <div class="cams-h">视频 <span style="float:right;color:var(--dk-text3);">▸ ▶ ⏸</span></div>
+    <div class="cam-th active"><span class="nm">FRONT_FOV120</span><span class="eye">👁</span><div class="pic v"><span>前视广角</span></div></div>
+    <div class="cam-th"><span class="nm">FRONT_FOV30</span><span class="eye">👁</span><div class="pic v"><span>前视窄角</span></div></div>
+    <div class="cam-th"><span class="nm">FRONT_LEFT</span><span class="eye">👁</span><div class="pic v"><span>左前</span></div></div>
+    <div class="cam-th"><span class="nm">BACK_LEFT</span><span class="eye">👁</span><div class="pic v"><span>左后</span></div></div>
+    <div class="cam-th"><span class="nm">FRONT_RIGHT</span><span class="eye">👁</span><div class="pic v"><span>右前</span></div></div>
+    <div class="cam-th"><span class="nm">BACK_RIGHT</span><span class="eye">👁</span><div class="pic v"><span>右后</span></div></div>
+  </div>
+
+  <!-- 中：点云画布 -->
+  <div class="center">
+    <div id="pcd-wrap" style="display:flex;flex:1;min-width:0;position:relative;">
+    <div class="pcd" id="pcd">
+      <div class="grid"></div>
+      <svg viewBox="0 0 900 520" preserveAspectRatio="none">
+        <g stroke="#5b7fb8" stroke-width="1" fill="none" opacity=".5">
+          <ellipse cx="450" cy="300" rx="210" ry="95"/><ellipse cx="450" cy="300" rx="120" ry="54"/>
+        </g>
+        <g fill="#f59e0b" opacity=".9">
+          <rect x="430" y="240" width="52" height="26" rx="3" stroke="#fbbf24" stroke-width="1.5"/>
+        </g>
+        <g fill="none" stroke="#ef4444" stroke-width="1.5">
+          <rect x="560" y="272" width="34" height="18" rx="3"/>
+          <rect x="352" y="286" width="30" height="16" rx="3"/>
+        </g>
+        <g fill="#38bdf8" opacity=".85"><rect x="470" y="212" width="18" height="10" rx="2"/></g>
+        <path d="M120 360h180" stroke="#22c55e" stroke-width="2"/><text x="128" y="376" fill="#22c55e" font-size="11">8.42 m</text>
+        <circle cx="456" cy="253" r="4" fill="#fff" opacity=".9"/>
+      </svg>
+      <div class="anno-info">
+        <div class="t"><span>标注：小轿车</span><span class="x" onclick="tip('收起信息面板')">«</span></div>
+        <div class="row"><span>长度</span><b>-4.73</b></div>
+        <div class="row"><span>宽度</span><b>-1.99</b></div>
+        <div class="row"><span>高度</span><b>-1.99</b></div>
+        <div class="row"><span>点数</span><b>275</b></div>
+        <div class="row"><span>位置</span><b>14.42 / 21.02 / -0.02</b></div>
+        <div class="row"><span>标注质量</span><b>3.9 / 34.4</b></div>
+        <div class="slider"><input type="range" class="rng" min="0" max="100" value="22"></div>
+        <div class="gh"><input type="checkbox" checked><span>地面高度 · 贴地</span><b style="margin-left:auto;">0.0</b><span>m</span></div>
+      </div>
+      <div class="sel-box">
+        <div class="h"><span>已选框 1：</span><span>⊞</span></div>
+        <span class="chip">ADE6 🗑</span><span class="chip">⤢ 拓扑</span>
+      </div>
+      <div class="axis">
+        <svg width="52" height="52" viewBox="0 0 52 52">
+          <g stroke-width="2" fill="none">
+            <path d="M26 26L26 6" stroke="#ef4444"/><path d="M26 26L44 36" stroke="#22c55e"/><path d="M26 26L8 36" stroke="#3b82f6"/>
+          </g>
+          <circle cx="26" cy="26" r="3" fill="#e5eaf1"/>
+        </svg>
+      </div>
+    </div>
+    <!-- 右侧三个小视图 -->
+    <div class="minis">
+      <div class="mini"><span class="cap">俯视</span><span class="dim">长 4.73 · 宽 1.99</span>
+        <div class="box" style="left:38%;top:38%;width:26%;height:18%;"></div>
+        <div style="position:absolute;left:50%;top:38%;width:1px;height:30%;background:#ef4444;"></div>
+      </div>
+      <div class="mini"><span class="cap">侧视</span><span class="dim">长 4.73 · 高 1.43</span>
+        <div class="box" style="left:34%;top:44%;width:30%;height:22%;"></div>
+      </div>
+      <div class="mini"><span class="cap">后视</span><span class="dim">宽 1.99 · 高 1.43</span>
+        <div class="box" style="left:40%;top:42%;width:22%;height:26%;"></div>
+        <div style="position:absolute;left:51%;top:56%;width:5px;height:5px;background:#ef4444;border-radius:50%;"></div>
+      </div>
+    </div>
+    </div><!-- /pcd-wrap -->
+    <!-- 无点云：仅多路视频 -->
+    <div id="v-wrap" class="vgrid" style="display:none;">
+      <div class="vmain">
+        <span class="nm">FRONT_FOV120 · 主视图</span><span class="fm">帧 1 / 47 · 1080P</span>
+        <div class="ctr">前视广角 · 无点云片段 · 标注框随视频帧显示</div>
+        <div class="box" style="left:36%;top:38%;width:18%;height:22%;"><span>Car_27 · 小轿车</span></div>
+        <div class="box" style="left:62%;top:52%;width:9%;height:13%;"><span>Ped_03</span></div>
+        <div class="box" style="left:20%;top:44%;width:11%;height:15%;"><span>Car_26</span></div>
+      </div>
+      <div class="vside">
+        <div class="v" onclick="pickMain(this)"><span class="nm">FRONT_FOV30</span><div class="box" style="left:40%;top:40%;width:20%;height:24%;"></div></div>
+        <div class="v" onclick="pickMain(this)"><span class="nm">FRONT_LEFT</span><div class="box" style="left:50%;top:44%;width:18%;height:22%;"></div></div>
+        <div class="v" onclick="pickMain(this)"><span class="nm">BACK_LEFT</span></div>
+        <div class="v" onclick="pickMain(this)"><span class="nm">FRONT_RIGHT</span><div class="box" style="left:28%;top:50%;width:16%;height:20%;"></div></div>
+        <div class="v" onclick="pickMain(this)"><span class="nm">BACK_RIGHT</span></div>
+        <div class="v" style="display:flex;align-items:center;justify-content:center;color:var(--dk-text3);font-size:11px;cursor:default;">无点云 · 以多路视频为标注依据<br>点小视图切主视图</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右：对象列表 -->
+  <div class="side">
+    <div class="hd">作业面板</div>
+    <div class="tabs2">
+      <button class="active" id="pt-qc" onclick="panelTab(this,'p-qc')">质量检查 · 待判定</button>
+      <button id="pt-anno" onclick="panelTab(this,'p-anno')">标注</button>
+    </div>
+    <div id="p-obj" style="display:none;flex-direction:column;flex:1;min-height:0;">
+    <div class="tabs2">
+      <button class="active" onclick="annoTab(this,'t-obj')">对象</button>
+      <button onclick="annoTab(this,'t-grp')">编组</button>
+    </div>
+    <div class="tree" id="t-obj">
+      <div class="tr-g"><span class="n">对象（89）</span><span class="eye">⋯</span></div>
+      <div class="tr-g"><span class="arrow">▸</span><span class="dot" style="background:#38bdf8;"></span><span class="n">SUV (5)</span><span class="eye">👁</span></div>
+      <div class="tr-g"><span class="arrow">▸</span><span class="dot" style="background:#22c55e;"></span><span class="n">两轮拖车 (9)</span><span class="eye">👁</span></div>
+      <div class="tr-g"><span class="arrow">▸</span><span class="dot" style="background:#a78bfa;"></span><span class="n">两轮明框车辆 (3)</span><span class="eye">👁</span></div>
+      <div class="tr-g"><span class="arrow">▾</span><span class="dot" style="background:#f59e0b;"></span><span class="n">小轿车 (8)</span><span class="eye">👁</span></div>
+      <div class="tr-i"><span class="arrow">▸</span><span class="n">26</span><span class="eye">👁</span></div>
+      <div class="tr-i active"><span class="arrow">▾</span><span class="n">27</span><span class="eye">👁</span></div>
+      <div class="tr-sub"><span class="chip">ADE6</span><span>👁 拓扑 ✎ ⌫</span></div>
+      <div class="tr-i"><span class="arrow">▸</span><span class="n">28</span><span class="eye">👁</span></div>
+      <div class="tr-i"><span class="arrow">▸</span><span class="n">34</span><span class="eye">👁</span></div>
+      <div class="tr-i"><span class="arrow">▸</span><span class="n">61</span><span class="eye">👁</span></div>
+      <div class="tr-g"><span class="arrow">▸</span><span class="dot" style="background:#f472b6;"></span><span class="n">摩托车 (1)</span><span class="eye">👁</span></div>
+      <div class="tr-g"><span class="arrow">▸</span><span class="dot" style="background:#facc15;"></span><span class="n">普通人 (7)</span><span class="eye">👁</span></div>
+      <div class="tr-g"><span class="arrow">▸</span><span class="dot" style="background:#fb923c;"></span><span class="n">机动车骑行者 (1)</span><span class="eye">👁</span></div>
+      <div class="tr-g"><span class="arrow">▸</span><span class="dot" style="background:#94a3b8;"></span><span class="n">货车 (12)</span><span class="eye">👁</span></div>
+      <div class="tr-g"><span class="arrow">▸</span><span class="dot" style="background:#4ade80;"></span><span class="n">施工锥 (2)</span><span class="eye">👁</span></div>
+      <div class="tr-g"><span class="arrow">▸</span><span class="dot" style="background:#60a5fa;"></span><span class="n">公交车 (4)</span><span class="eye">👁</span></div>
+      <div class="tr-g"><span class="arrow">▸</span><span class="dot" style="background:#c084fc;"></span><span class="n">三轮车 (3)</span><span class="eye">👁</span></div>
+      <div class="tr-g"><span class="arrow">▸</span><span class="dot" style="background:#f87171;"></span><span class="n">待定目标 (5)</span><span class="eye">👁</span></div>
+    </div>
+    <!-- 编组 = 编组后的标签 -->
+    <div class="tree" id="t-grp" style="display:none;">
+      <div class="tr-g"><span class="n">编组（5）</span><span class="eye">⋯</span></div>
+      <div class="tr-i"><span class="arrow">▸</span><span class="dot" style="background:#f59e0b;"></span><span class="n">同向车队 A（3 个标签）</span><span class="eye">👁</span></div>
+      <div class="tr-i"><span class="arrow">▸</span><span class="dot" style="background:#38bdf8;"></span><span class="n">对向车流 B（2 个标签）</span><span class="eye">👁</span></div>
+      <div class="tr-i"><span class="arrow">▸</span><span class="dot" style="background:#22c55e;"></span><span class="n">路口行人组 C（4 个标签）</span><span class="eye">👁</span></div>
+      <div class="tr-i"><span class="arrow">▸</span><span class="dot" style="background:#a78bfa;"></span><span class="n">施工区设备 D（2 个标签）</span><span class="eye">👁</span></div>
+      <div class="tr-i"><span class="arrow">▸</span><span class="dot" style="background:#94a3b8;"></span><span class="n">路边停车组 E（3 个标签）</span><span class="eye">👁</span></div>
+      <div class="tr-sub" style="padding:6px 12px;line-height:1.7;">编组＝把多个对象标签组成一组，作业时可整组确认 / 删除；组内单个标签仍可在「对象」页独立编辑。</div>
+    </div>
+    <div style="border-top:1px solid var(--dk-line);padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
+      <div style="font-size:12px;color:var(--dk-text2);">标注工具</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <button class="tbtn">拉框</button><button class="tbtn">平移</button><button class="tbtn">旋转</button>
+        <button class="tbtn">3D 框贴合</button><button class="tbtn">复制上一帧</button><button class="tbtn">插值</button>
+      </div>
+      <div style="font-size:12px;color:var(--dk-text2);">属性</div>
+      <div style="display:flex;gap:6px;">
+        <select style="flex:1;height:28px;background:var(--dk-panel2);border:1px solid var(--dk-line);border-radius:4px;color:var(--dk-text);padding:0 6px;"><option>遮挡：partial</option><option>遮挡：none</option><option>遮挡：heavy</option></select>
+        <input value="截断 0.12" style="flex:1;height:28px;background:var(--dk-panel2);border:1px solid var(--dk-line);border-radius:4px;color:var(--dk-text);padding:0 8px;">
+      </div>
+      <div style="font-size:12px;color:var(--dk-text2);">渲染参数</div>
+      <div style="display:flex;gap:6px;">
+        <select style="flex:1;height:28px;background:var(--dk-panel2);border:1px solid var(--dk-line);border-radius:4px;color:var(--dk-text);padding:0 6px;"><option>着色：按高度</option><option>着色：按距离</option><option>着色：按强度</option></select>
+        <input value="点密度 60%" style="flex:1;height:28px;background:var(--dk-panel2);border:1px solid var(--dk-line);border-radius:4px;color:var(--dk-text);padding:0 8px;">
+      </div>
+    </div>
+    </div><!-- /p-obj -->
+    <!-- 质量检查面板（默认显示；合格后才解锁「标注」tab） -->
+    <div id="p-qc" style="flex:1;overflow-y:auto;">
+      <div style="padding:10px 12px;font-size:12px;color:var(--dk-text2);border-bottom:1px solid var(--dk-line);">逐项看数据后判定；判定为符合后当场标注，一次提交。检查项配置在 M2「检验与标注 → 作业清单」维护，本页只读。</div>
+      <div class="qc-i">
+        <div class="t"><span class="n">画面清晰度</span><span class="seg"><button class="on">符合</button><button>不符合</button><button>存疑</button></span></div>
+        <input class="rk" placeholder="备注（选填）">
+      </div>
+      <div class="qc-i">
+        <div class="t"><span class="n">多模态一致性</span><span class="seg"><button class="on">符合</button><button>不符合</button><button>存疑</button></span></div>
+        <input class="rk" placeholder="备注（选填）">
+      </div>
+      <div class="qc-i">
+        <div class="t"><span class="n">时间对齐</span><span class="seg"><button class="on">符合</button><button>不符合</button><button>存疑</button></span></div>
+        <input class="rk" placeholder="备注（选填）">
+      </div>
+      <div class="qc-i">
+        <div class="t"><span class="n">画面异常区域</span><span class="seg"><button class="on">符合</button><button>不符合</button><button>存疑</button></span></div>
+        <input class="rk" placeholder="起始帧号（不符合时填写）">
+      </div>
+      <div class="qc-i">
+        <div class="t"><span class="n">物理合理性</span><span class="seg"><button class="on">符合</button><button>不符合</button><button>存疑</button></span></div>
+        <input class="rk" placeholder="目标 ID（不符合时填写）">
+      </div>
+      <div class="qc-act">
+        <button class="tbtn primary" onclick="qcPass()">判为符合 · 进入标注</button>
+        <button class="tbtn" onclick="qcFail()">判为不符合 · 记录原因</button>
+        <button class="tbtn" onclick="qcDoubt()">有存疑 · 转复核</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 底部：帧条 -->
+<div class="foot">
+  <div class="tg">加载 <div class="sw on" onclick="this.classList.toggle('on')"><i></i></div></div>
+  <div class="tg">指值模式 <div class="sw on" onclick="this.classList.toggle('on')"><i></i></div></div>
+  <div class="fc">
+    <button class="tbtn" onclick="tip('首帧')">⏮</button>
+    <button class="tbtn" onclick="tip('上一帧')">◀</button>
+    <span class="pg"><input id="fno" value="1" style="width:26px;background:none;border:none;color:var(--dk-text);text-align:center;"> / 47</span>
+    <button class="tbtn" onclick="tip('下一帧')">▶</button>
+    <button class="tbtn" onclick="tip('尾帧')">⏭</button>
+    <button class="tbtn" onclick="tip('循环播放')">⏵</button>
+  </div>
+  <div class="frames" id="frames"></div>
+</div>
+
+<div class="mask" id="mask" onclick="dlgClose()"></div>
+<div class="dlg" id="dlg">
+  <div class="h" id="dlg-t"></div>
+  <div class="b" id="dlg-b"></div>
+  <div class="f" id="dlg-f"></div>
+</div>
+
+<script>
+function qs(k){
+  var m = new RegExp('[?&]' + k + '=([^&]*)').exec(location.search);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+(function(){
+  var from = qs('from');
+  if (from){
+    var c = document.getElementById('crumb');
+    if (c){ c.textContent = from; }
+  }
+})();
+function backToWork(){ location.href = 'M2数据生成_原型.html#qc'; }
+function dlg(t, b, f){
+  document.getElementById('dlg-t').textContent = t;
+  document.getElementById('dlg-b').innerHTML = b;
+  document.getElementById('dlg-f').innerHTML = f;
+  document.getElementById('mask').classList.add('show');
+  document.getElementById('dlg').classList.add('show');
+}
+function dlgClose(){
+  document.getElementById('mask').classList.remove('show');
+  document.getElementById('dlg').classList.remove('show');
+}
+function tip(msg){
+  dlg('提示', '<div style="white-space:pre-line;">' + msg + '</div>',
+    '<button class="tbtn primary" onclick="dlgClose()">知道了</button>');
+}
+function commitAnno(){
+  dlg('提交标注', '<div>片段 SY-0184 · 89 实例 · 当前帧 1 / 47</div>'
+    + '<div style="margin-top:6px;">提交后回到 M2 作业面，与第 1 步检查结论一并保存。</div>',
+    '<button class="tbtn" onclick="dlgClose()">继续标注</button><button class="tbtn primary" onclick="dlgClose();backToWork()">提交并返回</button>');
+}
+function setModality(hasPcd){
+  var pc = document.getElementById('pcd-wrap');
+  var vw = document.getElementById('v-wrap');
+  var bpc = document.getElementById('mod-pc');
+  var bv = document.getElementById('mod-v');
+  if (hasPcd){
+    pc.style.display = 'flex'; vw.style.display = 'none';
+    document.getElementById('cams').style.display = '';
+    bpc.classList.add('on'); bv.classList.remove('on');
+  } else {
+    pc.style.display = 'none'; vw.style.display = '';
+    document.getElementById('cams').style.display = 'none';
+    bpc.classList.remove('on'); bv.classList.add('on');
+    tip('无点云片段：多路视频平铺在页面中间，左列相机缩略不重复显示；点击任一路小视图可切为主视图。');
+  }
+}
+function pickMain(el){
+  var main = document.querySelector('#v-wrap .vmain');
+  if (!main || !el || el === main){ return; }
+  var tmp = main.innerHTML;
+  main.innerHTML = el.innerHTML;
+  el.innerHTML = tmp;
+}
+var qcResult = '';
+function panelTab(el, id){
+  if (id === 'p-anno' && qcResult !== '合格'){
+    tip('质量检查判定为「合格」后才能切到「标注」；请先逐项判定（判为符合 · 进入标注）。');
+    return;
+  }
+  var tabs = el.parentNode.querySelectorAll('button');
+  for (var i=0;i<tabs.length;i++){ tabs[i].classList.remove('active'); }
+  el.classList.add('active');
+  var pq = document.getElementById('p-qc');
+  var po = document.getElementById('p-obj');
+  if (id === 'p-anno'){ pq.style.display = 'none'; po.style.display = 'flex'; }
+  else { po.style.display = 'none'; pq.style.display = ''; }
+}
+function qcPass(){
+  qcResult = '合格';
+  document.getElementById('pt-qc').textContent = '质量检查 · 合格';
+  panelTab(document.getElementById('pt-anno'), 'p-anno');
+  tip('质量检查合格：已切到「标注」，可开始标注；检查结论与标注结果一次提交。');
+}
+function qcFail(){
+  qcResult = '不合格';
+  document.getElementById('pt-qc').textContent = '质量检查 · 不合格';
+  tip('有不符合项：从「数据集管理 → 数据分类管理」的质检不合格原因里选一条，片段退出流转进重生成队列，不进入标注。');
+}
+function qcDoubt(){
+  qcResult = '存疑';
+  document.getElementById('pt-qc').textContent = '质量检查 · 存疑';
+  tip('有存疑项：转他人复核，复核后再定符合或不符合；「标注」tab 在复核定合格后解锁。');
+}
+function annoTab(el, id){
+  var tabs = el.parentNode.querySelectorAll('button');
+  for (var i=0;i<tabs.length;i++){ tabs[i].classList.remove('active'); }
+  el.classList.add('active');
+  document.getElementById('t-obj').style.display = (id === 't-obj') ? '' : 'none';
+  document.getElementById('t-grp').style.display = (id === 't-grp') ? '' : 'none';
+}
+(function(){
+  document.body.addEventListener('click', function(e){
+    var b = e.target;
+    if (b.tagName !== 'BUTTON' || !b.parentNode.classList.contains('seg')){ return; }
+    var s = b.parentNode.querySelectorAll('button');
+    for (var i=0;i<s.length;i++){ s[i].classList.remove('on'); }
+    b.classList.add('on');
+  });
+})();
+(function(){
+  var fr = document.getElementById('frames');
+  var html = '';
+  for (var i=1;i<=34;i++){ html += '<button' + (i===1 ? ' class="active"' : '') + '>' + i + '</button>'; }
+  fr.innerHTML = html;
+  fr.addEventListener('click', function(e){
+    if (e.target.tagName !== 'BUTTON'){ return; }
+    var bs = fr.querySelectorAll('button');
+    for (var j=0;j<bs.length;j++){ bs[j].classList.remove('active'); }
+    e.target.classList.add('active');
+    document.getElementById('fno').value = e.target.textContent;
+  });
+})();
+</script>
+</body>
+</html>

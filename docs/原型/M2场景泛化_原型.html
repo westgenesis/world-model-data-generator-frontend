@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>世界模型数据生成系统 · 场景泛化原型 V1</title>
+<style>
+:root{
+  --primary:#009fe3; --primary-hover:#0086c2; --primary-light:#e6f7fd;
+  --bg:#f5f7fa; --card:#ffffff; --border:#e4e8ef; --border-strong:#cbd5e1;
+  --text:#1f2937; --text-2:#6b7280; --text-3:#9ca3af;
+  --success:#10b981; --success-bg:#ecfdf5;
+  --warning:#f59e0b; --warning-bg:#fffbeb;
+  --danger:#ef4444; --danger-bg:#fef2f2;
+  --info:#009fe3; --info-bg:#e6f7fd;
+  --purple:#8b5cf6; --purple-bg:#f5f3ff;
+  --radius:6px; --radius-lg:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+button{font-family:inherit;font-size:13px;cursor:pointer;border:none;background:none;color:inherit;}
+input,select,textarea{font-family:inherit;font-size:13px;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+.layout{display:flex;min-height:100vh;}
+.main{flex:1;padding:20px 24px;min-width:0;}
+.crumb{font-size:12px;color:var(--text-3);margin-bottom:10px;}
+.crumb span{color:var(--text-2);}
+.crumb b{color:var(--text);}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:16px;}
+.page-title{font-size:19px;font-weight:600;margin-bottom:4px;}
+.page-desc{font-size:12px;color:var(--text-2);}
+.head-actions{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;}
+.back-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text-2);margin-bottom:8px;}
+.back-btn:hover{color:var(--primary);}
+.btn{padding:7px 14px;border-radius:var(--radius);border:1px solid var(--border-strong);background:var(--card);color:var(--text);transition:all .15s;white-space:nowrap;}
+.btn:hover{border-color:var(--primary);color:var(--primary);}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover);color:#fff;}
+.btn-sm{padding:4px 10px;font-size:12px;}
+.btn-text{color:var(--primary);padding:2px 4px;font-size:12px;}
+.btn-text:hover{text-decoration:underline;}
+.btn-text.gray{color:var(--text-2);}
+.btn-text.gray:hover{color:var(--text);text-decoration:none;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);}
+.card-pad{padding:16px;}
+.section{margin-bottom:14px;}
+.section-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.section-title .sub{font-size:12px;font-weight:400;color:var(--text-3);}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
+.three-col{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px;align-items:start;}
+.camth{position:relative;height:52px;border-radius:6px;background:linear-gradient(135deg,#334155 0%,#1e293b 100%);color:#cbd5e1;font-size:9.5px;display:flex;align-items:flex-end;padding:5px 6px;cursor:pointer;line-height:1.3;}
+.camth:hover{outline:1px solid var(--primary);}
+.mini-v{position:relative;flex:1;min-height:86px;border-radius:6px;background:#0b0d08;border:1px solid rgba(148,163,184,.25);overflow:hidden;}
+.mini-v>span{position:absolute;left:7px;top:5px;font-size:10px;color:#94a3b8;z-index:1;}
+.lrow{display:flex;align-items:center;gap:7px;padding:7px 10px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;color:var(--text-1);}
+.lrow:hover{background:#f8fafc;}
+.lrow.on{background:#eef6fb;box-shadow:inset 3px 0 0 var(--primary);}
+.lrow .dot{width:8px;height:8px;border-radius:2px;flex:0 0 8px;}
+.fbtn{width:24px;height:20px;border:1px solid var(--border);border-radius:3px;background:#fff;color:var(--text-2);font-size:11px;cursor:pointer;}
+.fbtn:hover{border-color:var(--primary);color:var(--primary);}
+.field{display:flex;align-items:center;gap:6px;}
+.field-label{font-size:12px;color:var(--text-2);white-space:nowrap;}
+.input,.select{height:30px;padding:0 9px;border:1px solid var(--border-strong);border-radius:var(--radius);background:var(--card);color:var(--text);outline:none;transition:border-color .15s;}
+.input:focus,.select:focus{border-color:var(--primary);}
+.input{width:100%;}
+.select{min-width:104px;}
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:12px;font-weight:500;color:var(--text-2);background:#fafbfc;padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:11px 14px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+tbody tr{transition:background .12s;}
+tbody tr:hover{background:#fafbfc;}
+tbody tr:last-child td{border-bottom:none;}
+td input,td select{height:28px;width:100%;padding:0 8px;border:1px solid var(--border);border-radius:4px;background:#fff;color:var(--text);outline:none;font-size:12.5px;}
+td input:focus,td select:focus{border-color:var(--primary);}
+td .num, .num{font-variant-numeric:tabular-nums;}
+.time{font-size:12px;color:var(--text-2);white-space:nowrap;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:10px;font-size:11.5px;white-space:nowrap;}
+.badge-success{background:var(--success-bg);color:#047857;}
+.badge-info{background:var(--info-bg);color:#0086c2;}
+.badge-warning{background:var(--warning-bg);color:#b45309;}
+.badge-danger{background:var(--danger-bg);color:#b91c1c;}
+.badge-gray{background:#f1f5f9;color:var(--text-2);}
+.badge-purple{background:var(--purple-bg);color:#6d28d9;}
+.tag{padding:1px 7px;border-radius:3px;background:#f1f5f9;color:var(--text-2);font-size:11px;white-space:nowrap;}
+.tags{display:flex;gap:4px;flex-wrap:wrap;}
+.ops{display:flex;gap:10px;}
+.prop-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;}
+.prop-row:last-child{border-bottom:none;}
+.prop-row .pl{font-size:12.5px;color:var(--text-2);white-space:nowrap;}
+.form-label{font-size:12.5px;color:var(--text-2);display:block;margin-bottom:6px;}
+.form-item{margin-bottom:12px;}
+.form-item.full{grid-column:1 / -1;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.req{color:var(--danger);margin-left:2px;}
+.qa{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1px solid var(--border-strong);color:var(--text-3);font-size:10.5px;cursor:help;position:relative;font-weight:400;}
+.qa:hover{border-color:var(--primary);color:var(--primary);}
+.qa .qa-tip{display:none;position:absolute;top:20px;left:50%;transform:translateX(-50%);width:300px;background:#1f2937;color:#fff;padding:10px 12px;border-radius:6px;font-size:12px;line-height:1.6;z-index:50;font-weight:400;text-align:left;}
+.qa:hover .qa-tip{display:block;}
+.tip{display:flex;gap:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius);padding:9px 12px;font-size:12px;color:#92400e;}
+.tip.gray{background:#f8fafc;border-color:var(--border);color:var(--text-2);}
+.cam{background:linear-gradient(135deg,#cbd5e1 0%,#94a3b8 100%);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12.5px;letter-spacing:1px;min-height:100px;}
+.cam-sub{background:linear-gradient(135deg,#e2e8f0 0%,#cbd5e1 100%);}
+.cam-cap{font-size:11px;color:var(--text-3);margin-bottom:5px;display:flex;justify-content:space-between;}
+.radio-card{border:1px solid var(--border-strong);border-radius:var(--radius);padding:10px 12px;cursor:pointer;transition:all .15s;background:var(--card);}
+.radio-card:hover{border-color:var(--primary);}
+.radio-card.active{border-color:var(--primary);background:var(--primary-light);}
+.radio-card-title{font-weight:600;font-size:13px;margin-bottom:2px;}
+.radio-card-desc{font-size:11.5px;color:var(--text-3);line-height:1.5;}
+.radio-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.row2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.tl{height:34px;background:linear-gradient(90deg,#e6f7fd 0%,#b6e3f4 40%,#fffbeb 40%,#fde68a 60%,#e6f7fd 60%);border:1px solid var(--border);border-radius:4px;position:relative;margin-top:10px;}
+.tl-mark{position:absolute;top:-5px;width:2px;height:44px;background:var(--primary);}
+.tl-txt{position:absolute;top:40px;font-size:10.5px;color:var(--text-3);}
+.env-tb{width:100%;border-collapse:collapse;}
+.env-tb th{text-align:left;font-size:12px;font-weight:500;color:var(--text-2);background:#fafbfc;padding:8px 12px;border-bottom:1px solid var(--border);}
+.env-tb td{padding:9px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+.env-tb tr:last-child td{border-bottom:none;}
+.env-tb .k{font-size:12.5px;color:var(--text-2);}
+.env-tb .v0{font-size:12.5px;color:var(--text-3);}
+.seg{display:inline-flex;border:1px solid var(--border-strong);border-radius:var(--radius);overflow:hidden;background:var(--card);}
+.seg button{padding:4px 13px;font-size:12px;color:var(--text-2);border-right:1px solid var(--border);background:transparent;transition:all .12s;}
+.seg button:last-child{border-right:none;}
+.seg button:hover{background:#f8fafc;color:var(--primary);}
+.seg button.on{background:var(--primary);color:#fff;}
+.env-hint{font-size:11.5px;color:var(--text-3);margin-left:8px;}
+.env-sum{margin-top:12px;padding:9px 12px;background:#f8fafc;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;color:var(--text-2);line-height:1.9;}
+.env-sum b{color:var(--text);font-weight:600;}
+.env-sum .gray{color:var(--text-3);}
+.dlg-mask{position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:100;display:none;}
+.dlg{position:fixed;left:50%;top:14%;transform:translateX(-50%);width:560px;max-width:92vw;background:var(--card);border-radius:var(--radius-lg);z-index:101;display:none;box-shadow:0 20px 60px rgba(15,23,42,.18);}
+.dlg.show,.dlg-mask.show{display:block;}
+.dlg-head{padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;}
+.dlg-body{padding:16px 18px;max-height:60vh;overflow:auto;}
+.dlg-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="main">
+    <div class="crumb" id="crumb">数据生成<span class="sep"> / </span>新建任务 · 泛化<span class="sep"> / </span><b>场景泛化操作</b></div>
+    <button class="back-btn" onclick="backToTask()">
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 3L5 8l5 5"/></svg>
+      <span>返回任务创建</span>
+    </button>
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">场景泛化操作 <span style="font-size:12px;font-weight:400;color:var(--text-3);">SD-0182 · 高速晴天段 · 10 s · 30 fps</span></h1>
+        <p class="page-desc">加载种子数据的视频与真值标签，编辑环境参数与动态目标物，形成本次泛化任务的输入。</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn" onclick="tip('切换到同一数据集内的其它种子片段')">切换片段</button>
+        <button class="btn btn-primary" onclick="saveGan()">保存泛化配置</button>
+      </div>
+    </div>
+
+    <div class="card card-pad section">
+      <div class="section-title">原始数据 <span class="sub">来源：种子数据</span>
+        <span style="flex:1"></span>
+        <span class="qa">?<span class="qa-tip">泛化页的数据全部来自已接入的种子片段：视频与真值标签必须加载成功后才能编辑；点云按该片段实际持有情况加载，缺失不影响泛化。</span></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>数据类型</th><th>要求</th><th>状态</th><th>说明</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><b>视频</b></td><td><span class="badge badge-danger">必须</span></td><td><span class="badge badge-success">已加载</span></td><td>1080P · 300 帧 · 10 s · 前视 1 路</td><td><button class="btn-text gray" onclick="tip('重新解析视频流与帧索引')">重新加载</button></td></tr>
+            <tr><td><b>真值标签</b></td><td><span class="badge badge-danger">必须</span></td><td><span class="badge badge-success">已加载</span></td><td>24 个标注目标 · 类别 7 种 · 3D 框</td><td><button class="btn-text gray" onclick="tip('重新解析真值文件并重建结构化目标表')">重新加载</button></td></tr>
+            <tr><td>点云</td><td><span class="badge badge-gray">可选</span></td><td><span class="badge badge-success">已加载</span></td><td>32 线 · 与视频帧对齐</td><td><button class="btn-text gray" onclick="tip('重新解析点云帧索引')">重新加载</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+        <div class="card card-pad section">
+      <div class="section-title">原始数据渲染 <span class="sub">点云 + 图像逐帧对齐 · 在视图中编辑 3D 框与车道线标签</span></div>
+      <div style="display:grid;grid-template-columns:148px 1fr 168px 148px;gap:10px;">
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text-1);padding:2px;">相机视角 <span style="font-weight:400;font-size:11px;color:var(--text-3);">与点云逐帧对齐</span></div>
+          <div class="camth" onclick="tip('切换主视图相机源，图像随帧与点云对齐')"><span>CAMERA_FRONT_CENTER</span></div>
+          <div class="camth" onclick="tip('切换主视图相机源，图像随帧与点云对齐')"><span>CAMERA_FRONT_CENTER_TELE</span></div>
+          <div class="camth" onclick="tip('切换主视图相机源，图像随帧与点云对齐')"><span>CAMERA_FRONT_FISHEYE</span></div>
+          <div class="camth" onclick="tip('切换主视图相机源，图像随帧与点云对齐')"><span>CAMERA_FRONT_LEFT</span></div>
+          <div class="camth" onclick="tip('切换主视图相机源，图像随帧与点云对齐')"><span>CAMERA_FRONT_RIGHT</span></div>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;padding:2px 2px 8px;font-size:11.5px;color:var(--text-2);">
+            <span>标注高度 −3.2 – 33.6 m</span>
+            <input type="range" min="0" max="100" value="60" style="flex:1;accent-color:var(--primary);">
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" checked> 地面高度：贴地</label>
+            <span style="flex:1"></span>
+            <span id="sel-chip" class="badge badge-info">已选 OBJ-01 · 轿车</span>
+          </div>
+          <div style="position:relative;height:298px;border-radius:var(--radius);overflow:hidden;background:#0b0d08;">
+            <svg id="layer-pcd" viewBox="0 0 640 300" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;">
+              <g stroke="rgba(250,204,21,.13)" fill="none">
+                <ellipse cx="320" cy="205" rx="70" ry="24"/><ellipse cx="320" cy="205" rx="125" ry="45"/><ellipse cx="320" cy="205" rx="185" ry="68"/><ellipse cx="320" cy="205" rx="255" ry="96"/>
+              </g>
+              <g id="pcd-dots"></g>
+              <g class="tbox" data-tid="LN-01" data-c="#22d3ee" onclick="selectTarget('LN-01')" style="cursor:pointer;">
+                <path d="M60 262 C 220 205, 420 175, 615 118" stroke="#22d3ee" fill="none" stroke-width="2"/>
+                <text x="60" y="256" fill="#22d3ee" font-size="9">LN-01</text>
+              </g>
+              <g class="tbox" data-tid="LN-02" data-c="#22d3ee" onclick="selectTarget('LN-02')" style="cursor:pointer;">
+                <path d="M100 278 C 250 228, 450 198, 625 150" stroke="#22d3ee" fill="none" stroke-width="2" stroke-dasharray="7 4"/>
+                <text x="100" y="273" fill="#22d3ee" font-size="9">LN-02</text>
+              </g>
+              <g class="tbox" data-tid="OBJ-02" data-c="#fb923c" onclick="selectTarget('OBJ-02')" style="cursor:pointer;">
+                <path d="M120 190h52v22h-52z M128 183h52v22h-52 M120 190l8-7 M172 212l8-7 M172 190l8-7 M128 183l-8 7" stroke="#fb923c" fill="none" stroke-width="1.2"/>
+                <text x="120" y="176" fill="#fb923c" font-size="9">OBJ-02</text>
+              </g>
+              <g class="tbox" data-tid="OBJ-03" data-c="#c084fc" onclick="selectTarget('OBJ-03')" style="cursor:pointer;">
+                <path d="M250 168h18v26h-18z M254 164h18v26h-18 M250 168l4-4 M268 194l4-4 M268 168l4-4 M254 164l-4 4" stroke="#c084fc" fill="none" stroke-width="1.2"/>
+                <text x="246" y="158" fill="#c084fc" font-size="9">OBJ-03</text>
+              </g>
+              <g class="tbox" data-tid="OBJ-01" data-c="#facc15" onclick="selectTarget('OBJ-01')" style="cursor:pointer;">
+                <path d="M330 150h40v20h-40z M336 145h40v20h-40 M330 150l6-5 M370 170l6-5 M370 150l6-5 M336 145l-6 5" stroke="#ef4444" fill="none" stroke-width="2"/>
+                <text x="330" y="140" fill="#ef4444" font-size="9">OBJ-01</text>
+              </g>
+              <g class="tbox" data-tid="OBJ-09" data-c="#facc15" onclick="selectTarget('OBJ-09')" style="cursor:pointer;">
+                <path d="M430 175h38v18h-38z M437 169h38v18h-38 M430 175l7-6 M468 193l7-6 M468 175l7-6 M437 169l-7 6" stroke="#facc15" fill="none" stroke-width="1.2"/>
+                <text x="430" y="164" fill="#facc15" font-size="9">OBJ-09</text>
+              </g>
+              <g class="tbox" data-tid="OBJ-05" data-c="#94a3b8" onclick="selectTarget('OBJ-05')" style="cursor:pointer;">
+                <path d="M520 210h86v14h-86z M526 206h86v14h-86 M520 210l6-4 M606 224l6-4 M606 210l6-4 M526 206l-6 4" stroke="#94a3b8" fill="none" stroke-width="1.2"/>
+                <text x="520" y="200" fill="#94a3b8" font-size="9">OBJ-05</text>
+              </g>
+            </svg>
+            <span style="position:absolute;left:10px;top:8px;color:#f8fafc;font-size:11px;background:rgba(11,13,8,.55);padding:2px 8px;border-radius:3px;">前视 · 96 / 300 帧</span>
+            <span id="stack-tag" style="position:absolute;right:10px;top:8px;color:#e2e8f0;font-size:11px;background:rgba(11,13,8,.55);padding:2px 8px;border-radius:3px;">叠加：图像 + 点云（32 线）</span>
+            <span id="tex-tag" style="position:absolute;left:10px;bottom:8px;color:#e2e8f0;font-size:11px;background:rgba(11,13,8,.55);padding:2px 8px;border-radius:3px;">着色：图像纹理</span>
+            <span style="position:absolute;right:10px;bottom:8px;color:#e2e8f0;font-size:11px;background:rgba(11,13,8,.55);padding:2px 8px;border-radius:3px;">点选 3D 框 / 车道线选中</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:8px;font-size:11.5px;color:var(--text-2);">
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">自动加载 <input type="checkbox" checked></label>
+            <span style="flex:1"></span>
+            <button class="btn btn-sm" onclick="tip('跳到首帧')">⏮</button>
+            <button class="btn btn-sm" onclick="tip('上一帧')">◀</button>
+            <input class="input" value="96" style="width:46px;height:26px;text-align:center;">
+            <span>/ 300</span>
+            <button class="btn btn-sm" onclick="tip('下一帧')">▶</button>
+            <button class="btn btn-sm" onclick="tip('跳到末帧')">⏭</button>
+          </div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;">
+            <button class="fbtn">1</button><button class="fbtn">2</button><button class="fbtn">3</button><button class="fbtn">4</button><button class="fbtn">5</button><button class="fbtn">6</button><button class="fbtn">7</button><button class="fbtn">8</button><button class="fbtn">9</button><button class="fbtn">10</button><button class="fbtn">11</button><button class="fbtn">12</button><button class="fbtn">13</button><button class="fbtn">14</button><button class="fbtn">15</button><button class="fbtn">16</button><button class="fbtn">17</button><button class="fbtn">18</button><button class="fbtn">19</button>
+          </div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;overflow:hidden;">
+          <div style="padding:7px 10px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-1);">标签 <span style="font-weight:400;font-size:11px;color:var(--text-3);">24 目标 · 2 车道线</span></div>
+          <div style="flex:1;overflow-y:auto;">
+            <div class="lrow on" data-tid="OBJ-01" onclick="selectTarget('OBJ-01')"><span class="dot" style="background:#facc15;"></span>OBJ-01 · 轿车</div>
+            <div class="lrow" data-tid="OBJ-02" onclick="selectTarget('OBJ-02')"><span class="dot" style="background:#fb923c;"></span>OBJ-02 · 货车</div>
+            <div class="lrow" data-tid="OBJ-03" onclick="selectTarget('OBJ-03')"><span class="dot" style="background:#c084fc;"></span>OBJ-03 · 行人</div>
+            <div class="lrow" data-tid="OBJ-05" onclick="selectTarget('OBJ-05')"><span class="dot" style="background:#94a3b8;"></span>OBJ-05 · 护栏</div>
+            <div class="lrow" data-tid="OBJ-09" onclick="selectTarget('OBJ-09')"><span class="dot" style="background:#facc15;"></span>OBJ-09 · 轿车</div>
+            <div class="lrow" data-tid="LN-01" onclick="selectTarget('LN-01')"><span class="dot" style="background:#22d3ee;"></span>LN-01 · 车道线</div>
+            <div class="lrow" data-tid="LN-02" onclick="selectTarget('LN-02')"><span class="dot" style="background:#22d3ee;"></span>LN-02 · 车道线</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div class="mini-v"><span>俯视图</span><svg viewBox="0 0 140 88" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;"><path d="M20 70 C 50 40, 90 30, 125 18" stroke="#a3e635" stroke-width="1.5" fill="none" opacity=".8"/><path d="M30 78 C 60 50, 95 40, 130 28" stroke="#4d7c0f" stroke-width="1" fill="none" opacity=".6"/><rect x="58" y="38" width="14" height="8" fill="none" stroke="#e2e8f0" stroke-width="1"/></svg></div>
+          <div class="mini-v"><span>侧视图</span><svg viewBox="0 0 140 88" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;"><path d="M10 66 L 130 62" stroke="#4d7c0f" stroke-width="1" opacity=".6"/><path d="M50 66 v-14 h22 v14 M96 66 v-10 h16 v10" stroke="#a3e635" stroke-width="1.5" fill="none" opacity=".85"/></svg></div>
+          <div class="mini-v"><span>后视图</span><svg viewBox="0 0 140 88" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;"><path d="M10 74 C 50 60, 90 60, 130 74" stroke="#a3e635" stroke-width="1.5" fill="none" opacity=".8"/><path d="M60 74 v-16 h20 v16" stroke="#e2e8f0" stroke-width="1" fill="none"/></svg></div>
+        </div>
+      </div>
+      <div class="tip gray" style="margin-top:8px;"><span>主视图＝点云与图像：图像与每一帧点云对齐，叠加后按纹理着色。编辑直接在视图内进行——3D 框与车道线标签选中后即可调整；选中项同步显示在上方标签条。</span></div>
+    </div>
+
+    <div class="card card-pad section">
+      <div class="section-title">环境参数 <span class="sub">本页可编辑 · 只改画面层，几何与真值不动</span>
+        <span class="qa">?<span class="qa-tip">环境参数决定泛化后的画面层：天气与时段改变后，车道几何、目标物位置与真值标签保持不变。这里的取值即任务创建页「环境参数」行的组合。</span></span>
+        <span style="flex:1"></span>
+        <button class="btn btn-sm" onclick="envReset()">重置为原始</button>
+      </div>
+      <table class="env-tb">
+        <thead><tr><th style="width:100px;">参数</th><th style="width:120px;">种子原始值</th><th>泛化目标值</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="k">天气</td>
+            <td class="v0">晴</td>
+            <td><div class="seg" id="seg-w"></div></td>
+          </tr>
+          <tr id="row-i">
+            <td class="k">天气强度</td>
+            <td class="v0">—</td>
+            <td><div class="seg" id="seg-i"></div><span class="env-hint">档位随所选天气切换</span></td>
+          </tr>
+          <tr>
+            <td class="k">时段</td>
+            <td class="v0">白天</td>
+            <td><div class="seg" id="seg-t"></div></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="env-sum" id="env-sum"></div>
+    </div>
+
+<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
+      <button class="btn" onclick="backToTask()">返回任务创建</button>
+      <button class="btn btn-primary" onclick="saveGan()">保存泛化配置</button>
+    </div>
+  </div>
+</div>
+
+<div class="dlg-mask" id="dlg-mask" onclick="dlgClose()"></div>
+<div class="dlg" id="dlg">
+  <div class="dlg-head" id="dlg-title"></div>
+  <div class="dlg-body" id="dlg-body"></div>
+  <div class="dlg-foot" id="dlg-foot"></div>
+</div>
+
+<script>
+function qs(k){
+  var m = new RegExp('[?&]' + k + '=([^&]*)').exec(location.search);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+(function(){
+  var from = qs('from');
+  if (from){
+    var c = document.getElementById('crumb');
+    if (c){ c.innerHTML = from + '<span class="sep"> / </span><b>场景泛化操作</b>'; }
+    var back = document.querySelector('.back-btn span');
+    if (back){ back.textContent = '返回' + (from.indexOf('任务') > -1 ? '任务创建' : '来源页'); }
+  }
+  genPcd();
+})();
+function backToTask(){ location.href = 'M2数据生成_原型.html#gen-list'; }
+function selectTarget(id){
+  var i, chips = document.querySelectorAll('.lrow');
+  for (i = 0; i < chips.length; i++){ chips[i].classList.toggle('on', chips[i].getAttribute('data-tid') === id); }
+  var boxes = document.querySelectorAll('.tbox');
+  for (i = 0; i < boxes.length; i++){
+    var g = boxes[i], on = g.getAttribute('data-tid') === id, p = g.querySelector('path'), tx = g.querySelector('text');
+    var c = on ? '#ef4444' : (g.getAttribute('data-c') || '#e2e8f0');
+    if (p){ p.setAttribute('stroke', c); p.setAttribute('stroke-width', on ? '2.2' : '1.3'); }
+    if (tx){ tx.setAttribute('fill', c); }
+  }
+  var sc = document.getElementById('sel-chip');
+  if (sc){ var chip = document.querySelector('.lrow.on'); sc.textContent = '已选 ' + (chip ? chip.textContent : id); }
+}
+function genPcd(){
+  var g = document.getElementById('pcd-dots');
+  if (!g) return;
+  var colored = true;
+  var s = 42;
+  function rnd(){ s = (s * 9301 + 49297) % 233280; return s / 233280; }
+  var html = '';
+  for (var i = 0; i < 420; i++){
+    var t = rnd(), band = rnd();
+    var x = 20 + t * 600;
+    var y = band < 0.68 ? (175 + rnd() * 115) : (95 + rnd() * 72);
+    var c;
+    if (colored){ var k = rnd(); c = k < 0.55 ? '#facc15' : (k < 0.85 ? '#a3e635' : '#4ade80'); }
+    else { c = '#94a3b8'; }
+    html += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (rnd() < 0.85 ? 1.3 : 2) + '" fill="' + c + '" opacity="' + (0.5 + rnd() * 0.45).toFixed(2) + '"/>';
+  }
+  g.innerHTML = html;
+}
+var ENV_SRC = { w: '晴', t: '白天' };
+var ENV = { w: '晴', i: '', t: '白天' };
+var ENV_I = { '雨': ['小雨', '中雨', '大雨'], '雪': ['小雪', '中雪', '大雪'], '雾': ['轻雾', '中雾', '浓雾'] };
+function segOn(id, v){
+  var bs = document.getElementById(id).querySelectorAll('button');
+  for (var i = 0; i < bs.length; i++){ bs[i].classList.toggle('on', bs[i].getAttribute('data-v') === v); }
+}
+function envSync(){
+  segOn('seg-w', ENV.w);
+  segOn('seg-t', ENV.t);
+  var arr = ENV_I[ENV.w];
+  var row = document.getElementById('row-i');
+  var box = document.getElementById('seg-i');
+  if (arr){
+    row.style.display = '';
+    if (arr.indexOf(ENV.i) < 0){ ENV.i = arr[1]; }
+    var h = '';
+    for (var k = 0; k < arr.length; k++){
+      h += '<button data-v="' + arr[k] + '"' + (arr[k] === ENV.i ? ' class="on"' : '')
+        + ' onclick="envPick(\'i\',\'' + arr[k] + '\')">' + arr[k] + '</button>';
+    }
+    box.innerHTML = h;
+  } else {
+    row.style.display = 'none';
+    ENV.i = '';
+  }
+  var parts = [];
+  if (ENV.w !== ENV_SRC.w){ parts.push('天气 ' + ENV_SRC.w + ' → ' + ENV.w + (ENV.i ? '（' + ENV.i + '）' : '')); }
+  if (ENV.t !== ENV_SRC.t){ parts.push('时段 ' + ENV_SRC.t + ' → ' + ENV.t); }
+  var sum = document.getElementById('env-sum');
+  if (parts.length){
+    sum.innerHTML = '<b>本次改变</b>：' + parts.join('　|　')
+      + '<br><span class="gray">保持不变：车道几何 · 目标物位置与轨迹 · 真值标签内容</span>';
+  } else {
+    sum.innerHTML = '<b>未改变环境参数</b>：输出画面与种子片段一致，本次只做标签校验与编辑。';
+  }
+}
+function envPick(k, v){
+  ENV[k] = v;
+  if (k === 'w'){
+    var arr = ENV_I[ENV.w];
+    if (arr && arr.indexOf(ENV.i) < 0){ ENV.i = arr[1]; }
+    if (!arr){ ENV.i = ''; }
+  }
+  envSync();
+}
+function envReset(){
+  ENV.w = ENV_SRC.w; ENV.i = ''; ENV.t = ENV_SRC.t;
+  envSync();
+}
+function envText(){
+  var parts = [];
+  if (ENV.w !== ENV_SRC.w){ parts.push(ENV_SRC.w + ' → ' + ENV.w + (ENV.i ? '（' + ENV.i + '）' : '')); }
+  if (ENV.t !== ENV_SRC.t){ parts.push(ENV_SRC.t + ' → ' + ENV.t); }
+  return parts.length ? parts.join(' · ') : '未改变（与种子一致）';
+}
+(function initEnv(){
+  var wOpts = [{ v: '晴', l: '保持晴' }, { v: '雨', l: '雨' }, { v: '雪', l: '雪' }, { v: '雾', l: '雾' }];
+  var tOpts = [{ v: '白天', l: '保持白天' }, { v: '黄昏', l: '黄昏' }, { v: '黑夜', l: '黑夜' }];
+  var h = '';
+  for (var i = 0; i < wOpts.length; i++){
+    h += '<button data-v="' + wOpts[i].v + '" onclick="envPick(\'w\',\'' + wOpts[i].v + '\')">' + wOpts[i].l + '</button>';
+  }
+  document.getElementById('seg-w').innerHTML = h;
+  h = '';
+  for (var j = 0; j < tOpts.length; j++){
+    h += '<button data-v="' + tOpts[j].v + '" onclick="envPick(\'t\',\'' + tOpts[j].v + '\')">' + tOpts[j].l + '</button>';
+  }
+  document.getElementById('seg-t').innerHTML = h;
+  envSync();
+})();
+function saveGan(){
+  dlg('保存泛化配置', '<div class="prop-row"><span class="pl">片段</span><span>SD-0182 · 高速晴天段 · 10 s</span></div>'
+    + '<div class="prop-row"><span class="pl">环境参数</span><span>' + envText() + '</span></div>'
+    + '<div class="prop-row"><span class="pl">编辑标签</span><span>3D 框 5 个 · 车道线 2 条（渲染视图内编辑）</span></div>'
+    + '<div class="prop-row"><span class="pl">标签一致性</span><span><span class="badge badge-success">一致</span></span></div>',
+    '<button class="btn" onclick="dlgClose()">继续编辑</button><button class="btn btn-primary" onclick="dlgClose();backToTask()">保存并返回任务创建</button>');
+}
+function dlg(title, body, foot){
+  document.getElementById('dlg-title').textContent = title;
+  document.getElementById('dlg-body').innerHTML = body;
+  document.getElementById('dlg-foot').innerHTML = foot;
+  document.getElementById('dlg-mask').classList.add('show');
+  document.getElementById('dlg').classList.add('show');
+}
+function dlgClose(){
+  document.getElementById('dlg-mask').classList.remove('show');
+  document.getElementById('dlg').classList.remove('show');
+}
+function tip(msg){
+  dlg('提示', '<div style="font-size:12.5px;color:var(--text-2);line-height:1.8;white-space:pre-line;">' + msg + '</div>',
+    '<button class="btn btn-primary" onclick="dlgClose()">知道了</button>');
+}
+</script>
+</body>
+</html>

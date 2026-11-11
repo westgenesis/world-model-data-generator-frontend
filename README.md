@@ -97,8 +97,11 @@ pnpm docker:down --env prod
 src/
 ├── api/          # 接口定义：zod schema + queryOptions
 ├── app/          # 全局 Provider 与路由实例
-├── components/   # 通用组件
+├── components/   # 通用组件（FormDrawer、StatGrid、FilterBar、EnumTag 等）
 ├── config/       # 导航等静态配置
+├── constants/    # 业务枚举（enums.ts）与色调映射
+├── features/     # 业务页面：<模块>/<功能>/ 下放页面组件、components、hooks
+├── hooks/        # 通用 Hooks（列表筛选分页、抽屉状态、写操作封装）
 ├── layouts/      # 布局（顶栏 / 侧栏）
 ├── lib/          # http、queryClient、环境变量等基础设施
 ├── mocks/        # MSW Mock 接口
@@ -120,6 +123,9 @@ src/
 - 原型位于 `docs/原型`，新页面先对照原型实现。
 - 新增菜单：在 `src/routes/_app/<模块>/` 下新建路由文件，并在 `src/config/navigation.ts` 的导航树与语言包中登记。导航树支持任意层级嵌套，面包屑与 ⌘K 搜索自动生效。
 - 图标统一使用 `lucide-react`，默认 `strokeWidth={1.75}`，菜单/按钮尺寸 16–18。
+- 业务枚举统一在 `src/constants/enums.ts` 中用 `defineEnum` 定义（取值、文案、色调），表单选项、zod 校验与标签展示都从这里派生。
+- 路由文件只做路由声明，页面实现放在 `src/features/<模块>/`。
+- 接口在 `src/api/` 中以 zod schema 定义，请求 schema 同时用于表单校验（`zodRule`）；后端未就绪时在 `src/mocks/` 中补充 Mock。
 - 颜色使用语义 token（如 `bg-card`、`text-fg-2`、`border-line`），不要写死色值，以保证暗色模式可用。
 - 全屏页面（如场景编辑器）放在 `src/routes` 根层级，不经过 `_app` 布局。
 - 注释使用中文，函数使用箭头函数并附 JSDoc，单文件不超过 500 行。
