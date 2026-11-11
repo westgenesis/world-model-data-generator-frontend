@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import type { MenuProps } from 'antd'
-import { Button, Menu, Tooltip } from 'antd'
+import { Menu, Tooltip } from 'antd'
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useState } from 'react'
 import type { AppPath, NavNode } from '@/config/navigation'
@@ -12,24 +12,32 @@ import { ClusterStatus } from './ClusterStatus'
 type MenuItem = Required<MenuProps>['items'][number]
 
 /**
- * 递归地将导航树转换为 antd Menu items，支持任意层级
+ * 递归地将导航树转换为 antd Menu items，支持任意层级；
+ * 一级图标稍大以突出模块，子级图标缩小以保持紧凑
  * @param nodes - 导航节点
+ * @param depth - 当前层级，从 0 开始
  * @returns Menu items
  */
-const toMenuItems = (nodes: NavNode[]): MenuItem[] =>
+const toMenuItems = (nodes: NavNode[], depth = 0): MenuItem[] =>
   nodes.map((node): MenuItem => {
     const Icon = node.icon
-    const icon = Icon ? <Icon size={18} strokeWidth={1.75} /> : undefined
+    const icon = Icon ? (
+      <Icon size={depth === 0 ? 17 : 15} strokeWidth={depth === 0 ? 1.85 : 1.75} />
+    ) : undefined
     if (node.children?.length) {
       return {
         key: node.key,
         icon,
         label: node.label,
-        children: toMenuItems(node.children),
+        popupClassName: 'app-nav-popup',
+        children: toMenuItems(node.children, depth + 1),
       }
     }
     return { key: node.to ?? node.key, icon, label: node.label }
   })
+
+/** 导航菜单项（静态，避免每次渲染重建） */
+const MENU_ITEMS = toMenuItems(NAV_TREE)
 
 /**
  * 计算当前路径对应页面的所有祖先目录 key
@@ -58,52 +66,64 @@ export const Sidebar = () => {
 
   const selectedKey = matchLeaf(pathname)?.node.to
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose
+  const toggleLabel = collapsed ? '展开导航' : '收起导航'
 
   return (
     <aside
-      className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-line bg-card transition-[width] duration-200 ${
+      className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-line bg-card transition-[width] duration-300 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none ${
         collapsed ? 'w-sidebar-collapsed' : 'w-sidebar'
       }`}
     >
       <Link
         to="/"
-        className={`flex h-header shrink-0 items-center gap-2.5 text-fg ${collapsed ? 'justify-center' : 'px-5'}`}
+        className="group flex h-header shrink-0 items-center gap-2.5 overflow-hidden px-4 text-fg"
       >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-linear-135 from-[#22c1f5] to-[#0067c7] text-sm font-bold text-white shadow-sm">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-linear-135 from-[#22c1f5] to-[#0067c7] text-sm font-bold text-white shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-6 motion-reduce:transition-none">
           W
         </span>
-        {!collapsed && (
-          <span className="truncate text-[15px] leading-tight font-semibold">
-            世界模型数据生成系统
-          </span>
-        )}
+        <span
+          className={`truncate text-sm leading-tight font-semibold whitespace-nowrap transition-[opacity,translate] duration-200 motion-reduce:transition-none ${
+            collapsed ? 'pointer-events-none -translate-x-2 opacity-0' : 'translate-x-0 opacity-100'
+          }`}
+        >
+          世界模型数据生成系统
+        </span>
       </Link>
 
-      <nav className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto py-2">
+      <nav
+        aria-label="主导航"
+        className="app-nav min-h-0 flex-1 [scrollbar-width:thin] overflow-x-hidden overflow-y-auto pt-1 pb-3"
+      >
         <Menu
           mode="inline"
           // 折叠态 antd 默认宽 80px，需撑满侧栏宽度以保证图标居中
           className="w-full! border-none! bg-transparent!"
           inlineCollapsed={collapsed}
-          inlineIndent={16}
+          inlineIndent={14}
           selectedKeys={selectedKey ? [selectedKey] : []}
           {...(collapsed ? {} : { openKeys, onOpenChange: setOpenKeys })}
-          items={toMenuItems(NAV_TREE)}
+          items={MENU_ITEMS}
           onClick={({ key }) => void navigate({ to: key as AppPath })}
         />
       </nav>
 
-      <div className="shrink-0 space-y-2 border-t border-line p-3">
-        <ClusterStatus compact={collapsed} />
-        <Tooltip title="收起 / 展开导航" placement="right">
-          <Button
-            type="text"
-            block
-            aria-label="收起 / 展开导航"
-            icon={<ToggleIcon size={18} strokeWidth={1.75} />}
-            className="text-fg-3!"
+      <div
+        className={`flex shrink-0 gap-1.5 border-t border-line p-2 ${
+          collapsed ? 'flex-col items-center' : 'items-center'
+        }`}
+      >
+        <div className="min-w-0 flex-1">
+          <ClusterStatus compact={collapsed} />
+        </div>
+        <Tooltip title={toggleLabel} placement="right">
+          <button
+            type="button"
+            aria-label={toggleLabel}
+            className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-fg-3 transition-colors hover:bg-sunken hover:text-fg focus-visible:outline-2 focus-visible:outline-primary active:scale-95"
             onClick={toggleSidebar}
-          />
+          >
+            <ToggleIcon size={16} strokeWidth={1.75} />
+          </button>
         </Tooltip>
       </div>
     </aside>

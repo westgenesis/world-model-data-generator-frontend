@@ -1,5 +1,35 @@
 import type { LucideIcon } from 'lucide-react'
-import { Database, Sparkles, UsersRound } from 'lucide-react'
+import {
+  Activity,
+  Archive,
+  BadgeCheck,
+  BellRing,
+  Boxes,
+  CalendarClock,
+  Clapperboard,
+  Database,
+  DatabaseZap,
+  Factory,
+  FolderInput,
+  FolderKanban,
+  KeyRound,
+  LayoutTemplate,
+  ListTodo,
+  Mail,
+  MessageSquareWarning,
+  Palette,
+  Radar,
+  ScrollText,
+  ShieldCheck,
+  SlidersHorizontal,
+  Sparkles,
+  Sprout,
+  Tags,
+  UserCog,
+  UsersRound,
+  WandSparkles,
+  Workflow,
+} from 'lucide-react'
 import type { FileRouteTypes } from '@/routeTree.gen'
 
 /** 应用内可跳转的路由路径（由 TanStack Router 生成的路由树推导） */
@@ -15,7 +45,7 @@ export interface NavNode {
   key: string
   /** 菜单文案 */
   label: string
-  /** 图标，建议仅一级节点配置 */
+  /** 图标，各层级均可配置；一级节点用于收起态展示，必须配置 */
   icon?: LucideIcon
   /** 跳转路径（叶子节点必填） */
   to?: AppPath
@@ -34,9 +64,15 @@ export interface NavLeaf {
  * 创建页面节点
  * @param label - 菜单文案
  * @param to - 路由路径
+ * @param icon - 菜单图标
  * @returns 叶子导航节点
  */
-const page = (label: string, to: AppPath): NavNode => ({ key: to, label, to })
+const page = (label: string, to: AppPath, icon?: LucideIcon): NavNode => ({
+  key: to,
+  label,
+  to,
+  icon,
+})
 
 /** 全站导航树 */
 export const NAV_TREE: NavNode[] = [
@@ -48,32 +84,36 @@ export const NAV_TREE: NavNode[] = [
       {
         key: 'data-gen/prepare',
         label: '准备场景',
-        children: [page('场景资源', '/data-gen/scene-resources')],
+        icon: Clapperboard,
+        children: [page('场景资源', '/data-gen/scene-resources', Boxes)],
       },
       {
         key: 'data-gen/production',
         label: '生产编排',
+        icon: Factory,
         children: [
-          page('任务管理', '/data-gen/tasks'),
-          page('任务模板', '/data-gen/task-templates'),
-          page('流程编排方案', '/data-gen/flows'),
+          page('任务管理', '/data-gen/tasks', ListTodo),
+          page('任务模板', '/data-gen/task-templates', LayoutTemplate),
+          page('流程编排方案', '/data-gen/flows', Workflow),
         ],
       },
       {
         key: 'data-gen/monitoring',
         label: '执行监控',
+        icon: Radar,
         children: [
-          page('调度策略', '/data-gen/schedules'),
-          page('任务监控', '/data-gen/monitor'),
-          page('日志与通知', '/data-gen/notifications'),
+          page('调度策略', '/data-gen/schedules', CalendarClock),
+          page('任务监控', '/data-gen/monitor', Activity),
+          page('日志与通知', '/data-gen/notifications', BellRing),
         ],
       },
       {
         key: 'data-gen/qc',
         label: '质检归档',
+        icon: Archive,
         children: [
-          page('数据质量检验', '/data-gen/quality'),
-          page('数据分类管理', '/data-gen/categories'),
+          page('数据质量检验', '/data-gen/quality', BadgeCheck),
+          page('数据分类管理', '/data-gen/categories', Tags),
         ],
       },
     ],
@@ -83,11 +123,11 @@ export const NAV_TREE: NavNode[] = [
     label: '数据集管理',
     icon: Database,
     children: [
-      page('数据接入', '/dataset/ingestion'),
-      page('数据处理', '/dataset/processing'),
-      page('种子数据', '/dataset/seed'),
-      page('合成数据', '/dataset/synthetic'),
-      page('质量与反馈', '/dataset/feedback'),
+      page('数据接入', '/dataset/ingestion', FolderInput),
+      page('数据处理', '/dataset/processing', DatabaseZap),
+      page('种子数据', '/dataset/seed', Sprout),
+      page('合成数据', '/dataset/synthetic', WandSparkles),
+      page('质量与反馈', '/dataset/feedback', MessageSquareWarning),
     ],
   },
   {
@@ -95,14 +135,14 @@ export const NAV_TREE: NavNode[] = [
     label: '用户服务管理',
     icon: UsersRound,
     children: [
-      page('用户管理', '/user-service/users'),
-      page('权限管理', '/user-service/permissions'),
-      page('门户个性化', '/user-service/portal'),
-      page('安全管理', '/user-service/security'),
-      page('日志管理', '/user-service/logs'),
-      page('项目管理', '/user-service/projects'),
-      page('消息中心', '/user-service/messages'),
-      page('统一配置管理', '/user-service/config'),
+      page('用户管理', '/user-service/users', UserCog),
+      page('权限管理', '/user-service/permissions', KeyRound),
+      page('门户个性化', '/user-service/portal', Palette),
+      page('安全管理', '/user-service/security', ShieldCheck),
+      page('日志管理', '/user-service/logs', ScrollText),
+      page('项目管理', '/user-service/projects', FolderKanban),
+      page('消息中心', '/user-service/messages', Mail),
+      page('统一配置管理', '/user-service/config', SlidersHorizontal),
     ],
   },
 ]

@@ -103,7 +103,7 @@
 
 @theme {
   --spacing-header: 56px;
-  --spacing-sidebar: 248px;
+  --spacing-sidebar: 232px;
   --spacing-sidebar-collapsed: 64px;
 }
 
@@ -141,5 +141,100 @@
   .ant-btn .lucide,
   .ant-menu .lucide {
     flex-shrink: 0;
+  }
+
+  /*
+   * 侧栏导航：antd Menu 内部 DOM 无法通过工具类触达，故集中在此做局部覆盖。
+   * 仅作用于 .app-nav 内的菜单及其收起态弹出层（.app-nav-popup）。
+   */
+  .app-nav .ant-menu-sub .ant-menu-title-content,
+  .app-nav-popup .ant-menu-title-content {
+    font-size: 13px;
+  }
+
+  /* 图标：颜色随文字过渡，悬停时轻微放大 */
+  .app-nav .ant-menu-item-icon,
+  .app-nav-popup .ant-menu-item-icon {
+    transition:
+      transform 0.2s cubic-bezier(0.2, 0, 0, 1),
+      color 0.2s;
+  }
+  .app-nav .ant-menu-item:hover .ant-menu-item-icon,
+  .app-nav .ant-menu-submenu-title:hover .ant-menu-item-icon,
+  .app-nav-popup .ant-menu-item:hover .ant-menu-item-icon {
+    transform: scale(1.12);
+  }
+  .app-nav .ant-menu-item:active,
+  .app-nav .ant-menu-submenu-title:active {
+    transform: scale(0.98);
+  }
+  .app-nav .ant-menu-item,
+  .app-nav .ant-menu-submenu-title {
+    transition-property: background-color, color, transform, padding;
+  }
+
+  /* 选中项：左侧指示条从中心展开 */
+  .app-nav .ant-menu-inline .ant-menu-item {
+    position: relative;
+    overflow: visible;
+  }
+  .app-nav .ant-menu-inline .ant-menu-item::before {
+    content: '';
+    position: absolute;
+    inset-block: 8px;
+    inset-inline-start: -8px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--color-primary);
+    transform: scaleY(0);
+    transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1);
+  }
+  .app-nav .ant-menu-inline .ant-menu-item-selected::before {
+    transform: scaleY(1);
+  }
+  .app-nav .ant-menu-item-selected {
+    font-weight: 500;
+  }
+
+  /* 当前页面所在的一级目录：标题高亮 */
+  .app-nav .ant-menu-inline > .ant-menu-submenu-selected > .ant-menu-submenu-title {
+    font-weight: 500;
+  }
+
+  /* 子菜单展开：子项依次淡入下移 */
+  .app-nav .ant-menu-sub.ant-menu-inline > li {
+    animation: app-nav-item-in 0.28s cubic-bezier(0.2, 0, 0, 1) both;
+  }
+  .app-nav .ant-menu-sub.ant-menu-inline > li:nth-child(2) {
+    animation-delay: 20ms;
+  }
+  .app-nav .ant-menu-sub.ant-menu-inline > li:nth-child(3) {
+    animation-delay: 40ms;
+  }
+  .app-nav .ant-menu-sub.ant-menu-inline > li:nth-child(4) {
+    animation-delay: 60ms;
+  }
+  .app-nav .ant-menu-sub.ant-menu-inline > li:nth-child(5) {
+    animation-delay: 80ms;
+  }
+  .app-nav .ant-menu-sub.ant-menu-inline > li:nth-child(n + 6) {
+    animation-delay: 100ms;
+  }
+
+  @keyframes app-nav-item-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app-nav .ant-menu-sub.ant-menu-inline > li {
+      animation: none;
+    }
+    .app-nav .ant-menu-inline .ant-menu-item::before,
+    .app-nav .ant-menu-item-icon {
+      transition: none;
+    }
   }
 }
