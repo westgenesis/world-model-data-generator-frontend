@@ -3,6 +3,7 @@ import type { MenuProps } from 'antd'
 import { Menu, Tooltip } from 'antd'
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useState } from 'react'
+import { AppLogo } from '@/components/AppLogo'
 import type { AppPath, NavNode } from '@/config/navigation'
 import { matchLeaf, NAV_TREE } from '@/config/navigation'
 import { useAppStore } from '@/stores/app-store'
@@ -78,9 +79,7 @@ export const Sidebar = () => {
         to="/"
         className="group flex h-header shrink-0 items-center gap-2.5 overflow-hidden px-4 text-fg"
       >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-linear-135 from-[#22c1f5] to-[#0067c7] text-sm font-bold text-white shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-6 motion-reduce:transition-none">
-          W
-        </span>
+        <AppLogo className="shrink-0 rounded-lg shadow-sm" />
         <span
           className={`truncate text-sm leading-tight font-semibold whitespace-nowrap transition-[opacity,translate] duration-200 motion-reduce:transition-none ${
             collapsed ? 'pointer-events-none -translate-x-2 opacity-0' : 'translate-x-0 opacity-100'
