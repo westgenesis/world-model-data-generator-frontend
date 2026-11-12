@@ -18,6 +18,7 @@ import { useEntityPoses } from '../../hooks/use-entity-poses'
 import { useSceneModel } from '../../hooks/use-scene-model'
 import { useSceneEditorStore } from '../../stores/scene-editor-store'
 import { CanvasToolbar } from './CanvasToolbar'
+import { EntityShape } from './EntityShape'
 import { CANVAS_PALETTE, laneFill } from './palette'
 
 /** 画布视图：屏幕坐标 = 偏移 + 世界坐标 × 缩放（y 轴翻转） */
@@ -348,7 +349,6 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
                   const pose = poses.get(e.name)
                   if (!pose) return null
                   const active = e.name === selected
-                  const nose = Math.min(0.6, e.length * 0.2)
                   return (
                     <Group
                       key={e.name}
@@ -380,32 +380,7 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
                         height={Math.max(e.width, 12 * px)}
                         fill="transparent"
                       />
-                      <Rect
-                        x={e.centerX - e.length / 2}
-                        y={-e.width / 2}
-                        width={e.length}
-                        height={e.width}
-                        cornerRadius={Math.min(e.width, e.length) * 0.2}
-                        fill={colors[e.kind]}
-                        stroke={active ? colors.selected : colors.white}
-                        strokeWidth={active ? 2.5 : 1}
-                        strokeScaleEnabled={false}
-                        shadowColor={active ? colors.selected : undefined}
-                        shadowBlur={active ? 10 : 0}
-                        shadowOpacity={0.6}
-                        shadowForStrokeEnabled={false}
-                      />
-                      {e.kind !== 'misc' && (
-                        <Rect
-                          x={e.centerX + e.length / 2 - nose}
-                          y={-e.width / 2}
-                          width={nose}
-                          height={e.width}
-                          fill={colors.white}
-                          opacity={0.55}
-                          listening={false}
-                        />
-                      )}
+                      <EntityShape entity={e} colors={colors} active={active} px={px} />
                     </Group>
                   )
                 })}

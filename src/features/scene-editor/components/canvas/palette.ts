@@ -21,6 +21,12 @@ export const CANVAS_PALETTE = {
     trajectory: '#0a9ee0',
     trajectoryMuted: 'rgba(10,158,224,0.45)',
     keyframe: '#ffffff',
+    glass: 'rgba(23,32,48,0.82)',
+    headlight: '#fff4c2',
+    taillight: '#f04438',
+    tire: '#1f2430',
+    cone: '#f97316',
+    tree: '#2f9e6e',
   },
   dark: {
     bg: '#0b0f17',
@@ -41,6 +47,12 @@ export const CANVAS_PALETTE = {
     trajectory: '#2bb3f0',
     trajectoryMuted: 'rgba(43,179,240,0.45)',
     keyframe: '#121823',
+    glass: 'rgba(4,8,15,0.78)',
+    headlight: '#fff1b0',
+    taillight: '#f97066',
+    tire: '#0b0e14',
+    cone: '#fb923c',
+    tree: '#3fb47e',
   },
 } as const
 
