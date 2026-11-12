@@ -9,6 +9,9 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
+      args:
+        # 构建时使用的 npm 源，默认走国内镜像；可在 env 文件中覆盖
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
     image: ${IMAGE_NAME:-world-model-data-generator-frontend}:${IMAGE_TAG:-latest}
     restart: unless-stopped
     ports:

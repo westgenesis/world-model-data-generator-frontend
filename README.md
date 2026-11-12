@@ -70,6 +70,7 @@ pnpm docker:down --env prod
 | `WEB_PORT`                 | 宿主机对外端口                                              |
 | `IMAGE_NAME` / `IMAGE_TAG` | 镜像名与标签                                                |
 | `COMPOSE_PROJECT_NAME`     | Compose 项目名，区分同机的多套环境                          |
+| `NPM_REGISTRY`             | 构建时使用的 npm 源，默认 `https://registry.npmmirror.com`  |
 
 - 不使用脚本时：`docker compose -f deploy/docker-compose.yml --env-file deploy/env/dev.env up -d --build`。
 - 只用镜像时：`docker run -d -p 8080:80 -e API_UPSTREAM=http://backend:8080 <镜像>`。
