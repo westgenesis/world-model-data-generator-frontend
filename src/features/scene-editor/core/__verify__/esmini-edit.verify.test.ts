@@ -15,6 +15,7 @@ import { laneToWorld } from '../opendrive/lanes'
 import { parseOpenDrive } from '../opendrive/parse'
 import { poseAt } from '../openscenario/motion'
 import { withHeadings } from '../openscenario/edit'
+import { setEgo, setSensorFileRef } from '../openscenario/edit-ego'
 import { parseXml, serializeXml } from '../xml'
 
 const ESMINI_HOME = process.env.ESMINI_HOME
@@ -167,7 +168,7 @@ describe.skipIf(!ESMINI_HOME)('esmini 交叉验证：编辑结果', { timeout: 1
     expect(coneMove).toBeLessThan(0.05)
   })
 
-  it('1.2 场景（中文实体名）：角色车辆、火车按关键帧运动，人行横道、路灯等静态物体不动', () => {
+  it('1.2 场景（中文实体名、自车与传感器引用）：角色车辆、火车按关键帧运动，人行横道、路灯等静态物体不动', () => {
     const police: Keyframe[] = [
       { t: 0, x: 30, y: -1.75 },
       { t: 5, x: 90, y: -1.75 },
@@ -211,6 +212,8 @@ describe.skipIf(!ESMINI_HOME)('esmini 交叉验证：编辑结果', { timeout: 1
         { kind: 'world', x: o.x, y: o.y, h: 0 },
       )
     }
+    // 自车标记（CARLA 约定）与传感器配置引用：esmini 应忽略这些属性
+    doc = setSensorFileRef(setEgo(doc, '警车1'), '__edit_roles.sensors.json')
     doc = setKeyframes(doc, '警车1', police)
     doc = setKeyframes(doc, '救护车1', ambulance)
     doc = setKeyframes(doc, '火车1', train)
@@ -218,6 +221,7 @@ describe.skipIf(!ESMINI_HOME)('esmini 交叉验证：编辑结果', { timeout: 1
     const text = serializeXml({ doc, declaration: '<?xml version="1.0" encoding="UTF-8"?>' })
     expect(text).toContain('revMinor="2"')
     expect(text).toContain('role="police"')
+    expect(text).toContain('value="ego_vehicle"')
     const rows = simulate('__edit_roles.xosc', text)
     expect(rows.length, 'esmini 未能运行生成的 1.2 场景').toBeGreaterThan(0)
 

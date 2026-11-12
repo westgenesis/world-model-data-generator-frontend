@@ -1,16 +1,24 @@
 import { useCallback, useEffect } from 'react'
 import { createEmptyScenario } from '../core/openscenario/edit'
 import { parseOpenScenario } from '../core/openscenario/parse'
+import {
+  isSensorConfigText,
+  parseSensorConfig,
+  serializeSensorConfig,
+} from '../core/sensors/schema'
 import { parseXml, serializeXml } from '../core/xml'
-import type { DocKind } from '../stores/scene-editor-store'
+import type { DocKind, PaneKind } from '../stores/scene-editor-store'
 import { useSceneEditorStore } from '../stores/scene-editor-store'
 
 /** 本地草稿内容 */
 interface Draft {
   xodr?: string
   xosc?: string
+  /** 传感器配置 JSON */
+  sensors?: string
   xodrName: string
   xoscName: string
+  sensorsName?: string
   savedAt: string
 }
 
@@ -27,7 +35,8 @@ const draftKey = (sceneId: string) => `wmdg-scene-draft:${sceneId}`
  * @param text - 文件内容
  */
 const downloadText = (fileName: string, text: string) => {
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/xml' }))
+  const type = fileName.toLowerCase().endsWith('.json') ? 'application/json' : 'application/xml'
+  const url = URL.createObjectURL(new Blob([text], { type }))
   const a = document.createElement('a')
   a.href = url
   a.download = fileName
@@ -55,7 +64,8 @@ export interface FetchedFile {
 
 /**
  * 按 URL 获取 xodr / xosc 文本（用于路由 loader）。
- * 只给 xosc 时，按其 LogicFile 相对路径一并获取路网。
+ * 只给 xosc 时，按其 LogicFile 相对路径一并获取路网；自车引用了传感器配置时一并获取
+ * （获取失败不阻断加载，校验面板会提示缺少传感器配置）。
  * @param urls.xodr - 路网地址
  * @param urls.xosc - 场景地址
  * @returns 文件列表（路网在前）
@@ -72,15 +82,28 @@ export const fetchSceneFiles = async ({
   const files: FetchedFile[] = []
   let roadUrl = xodr && new URL(xodr, base).href
   let scene: FetchedFile | undefined
+  let sensors: FetchedFile | undefined
   if (xosc) {
     const sceneUrl = new URL(xosc, base).href
     scene = { name: sceneUrl.split('/').pop() ?? 'scene.xosc', text: await fetchText(sceneUrl) }
-    const logic = parseOpenScenario(parseXml(scene.text).doc).logicFile
-    if (!roadUrl && logic) roadUrl = new URL(logic, sceneUrl).href
+    const { logicFile, sensorFile } = parseOpenScenario(parseXml(scene.text).doc)
+    if (!roadUrl && logicFile) roadUrl = new URL(logicFile, sceneUrl).href
+    if (sensorFile) {
+      const sensorUrl = new URL(sensorFile, sceneUrl).href
+      try {
+        sensors = {
+          name: sensorUrl.split('/').pop() ?? 'sensors.json',
+          text: await fetchText(sensorUrl),
+        }
+      } catch {
+        // 缺少传感器配置时仍加载场景
+      }
+    }
   }
   if (roadUrl)
     files.push({ name: roadUrl.split('/').pop() ?? 'road.xodr', text: await fetchText(roadUrl) })
   if (scene) files.push(scene)
+  if (sensors) files.push(sensors)
   return files
 }
 
@@ -106,28 +129,41 @@ export const readDraft = (sceneId: string): Draft | undefined => {
 export const useSceneIo = (sceneId: string) => {
   const load = useSceneEditorStore((s) => s.load)
 
-  /** 按扩展名导入一个文件 */
+  /** 按扩展名导入一个文件：.xodr / .xosc，或 format 为 wmdg-sensor-config 的 .json */
   const importText = useCallback(
-    (fileName: string, text: string) => {
+    (fileName: string, text: string): PaneKind => {
       const lower = fileName.toLowerCase()
+      if (lower.endsWith('.json')) {
+        if (!isSensorConfigText(text)) {
+          throw new Error(`${fileName} 不是传感器配置文件（format 应为 wmdg-sensor-config）`)
+        }
+        useSceneEditorStore
+          .getState()
+          .commitSensors({ config: parseSensorConfig(text), fileName }, `导入 ${fileName}`)
+        return 'sensors'
+      }
       const kind: DocKind | undefined = lower.endsWith('.xodr')
         ? 'xodr'
         : lower.endsWith('.xosc')
           ? 'xosc'
           : undefined
-      if (!kind) throw new Error(`不支持的文件类型：${fileName}（仅支持 .xodr / .xosc）`)
+      if (!kind) {
+        throw new Error(`不支持的文件类型：${fileName}（仅支持 .xodr / .xosc / 传感器配置 .json）`)
+      }
       load(kind, parseXml(text), fileName)
       return kind
     },
     [load],
   )
 
-  /** 导入多个本地文件（先路网后场景，便于场景解析时路网已就绪） */
+  /** 导入多个本地文件（路网 → 场景 → 传感器配置，便于场景解析时路网已就绪） */
   const importFiles = useCallback(
     async (files: File[]) => {
-      const sorted = [...files].sort(
-        (a, b) => Number(a.name.endsWith('.xosc')) - Number(b.name.endsWith('.xosc')),
-      )
+      const order = (name: string) => {
+        const lower = name.toLowerCase()
+        return lower.endsWith('.xodr') ? 0 : lower.endsWith('.xosc') ? 1 : 2
+      }
+      const sorted = [...files].sort((a, b) => order(a.name) - order(b.name))
       for (const file of sorted) importText(file.name, await file.text())
     },
     [importText],
@@ -141,8 +177,13 @@ export const useSceneIo = (sceneId: string) => {
     [importText],
   )
 
-  const exportDoc = useCallback((kind: DocKind) => {
+  /** 导出单个文档：xodr / xosc / 传感器配置 JSON */
+  const exportDoc = useCallback((kind: PaneKind) => {
     const s = useSceneEditorStore.getState()
+    if (kind === 'sensors') {
+      if (s.sensors) downloadText(s.sensors.fileName, serializeSensorConfig(s.sensors.config))
+      return
+    }
     const source = s[kind]
     if (source) downloadText(kind === 'xodr' ? s.xodrName : s.xoscName, serializeXml(source))
   }, [])
@@ -167,8 +208,10 @@ export const useSceneIo = (sceneId: string) => {
     const draft: Draft = {
       xodr: s.xodr && serializeXml(s.xodr),
       xosc: s.xosc && serializeXml(s.xosc),
+      sensors: s.sensors && serializeSensorConfig(s.sensors.config),
       xodrName: s.xodrName,
       xoscName: s.xoscName,
+      sensorsName: s.sensors?.fileName,
       savedAt: new Date().toISOString(),
     }
     try {
@@ -186,6 +229,7 @@ export const useSceneIo = (sceneId: string) => {
     if (!draft) return false
     if (draft.xodr) importText(draft.xodrName, draft.xodr)
     if (draft.xosc) importText(draft.xoscName, draft.xosc)
+    if (draft.sensors) importText(draft.sensorsName ?? 'scene.sensors.json', draft.sensors)
     useSceneEditorStore.getState().markSaved()
     return true
   }, [sceneId, importText])

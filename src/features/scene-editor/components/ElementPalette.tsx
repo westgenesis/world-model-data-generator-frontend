@@ -45,7 +45,10 @@ export const ElementPalette = () => {
   const add = (element: SceneElement) => {
     const { viewCenter } = useSceneEditorStore.getState()
     try {
-      if (addElementAt(element, viewCenter.x, viewCenter.y).upgraded) message.info(UPGRADE_NOTICE)
+      const result = addElementAt(element, viewCenter.x, viewCenter.y)
+      if (result.upgraded) message.info(UPGRADE_NOTICE)
+      if (result.autoEgo)
+        message.info(`已将「${result.name}」设为自车，可在「自车」页签更换并配置传感器`)
       setUi({ inspectorTab: 'entity' })
     } catch (e) {
       message.error(e instanceof Error ? e.message : String(e))

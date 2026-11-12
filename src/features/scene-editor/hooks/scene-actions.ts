@@ -19,6 +19,7 @@ import {
   setStopTime,
   uniqueName,
 } from '../core/openscenario/edit'
+import { getEgoNames, setEgo } from '../core/openscenario/edit-ego'
 import { snapToFrame } from '../core/openscenario/motion'
 import type { OscEntity } from '../core/openscenario/types'
 import type { SceneElement } from '../constants/elements'
@@ -77,13 +78,13 @@ const entityInfo = (name: string) => {
  * @param element - 元件
  * @param x - 世界坐标 x
  * @param y - 世界坐标 y
- * @returns 新实体名，以及场景是否因角色属性升级到 OpenSCENARIO 1.2
+ * @returns 新实体名、场景是否因角色属性升级到 OpenSCENARIO 1.2、是否被自动设为自车
  */
 export const addElementAt = (
   element: SceneElement,
   x: number,
   y: number,
-): { name: string; upgraded: boolean } => {
+): { name: string; upgraded: boolean; autoEgo: boolean } => {
   const doc = ensureScene()
   const { scene } = getSceneModel()
   // 默认名称用元件中文名加序号，如「轿车1」
@@ -105,15 +106,15 @@ export const addElementAt = (
   const pose: InitPose = hit
     ? { kind: 'lane', roadId: hit.roadId, laneId: hit.laneId, s: hit.s, offset: 0 }
     : { kind: 'world', x, y, h: near && near.distance < 30 ? near.hdg : 0 }
-  const next = addEntity(doc, draft, pose)
+  let next = addEntity(doc, draft, pose)
   const upgraded = revMinor(next) > revMinor(doc)
-  store().commit(
-    'xosc',
-    next,
-    upgraded ? `添加 ${name}（升级为 OpenSCENARIO 1.2）` : `添加 ${name}`,
-  )
+  // 场景还没有自车时，第一辆车自动设为自车
+  const autoEgo = element.kind === 'vehicle' && getEgoNames(next).length === 0
+  if (autoEgo) next = setEgo(next, name)
+  const label = `添加 ${name}${upgraded ? '（升级为 OpenSCENARIO 1.2）' : ''}${autoEgo ? '，设为自车' : ''}`
+  store().commit('xosc', next, label)
   store().select(name)
-  return { name, upgraded }
+  return { name, upgraded, autoEgo }
 }
 
 /**

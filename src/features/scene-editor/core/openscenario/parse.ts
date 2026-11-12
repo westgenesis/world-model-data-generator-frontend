@@ -1,6 +1,7 @@
 import { child, children } from '../xml'
 import type { ParamTable } from './expression'
 import { paramNum, paramStr, readParams } from './expression'
+import { getEgoNames, getSensorFileRef } from './edit-ego'
 import { EDITOR_STORY } from './types'
 import type {
   EntityKind,
@@ -284,9 +285,11 @@ export const parseOpenScenario = (doc: XMLDocument): Scenario => {
     warnings.push({ message: '该文件是参数分布或目录文件，不是可运行场景' })
   }
 
-  const entities = children(child(root, 'Entities'), 'ScenarioObject').map((so) =>
-    readEntity(so, global),
-  )
+  const egos = new Set(getEgoNames(doc))
+  const entities = children(child(root, 'Entities'), 'ScenarioObject').map((so) => {
+    const entity = readEntity(so, global)
+    return egos.has(entity.name) ? { ...entity, ego: true } : entity
+  })
   if (children(child(root, 'Entities'), 'EntitySelection').length) {
     warnings.push({ message: 'EntitySelection 暂未支持' })
   }
@@ -323,6 +326,7 @@ export const parseOpenScenario = (doc: XMLDocument): Scenario => {
     initPositions,
     initSpeeds,
     trajectories: readTrajectories(root, global, cache, warnings),
+    sensorFile: getSensorFileRef(doc),
     warnings,
   }
 }

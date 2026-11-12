@@ -18,9 +18,11 @@ import { useEntityPoses } from '../../hooks/use-entity-poses'
 import { useSceneModel } from '../../hooks/use-scene-model'
 import { useSceneEditorStore } from '../../stores/scene-editor-store'
 import { CanvasToolbar } from './CanvasToolbar'
+import { SensorCoverage, SensorMounts } from './EgoSensors'
 import { isGroundEntity } from './entity-variant'
+import { LaneMarks, LaneShapes } from './RoadLayer'
 import { EntityShape } from './EntityShape'
-import { CANVAS_PALETTE, laneFill } from './palette'
+import { CANVAS_PALETTE } from './palette'
 
 /** 画布视图：屏幕坐标 = 偏移 + 世界坐标 × 缩放（y 轴翻转） */
 interface View {
@@ -63,6 +65,8 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
   const poses = useEntityPoses(scene)
   const tool = useSceneEditorStore((s) => s.tool)
   const layers = useSceneEditorStore((s) => s.layers)
+  const sensorConfig = useSceneEditorStore((s) => s.sensors?.config)
+  const selectedSensor = useSceneEditorStore((s) => s.selectedSensor)
   const selected = useSceneEditorStore((s) => s.selected)
   const selectedKey = useSceneEditorStore((s) => s.selectedKey)
   const select = useSceneEditorStore((s) => s.select)
@@ -229,7 +233,11 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
       if (!rect) return
       const w = toWorld(e.clientX - rect.left, e.clientY - rect.top)
       try {
-        if (addElementById(id, w.x, w.y)?.upgraded) message.info(UPGRADE_NOTICE)
+        const result = addElementById(id, w.x, w.y)
+        if (result?.upgraded) message.info(UPGRADE_NOTICE)
+        if (result?.autoEgo) {
+          message.info(`已将「${result.name}」设为自车，可在「自车」页签更换并配置传感器`)
+        }
         setUi({ inspectorTab: 'entity' })
       } catch (err) {
         message.error(err instanceof Error ? err.message : String(err))
@@ -239,39 +247,6 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
     const files = Array.from(e.dataTransfer.files)
     if (files.length) onDropFiles(files)
   }
-
-  const lanes = useMemo(
-    () =>
-      road?.mesh.lanes.map((lane) => (
-        <Line
-          key={`${lane.roadId}/${lane.sectionIndex}/${lane.laneId}`}
-          points={lane.polygon}
-          closed
-          fill={laneFill(lane, colors)}
-          perfectDrawEnabled={false}
-          shadowForStrokeEnabled={false}
-          onMouseEnter={() => setHovered(lane)}
-          onMouseLeave={() => setHovered(undefined)}
-        />
-      )),
-    [road, colors],
-  )
-
-  const marks = useMemo(
-    () =>
-      road?.mesh.marks.map((m, i) => (
-        <Line
-          key={i}
-          points={m.points}
-          stroke={m.color === 'yellow' ? colors.yellow : colors.white}
-          strokeWidth={Math.max(m.width, 0.1)}
-          dash={m.type.includes('broken') ? [3, 6] : undefined}
-          listening={false}
-          perfectDrawEnabled={false}
-        />
-      )),
-    [road, colors],
-  )
 
   const entities = scene?.scenario.entities ?? []
   // 贴地的标记（人行横道、停车位等）先画，车辆和行人画在上面；sort 为稳定排序，其余保持原顺序
@@ -283,6 +258,10 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
     [scene],
   )
   const selectedMotion = selected ? scene?.motions.get(selected) : undefined
+  // 自车与选中传感器的覆盖范围（多辆车标记为自车时不显示，由校验面板提示）
+  const egos = entities.filter((e) => e.ego)
+  const egoPose = egos.length === 1 ? poses.get(egos[0].name) : undefined
+  const coverage = sensorConfig?.sensors.find((s) => s.id === selectedSensor)
   const px = 1 / view.scale
 
   /** 关键帧手柄拖动结束：更新该关键帧 */
@@ -326,7 +305,9 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
         >
           <Layer>
             <Group x={view.x} y={view.y} scaleX={view.scale} scaleY={-view.scale}>
-              {layers.lanes && lanes}
+              {layers.lanes && road && (
+                <LaneShapes mesh={road.mesh} colors={colors} onHover={setHovered} />
+              )}
               {layers.lanes && hovered && (
                 <Line
                   points={hovered.polygon}
@@ -337,7 +318,7 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
                   listening={false}
                 />
               )}
-              {layers.marks && marks}
+              {layers.marks && road && <LaneMarks mesh={road.mesh} colors={colors} />}
 
               {layers.trajectories &&
                 entities.map((e) => {
@@ -356,6 +337,17 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
                     />
                   )
                 })}
+
+              {layers.sensors && egoPose && coverage && (
+                <Group
+                  x={egoPose.x}
+                  y={egoPose.y}
+                  rotation={(egoPose.hdg * 180) / Math.PI}
+                  listening={false}
+                >
+                  <SensorCoverage sensor={coverage} colors={colors} px={px} />
+                </Group>
+              )}
 
               {layers.entities &&
                 drawOrder.map((e) => {
@@ -394,6 +386,14 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
                         fill="transparent"
                       />
                       <EntityShape entity={e} colors={colors} active={active} px={px} />
+                      {e.ego && layers.sensors && sensorConfig && (
+                        <SensorMounts
+                          sensors={sensorConfig.sensors}
+                          colors={colors}
+                          px={px}
+                          selected={selectedSensor}
+                        />
+                      )}
                     </Group>
                   )
                 })}

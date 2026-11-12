@@ -5,6 +5,8 @@ import type { EntityMotion } from './openscenario/motion'
 import { segmentSpeeds } from './openscenario/motion'
 import type { ResolvedPose } from './openscenario/resolve'
 import type { Scenario } from './openscenario/types'
+import type { SensorConfig } from './sensors/types'
+import { validateEgo } from './validate-ego'
 
 /** 校验结果 */
 export interface Issue {
@@ -28,6 +30,8 @@ export interface ValidateInput {
   mesh?: NetworkMesh
   poses?: ReadonlyMap<string, ResolvedPose>
   motions?: ReadonlyMap<string, EntityMotion>
+  /** 自车传感器配置 */
+  sensors?: SensorConfig
 }
 
 /**
@@ -35,7 +39,14 @@ export interface ValidateInput {
  * @param input - 场景、文档与路网
  * @returns 问题列表（按严重程度排序）
  */
-export const validateScene = ({ scenario, doc, mesh, poses, motions }: ValidateInput): Issue[] => {
+export const validateScene = ({
+  scenario,
+  doc,
+  mesh,
+  poses,
+  motions,
+  sensors,
+}: ValidateInput): Issue[] => {
   const issues: Issue[] = []
   if (!mesh) issues.push({ level: 'warning', message: '未加载路网（.xodr），无法校验车道位置' })
   if (!scenario || !doc) {
@@ -159,5 +170,6 @@ export const validateScene = ({ scenario, doc, mesh, poses, motions }: ValidateI
   }
 
   const order = { error: 0, warning: 1, info: 2 }
+  issues.push(...validateEgo(scenario, sensors))
   return issues.sort((a, b) => order[a.level] - order[b.level])
 }

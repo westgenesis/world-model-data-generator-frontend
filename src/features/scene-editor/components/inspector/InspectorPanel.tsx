@@ -4,14 +4,16 @@ import { validateScene } from '../../core/validate'
 import { useSceneModel } from '../../hooks/use-scene-model'
 import type { InspectorTab } from '../../stores/scene-editor-store'
 import { useSceneEditorStore } from '../../stores/scene-editor-store'
+import { EgoPanel } from './EgoPanel'
 import { EntityInspector } from './EntityInspector'
 import { ScenePanel } from './ScenePanel'
 import { ValidationPanel } from './ValidationPanel'
 
-/** 右侧面板：目标物 / 场景 / 校验 */
+/** 右侧面板：目标物 / 自车 / 场景 / 校验 */
 export const InspectorPanel = () => {
   const { road, scene } = useSceneModel()
   const xosc = useSceneEditorStore((s) => s.xosc)
+  const sensors = useSceneEditorStore((s) => s.sensors)
   const tab = useSceneEditorStore((s) => s.inspectorTab)
   const setUi = useSceneEditorStore((s) => s.setUi)
 
@@ -23,8 +25,9 @@ export const InspectorPanel = () => {
         mesh: road?.mesh,
         poses: scene?.poses,
         motions: scene?.motions,
+        sensors: sensors?.config,
       }),
-    [scene, xosc, road],
+    [scene, xosc, road, sensors],
   )
   const problemCount = issues.filter((i) => i.level !== 'info').length
 
@@ -39,6 +42,7 @@ export const InspectorPanel = () => {
       className="h-full [&_.ant-tabs-body-holder]:min-h-0! [&_.ant-tabs-body-holder]:overflow-x-hidden! [&_.ant-tabs-body-holder]:overflow-y-auto! [&_.ant-tabs-nav]:mb-0! [&_.ant-tabs-nav]:px-3"
       items={[
         { key: 'entity', label: '目标物', children: <EntityInspector scene={scene} /> },
+        { key: 'ego', label: '自车', children: <EgoPanel scene={scene} /> },
         { key: 'scene', label: '场景', children: <ScenePanel road={road} scene={scene} /> },
         {
           key: 'validate',

@@ -9,6 +9,7 @@ import {
   UPGRADE_NOTICE,
 } from '../../constants/elements'
 import type { OscEntity } from '../../core/openscenario/types'
+import { setEgoVehicle } from '../../hooks/ego-actions'
 import {
   commitKeyframes,
   convertToInline,
@@ -72,9 +73,10 @@ export const EntityInspector = ({ scene }: { scene: SceneModel | undefined }) =>
 
   const { scenario, motions, poses } = scene
   const isDynamic = (e: OscEntity) => (motions.get(e.name)?.keyframes.length ?? 0) >= 2
-  const list = scenario.entities.filter((e) =>
-    filter === 'all' ? true : filter === 'dynamic' ? isDynamic(e) : !isDynamic(e),
-  )
+  // 自车排在最前，其余保持文件顺序
+  const list = scenario.entities
+    .filter((e) => (filter === 'all' ? true : filter === 'dynamic' ? isDynamic(e) : !isDynamic(e)))
+    .sort((a, b) => Number(!!b.ego) - Number(!!a.ego))
   const entity = scenario.entities.find((e) => e.name === selected)
 
   /** 统一处理编辑异常 */
@@ -133,6 +135,11 @@ export const EntityInspector = ({ scene }: { scene: SceneModel | undefined }) =>
                   >
                     <Icon size={15} strokeWidth={1.75} className="shrink-0" />
                     <span className="min-w-0 flex-1 truncate font-medium">{e.name}</span>
+                    {e.ego && (
+                      <Tag variant="filled" color="geekblue" className="me-0!">
+                        自车
+                      </Tag>
+                    )}
                     {isDynamic(e) && (
                       <Tag variant="filled" color="blue" className="me-0!">
                         {motions.get(e.name)?.keyframes.length} 帧
@@ -246,6 +253,34 @@ const EntityProps = ({ entity, scene, run, onRemove }: EntityPropsProps) => {
             onChange={(category) => run(() => updateEntityProps(entity.name, { category }))}
           />
         </Field>
+        {entity.kind === 'vehicle' && (
+          <div className="col-span-full flex items-center gap-2 text-xs text-fg-3">
+            {entity.ego ? (
+              <>
+                <Tag variant="filled" color="geekblue" className="me-0!">
+                  自车
+                </Tag>
+                传感器在「自车」页签配置
+                <Button
+                  type="link"
+                  size="small"
+                  className="ms-auto px-0!"
+                  onClick={() => setUi({ inspectorTab: 'ego' })}
+                >
+                  配置传感器
+                </Button>
+              </>
+            ) : (
+              <Button
+                size="small"
+                disabled={isCatalog}
+                onClick={() => run(() => setEgoVehicle(entity.name))}
+              >
+                设为自车
+              </Button>
+            )}
+          </div>
+        )}
         {entity.kind !== 'misc' && (
           <Field label="角色（OpenSCENARIO 1.2）" wide>
             <Select

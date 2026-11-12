@@ -9,6 +9,7 @@ import { InspectorPanel } from './components/inspector/InspectorPanel'
 import { Timeline } from './components/Timeline'
 import { useEditorShortcuts } from './hooks/use-editor-shortcuts'
 import { readDraft, useSceneIo } from './hooks/use-scene-io'
+import type { PaneKind } from './stores/scene-editor-store'
 import { useSceneEditorStore } from './stores/scene-editor-store'
 
 const routeApi = getRouteApi('/scene-editor/$sceneId')
@@ -40,6 +41,7 @@ export const SceneEditorPage = () => {
 
   const xodr = useSceneEditorStore((s) => s.xodr)
   const xosc = useSceneEditorStore((s) => s.xosc)
+  const sensors = useSceneEditorStore((s) => s.sensors)
   const dirty = useSceneEditorStore((s) => s.dirty)
   const canUndo = useSceneEditorStore((s) => s.past.length > 0)
   const canRedo = useSceneEditorStore((s) => s.future.length > 0)
@@ -158,7 +160,7 @@ export const SceneEditorPage = () => {
           <input
             ref={inputRef}
             type="file"
-            accept=".xodr,.xosc"
+            accept=".xodr,.xosc,.json"
             multiple
             hidden
             onChange={(e) => {
@@ -176,7 +178,7 @@ export const SceneEditorPage = () => {
               新建场景
             </Button>
           </Tooltip>
-          <Tooltip title="可同时选择 .xodr 和 .xosc，也可以直接拖到画布上">
+          <Tooltip title="可同时选择 .xodr、.xosc 和传感器配置 .json，也可以直接拖到画布上">
             <Button
               size="small"
               icon={<FileUp {...iconProps} />}
@@ -191,8 +193,9 @@ export const SceneEditorPage = () => {
               items: [
                 { key: 'xosc', label: '导出场景 .xosc', disabled: !xosc },
                 { key: 'xodr', label: '导出路网 .xodr', disabled: !xodr },
+                { key: 'sensors', label: '导出传感器配置 .json', disabled: !sensors },
               ],
-              onClick: ({ key }) => io.exportDoc(key as 'xodr' | 'xosc'),
+              onClick: ({ key }) => io.exportDoc(key as PaneKind),
             }}
           >
             <Button size="small" icon={<Download {...iconProps} />}>

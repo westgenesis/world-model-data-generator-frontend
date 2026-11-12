@@ -31,6 +31,20 @@ export const EntityShape = ({ entity, colors, active, px }: EntityShapeProps) =>
   return (
     <Group listening={false}>
       {parts}
+      {/* 自车：常驻的虚线外框，与选中框区分 */}
+      {entity.ego && !active && (
+        <Rect
+          x={cx - L / 2 - pad}
+          y={-W / 2 - pad}
+          width={L + pad * 2}
+          height={W + pad * 2}
+          cornerRadius={pad}
+          stroke={colors.ego}
+          strokeWidth={2}
+          strokeScaleEnabled={false}
+          dash={[6 * px, 4 * px]}
+        />
+      )}
       {active && (
         <Rect
           x={cx - L / 2 - pad}

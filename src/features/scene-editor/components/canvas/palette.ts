@@ -37,6 +37,10 @@ export const CANVAS_PALETTE = {
     sign: '#15803d',
     island: '#8fa37d',
     marking: 'rgba(255,255,255,0.92)',
+    ego: '#2563eb',
+    sensorCamera: '#0ea5e9',
+    sensorLidar: '#a855f7',
+    sensorRadar: '#f59e0b',
   },
   dark: {
     bg: '#0b0f17',
@@ -73,6 +77,10 @@ export const CANVAS_PALETTE = {
     sign: '#22a35a',
     island: '#4f5f45',
     marking: 'rgba(217,222,230,0.9)',
+    ego: '#60a5fa',
+    sensorCamera: '#38bdf8',
+    sensorLidar: '#c084fc',
+    sensorRadar: '#fbbf24',
   },
 } as const
 

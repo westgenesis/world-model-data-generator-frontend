@@ -73,6 +73,8 @@ export interface OscEntity {
   centerX: number
   /** 角色（OpenSCENARIO 1.2+，如 police / ambulance）；未设置时为 undefined */
   role?: string
+  /** 是否标记为自车（Vehicle/Properties 中 type=ego_vehicle，CARLA 约定） */
+  ego?: boolean
   /** 来自目录引用时的目录名与条目名 */
   catalog?: { catalogName: string; entryName: string }
 }
@@ -108,6 +110,8 @@ export interface Scenario {
   description: string
   /** RoadNetwork/LogicFile 的路径（相对 xosc 文件） */
   logicFile?: string
+  /** 自车 Properties 中引用的传感器配置文件路径 */
+  sensorFile?: string
   entities: OscEntity[]
   /** 实体名 → 初始位置 */
   initPositions: Map<string, OscPosition>

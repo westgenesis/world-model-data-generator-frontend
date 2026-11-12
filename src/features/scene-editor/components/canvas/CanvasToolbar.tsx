@@ -10,6 +10,7 @@ const LAYER_LABELS: Record<keyof LayerState, string> = {
   entities: '目标物',
   trajectories: '轨迹',
   labels: '名称标签',
+  sensors: '自车传感器',
 }
 
 interface CanvasToolbarProps {

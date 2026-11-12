@@ -7,8 +7,9 @@ import { Alert, Button, Segmented, Tag, Tooltip } from 'antd'
 import { Check, Copy, RotateCcw, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useIsDark } from '@/hooks/use-is-dark'
+import { serializeSensorConfig } from '../core/sensors/schema'
 import { serializeXml } from '../core/xml'
-import type { DocKind } from '../stores/scene-editor-store'
+import type { PaneKind } from '../stores/scene-editor-store'
 import { useSceneEditorStore } from '../stores/scene-editor-store'
 
 /** 某个文档的未应用草稿 */
@@ -29,13 +30,46 @@ const errorPosition = (message: string) => {
 }
 
 /**
- * XML 面板：预览并直接修改 xosc / xodr 文本。修改形成草稿，应用后替换文档（可撤销）
+ * 传感器配置字段错误（如 sensors[2].camera.fov）在文本中的大致位置：
+ * 先找到第 i 个传感器的 "id"，再向后找该字段名
+ * @param text - JSON 文本
+ * @param message - 错误信息
+ * @returns 字符偏移；无法定位时返回 undefined
+ */
+const sensorFieldOffset = (text: string, message: string) => {
+  const m = /sensors\[(\d+)\]((?:\.\w+)*)/.exec(message)
+  if (!m) return undefined
+  let at = -1
+  for (let i = 0; i <= Number(m[1]); i++) {
+    at = text.indexOf('"id"', at + 1)
+    if (at < 0) return undefined
+  }
+  // 回到该传感器对象的起始处，再逐级查找字段
+  let from = text.lastIndexOf('{', at)
+  for (const key of m[2].split('.').filter(Boolean)) {
+    const next = text.indexOf(`"${key}"`, from)
+    if (next < 0) break
+    from = next
+  }
+  return from
+}
+
+/** 各标签的显示名 */
+const TAB_LABEL: Record<PaneKind, string> = {
+  xosc: 'OpenSCENARIO',
+  xodr: 'OpenDRIVE',
+  sensors: '传感器 JSON',
+}
+
+/**
+ * 文本面板：预览并直接修改 xosc / xodr / 传感器配置 JSON。修改形成草稿，应用后替换文档（可撤销）
  */
 export const XmlPane = () => {
   const isDark = useIsDark()
   const tab = useSceneEditorStore((s) => s.xmlTab)
   const xodr = useSceneEditorStore((s) => s.xodr)
   const xosc = useSceneEditorStore((s) => s.xosc)
+  const sensors = useSceneEditorStore((s) => s.sensors)
   const revision = useSceneEditorStore((s) => s.revision)
   const focus = useSceneEditorStore((s) => s.xmlFocus)
   const replaceText = useSceneEditorStore((s) => s.replaceText)
@@ -43,11 +77,14 @@ export const XmlPane = () => {
 
   // 编辑器实例放在 state 中：懒加载完成后触发定位等副作用
   const [view, setView] = useState<EditorView>()
-  const [drafts, setDrafts] = useState<Partial<Record<DocKind, Draft>>>({})
+  const [drafts, setDrafts] = useState<Partial<Record<PaneKind, Draft>>>({})
   const [error, setError] = useState<string>()
 
-  const source = tab === 'xodr' ? xodr : xosc
-  const docText = useMemo(() => (source ? serializeXml(source) : ''), [source])
+  const docText = useMemo(() => {
+    if (tab === 'sensors') return sensors ? serializeSensorConfig(sensors.config) : ''
+    const source = tab === 'xodr' ? xodr : xosc
+    return source ? serializeXml(source) : ''
+  }, [tab, xodr, xosc, sensors])
   const draft = drafts[tab]
   const text = draft?.text ?? docText
   const stale = !!draft && draft.revision !== revision
@@ -76,10 +113,16 @@ export const XmlPane = () => {
       setError(message)
       const pos = errorPosition(message)
       if (view) {
-        const line = view.state.doc.line(
-          Math.min(Math.max(pos?.line ?? 1, 1), view.state.doc.lines),
-        )
-        const from = Math.min(line.from + Math.max((pos?.column ?? 1) - 1, 0), line.to)
+        const offset =
+          current.xmlTab === 'sensors' && !pos ? sensorFieldOffset(d.text, message) : undefined
+        const line =
+          offset !== undefined
+            ? view.state.doc.lineAt(Math.min(offset, view.state.doc.length))
+            : view.state.doc.line(Math.min(Math.max(pos?.line ?? 1, 1), view.state.doc.lines))
+        const from =
+          offset !== undefined
+            ? Math.min(offset, line.to)
+            : Math.min(line.from + Math.max((pos?.column ?? 1) - 1, 0), line.to)
         const diagnostic: Diagnostic = {
           from,
           to: Math.max(from, line.to),
@@ -95,7 +138,13 @@ export const XmlPane = () => {
     }
   }, [drafts, replaceText, clearDiagnostics, view])
 
-  const extensions = useMemo(() => [xml(), lintGutter(), EditorView.lineWrapping], [])
+  const extensions = useMemo(
+    () =>
+      tab === 'sensors'
+        ? [lintGutter(), EditorView.lineWrapping]
+        : [xml(), lintGutter(), EditorView.lineWrapping],
+    [tab],
+  )
 
   // 定位请求：选中第一个匹配文本并滚动到视野中央
   useEffect(() => {
@@ -109,7 +158,7 @@ export const XmlPane = () => {
     view.focus()
   }, [focus, tab, view])
 
-  const hasDoc = !!source
+  const hasDoc = !!docText
 
   return (
     <div
@@ -123,14 +172,19 @@ export const XmlPane = () => {
       }}
     >
       <div className="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-line px-3 py-1.5">
-        <Segmented<DocKind>
+        <Segmented<PaneKind>
           size="small"
           value={tab}
           onChange={(v) => setUi({ xmlTab: v })}
-          options={[
-            { value: 'xosc', label: <span>OpenSCENARIO{drafts.xosc && ' •'}</span> },
-            { value: 'xodr', label: <span>OpenDRIVE{drafts.xodr && ' •'}</span> },
-          ]}
+          options={(['xosc', 'xodr', 'sensors'] as const).map((k) => ({
+            value: k,
+            label: (
+              <span>
+                {TAB_LABEL[k]}
+                {drafts[k] && ' •'}
+              </span>
+            ),
+          }))}
         />
         {draft && (
           <Tag color="orange" variant="filled" className="me-0!">
@@ -230,7 +284,9 @@ export const XmlPane = () => {
           />
         ) : (
           <p className="p-6 text-center text-xs text-fg-3">
-            尚未加载 {tab === 'xodr' ? 'OpenDRIVE（.xodr）' : 'OpenSCENARIO（.xosc）'} 文件
+            {tab === 'sensors'
+              ? '尚未配置传感器：在右侧「自车」面板添加，或导入传感器配置 .json'
+              : `尚未加载 ${tab === 'xodr' ? 'OpenDRIVE（.xodr）' : 'OpenSCENARIO（.xosc）'} 文件`}
           </p>
         )}
       </div>
