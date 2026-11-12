@@ -71,6 +71,8 @@ export interface OscEntity {
   height: number
   /** 包围盒中心相对参考点（后轴中心）的纵向偏移 */
   centerX: number
+  /** 角色（OpenSCENARIO 1.2+，如 police / ambulance）；未设置时为 undefined */
+  role?: string
   /** 来自目录引用时的目录名与条目名 */
   catalog?: { catalogName: string; entryName: string }
 }

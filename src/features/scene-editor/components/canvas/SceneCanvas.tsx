@@ -4,7 +4,7 @@ import type { DragEvent } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Circle, Group, Label, Layer, Line, Rect, Stage, Tag, Text } from 'react-konva'
 import { useIsDark } from '@/hooks/use-is-dark'
-import { ELEMENT_DRAG_TYPE } from '../../constants/elements'
+import { ELEMENT_DRAG_TYPE, UPGRADE_NOTICE } from '../../constants/elements'
 import type { LaneMesh } from '../../core/opendrive/lanes'
 import type { Keyframe } from '../../core/openscenario/edit'
 import {
@@ -18,6 +18,7 @@ import { useEntityPoses } from '../../hooks/use-entity-poses'
 import { useSceneModel } from '../../hooks/use-scene-model'
 import { useSceneEditorStore } from '../../stores/scene-editor-store'
 import { CanvasToolbar } from './CanvasToolbar'
+import { isGroundEntity } from './entity-variant'
 import { EntityShape } from './EntityShape'
 import { CANVAS_PALETTE, laneFill } from './palette'
 
@@ -228,7 +229,7 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
       if (!rect) return
       const w = toWorld(e.clientX - rect.left, e.clientY - rect.top)
       try {
-        addElementById(id, w.x, w.y)
+        if (addElementById(id, w.x, w.y)?.upgraded) message.info(UPGRADE_NOTICE)
         setUi({ inspectorTab: 'entity' })
       } catch (err) {
         message.error(err instanceof Error ? err.message : String(err))
@@ -273,6 +274,14 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
   )
 
   const entities = scene?.scenario.entities ?? []
+  // 贴地的标记（人行横道、停车位等）先画，车辆和行人画在上面；sort 为稳定排序，其余保持原顺序
+  const drawOrder = useMemo(
+    () =>
+      [...(scene?.scenario.entities ?? [])].sort(
+        (a, b) => Number(isGroundEntity(b)) - Number(isGroundEntity(a)),
+      ),
+    [scene],
+  )
   const selectedMotion = selected ? scene?.motions.get(selected) : undefined
   const px = 1 / view.scale
 
@@ -345,7 +354,7 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
                 })}
 
               {layers.entities &&
-                entities.map((e) => {
+                drawOrder.map((e) => {
                   const pose = poses.get(e.name)
                   if (!pose) return null
                   const active = e.name === selected

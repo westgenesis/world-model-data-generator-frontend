@@ -22,7 +22,10 @@ const DEFAULT_SIZE: Record<string, [number, number, number, number]> = {
   van: [5.2, 2.0, 2.0, 1.6],
   truck: [8.0, 2.5, 3.4, 2.5],
   semitrailer: [12.0, 2.5, 3.8, 4.0],
+  trailer: [7.0, 2.5, 3.2, 2.0],
   bus: [12.0, 2.5, 3.2, 4.0],
+  tram: [30.0, 2.65, 3.5, 9.0],
+  train: [50.0, 3.0, 4.0, 15.0],
   bicycle: [1.8, 0.6, 1.7, 0.5],
   motorbike: [2.0, 0.8, 1.5, 0.6],
   pedestrian: [0.5, 0.6, 1.8, 0],
@@ -32,7 +35,12 @@ const DEFAULT_SIZE: Record<string, [number, number, number, number]> = {
 /** 目录条目名关键字 → 类别 */
 const CATEGORY_HINTS: [string, string][] = [
   ['truck', 'truck'],
-  ['trailer', 'semitrailer'],
+  ['semitrailer', 'semitrailer'],
+  ['trailer', 'trailer'],
+  ['tram', 'tram'],
+  ['train', 'train'],
+  ['ambulance', 'van'],
+  ['police', 'car'],
   ['bus', 'bus'],
   ['bicycle', 'bicycle'],
   ['bike', 'bicycle'],
@@ -187,14 +195,16 @@ const readEntity = (so: Element, params: ParamTable): OscEntity => {
           : 'miscObjectCategory',
       params,
     ) || kind
+  const role = kind === 'misc' ? undefined : paramStr(def, 'role', params) || undefined
   const bb = child(def, 'BoundingBox')
-  if (!bb) return sized(kind, category)
+  if (!bb) return { ...sized(kind, category), role }
   const dim = child(bb, 'Dimensions')
   const center = child(bb, 'Center')
   return {
     name,
     kind,
     category,
+    role,
     length: paramNum(dim, 'length', params, 1),
     width: paramNum(dim, 'width', params, 1),
     height: paramNum(dim, 'height', params, 1),

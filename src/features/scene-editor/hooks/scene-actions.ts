@@ -10,6 +10,7 @@ import {
   createEmptyScenario,
   removeEntity,
   renameEntity,
+  revMinor,
   setEntityProps,
   setInitPose,
   setInitSpeed,
@@ -76,9 +77,13 @@ const entityInfo = (name: string) => {
  * @param element - 元件
  * @param x - 世界坐标 x
  * @param y - 世界坐标 y
- * @returns 新实体名
+ * @returns 新实体名，以及场景是否因角色属性升级到 OpenSCENARIO 1.2
  */
-export const addElementAt = (element: SceneElement, x: number, y: number): string => {
+export const addElementAt = (
+  element: SceneElement,
+  x: number,
+  y: number,
+): { name: string; upgraded: boolean } => {
   const doc = ensureScene()
   const { scene } = getSceneModel()
   const name = uniqueName(scene?.scenario.entities.map((e) => e.name) ?? [], element.prefix)
@@ -89,6 +94,8 @@ export const addElementAt = (element: SceneElement, x: number, y: number): strin
     length: element.length,
     width: element.width,
     height: element.height,
+    role: element.role,
+    maxSpeed: element.maxSpeed,
   }
   const hit = snapPoint(x, y)
   // 不吸附时，朝向取附近车道的行驶方向，避免新车横在路上
@@ -97,9 +104,15 @@ export const addElementAt = (element: SceneElement, x: number, y: number): strin
   const pose: InitPose = hit
     ? { kind: 'lane', roadId: hit.roadId, laneId: hit.laneId, s: hit.s, offset: 0 }
     : { kind: 'world', x, y, h: near && near.distance < 30 ? near.hdg : 0 }
-  store().commit('xosc', addEntity(doc, draft, pose), `添加 ${name}`)
+  const next = addEntity(doc, draft, pose)
+  const upgraded = revMinor(next) > revMinor(doc)
+  store().commit(
+    'xosc',
+    next,
+    upgraded ? `添加 ${name}（升级为 OpenSCENARIO 1.2）` : `添加 ${name}`,
+  )
   store().select(name)
-  return name
+  return { name, upgraded }
 }
 
 /**
@@ -107,7 +120,7 @@ export const addElementAt = (element: SceneElement, x: number, y: number): strin
  * @param id - 元件 id
  * @param x - 世界坐标 x
  * @param y - 世界坐标 y
- * @returns 新实体名；元件不存在时返回 undefined
+ * @returns 同 addElementAt；元件不存在时返回 undefined
  */
 export const addElementById = (id: string, x: number, y: number) => {
   const element = SCENE_ELEMENTS.find((e) => e.id === id)
@@ -255,16 +268,25 @@ export const renameSelected = (from: string, to: string) => {
 }
 
 /**
- * 修改实体类别与尺寸
+ * 修改实体类别、尺寸与角色
  * @param name - 实体名
- * @param props - 字段
+ * @param props - 字段；role 为空串表示清除
+ * @returns 场景是否因角色属性升级到 OpenSCENARIO 1.2
  */
 export const updateEntityProps = (
   name: string,
-  props: Partial<Pick<EntityDraft, 'category' | 'length' | 'width' | 'height'>>,
-) => {
+  props: Partial<Pick<EntityDraft, 'category' | 'length' | 'width' | 'height' | 'role'>>,
+): boolean => {
   const { xosc } = store()
-  if (xosc) store().commit('xosc', setEntityProps(xosc.doc, name, props), `修改 ${name} 属性`)
+  if (!xosc) return false
+  const next = setEntityProps(xosc.doc, name, props)
+  const upgraded = revMinor(next) > revMinor(xosc.doc)
+  store().commit(
+    'xosc',
+    next,
+    upgraded ? `修改 ${name} 属性（升级为 OpenSCENARIO 1.2）` : `修改 ${name} 属性`,
+  )
+  return upgraded
 }
 
 /**

@@ -1,7 +1,13 @@
 import { Alert, App, Button, Empty, Popconfirm, Segmented, Select, Tag, Tooltip } from 'antd'
 import { Code2, Crosshair, Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { CATEGORY_OPTIONS, SCENE_ELEMENTS, SIZE_PRESETS } from '../../constants/elements'
+import {
+  CATEGORY_OPTIONS,
+  ROLE_OPTIONS,
+  SCENE_ELEMENTS,
+  SIZE_PRESETS,
+  UPGRADE_NOTICE,
+} from '../../constants/elements'
 import type { OscEntity } from '../../core/openscenario/types'
 import {
   commitKeyframes,
@@ -29,13 +35,15 @@ const POSITION_LABEL: Record<string, string> = {
 }
 
 /**
- * 实体图标：按类别匹配元件库图标
+ * 实体图标：按角色、类别匹配元件库图标
  * @param entity - 实体
  * @returns 图标组件
  */
 const iconOf = (entity: OscEntity) =>
   (
-    SCENE_ELEMENTS.find((e) => e.kind === entity.kind && e.category === entity.category) ??
+    ((entity.role &&
+      SCENE_ELEMENTS.find((e) => e.kind === entity.kind && e.role === entity.role)) ||
+      SCENE_ELEMENTS.find((e) => e.kind === entity.kind && e.category === entity.category)) ??
     SCENE_ELEMENTS.find((e) => e.kind === entity.kind)
   )?.icon ?? SCENE_ELEMENTS[0].icon
 
@@ -186,6 +194,7 @@ interface EntityPropsProps {
  * @param props - 实体、场景与操作
  */
 const EntityProps = ({ entity, scene, run, onRemove }: EntityPropsProps) => {
+  const { message } = App.useApp()
   const drawSpeed = useSceneEditorStore((s) => s.drawSpeed)
   const setUi = useSceneEditorStore((s) => s.setUi)
   const pose = scene.poses.get(entity.name)
@@ -237,6 +246,21 @@ const EntityProps = ({ entity, scene, run, onRemove }: EntityPropsProps) => {
             onChange={(category) => run(() => updateEntityProps(entity.name, { category }))}
           />
         </Field>
+        {entity.kind !== 'misc' && (
+          <Field label="角色（OpenSCENARIO 1.2）" wide>
+            <Select
+              size="small"
+              value={entity.role ?? ''}
+              disabled={isCatalog}
+              options={ROLE_OPTIONS}
+              onChange={(role) =>
+                run(() => {
+                  if (updateEntityProps(entity.name, { role })) message.info(UPGRADE_NOTICE)
+                })
+              }
+            />
+          </Field>
+        )}
         <Field label="尺寸预设" wide>
           <Select
             size="small"
@@ -254,7 +278,7 @@ const EntityProps = ({ entity, scene, run, onRemove }: EntityPropsProps) => {
           <Field label="长 m">
             <NumberField
               value={entity.length}
-              min={0.1}
+              min={0.01}
               disabled={isCatalog}
               onCommit={(length) => run(() => updateEntityProps(entity.name, { length }))}
             />
@@ -262,7 +286,7 @@ const EntityProps = ({ entity, scene, run, onRemove }: EntityPropsProps) => {
           <Field label="宽 m">
             <NumberField
               value={entity.width}
-              min={0.1}
+              min={0.01}
               disabled={isCatalog}
               onCommit={(width) => run(() => updateEntityProps(entity.name, { width }))}
             />
@@ -270,7 +294,7 @@ const EntityProps = ({ entity, scene, run, onRemove }: EntityPropsProps) => {
           <Field label="高 m">
             <NumberField
               value={entity.height}
-              min={0.1}
+              min={0.01}
               disabled={isCatalog}
               onCommit={(height) => run(() => updateEntityProps(entity.name, { height }))}
             />

@@ -299,3 +299,51 @@ describe('projectToLane / isOnRoad', () => {
     expect(isOnRoad(mesh, 50, -8)).toBe(false)
   })
 })
+
+describe('角色（OpenSCENARIO 1.2）', () => {
+  const header = (doc: XMLDocument) =>
+    doc.getElementsByTagName('FileHeader')[0].getAttribute('revMinor')
+  const v11 = () =>
+    parseXml(`<OpenSCENARIO><FileHeader revMajor="1" revMinor="1"/>
+  <Entities/><Storyboard><Init><Actions/></Init><StopTrigger/></Storyboard></OpenSCENARIO>`).doc
+  const pose = { kind: 'world', x: 0, y: 0, h: 0 } as const
+
+  it('新建场景为 1.2', () => {
+    expect(header(createEmptyScenario({ logicFile: 'r.xodr' }).doc)).toBe('2')
+  })
+
+  it('添加角色车辆时写入 role、maxSpeed，并把旧版本场景升级到 1.2', () => {
+    const doc = v11()
+    const next = addEntity(doc, { ...CAR, name: 'Police', role: 'police', maxSpeed: 30 }, pose)
+    const vehicle = next.getElementsByTagName('Vehicle')[0]
+    expect(vehicle.getAttribute('role')).toBe('police')
+    expect(next.getElementsByTagName('Performance')[0].getAttribute('maxSpeed')).toBe('30')
+    expect(header(next)).toBe('2')
+    expect(header(doc)).toBe('1')
+    expect(parseOpenScenario(next).entities[0].role).toBe('police')
+  })
+
+  it('不带角色的实体不改变版本；静态物体忽略角色', () => {
+    expect(header(addEntity(v11(), CAR, pose))).toBe('1')
+    const cone: EntityDraft = {
+      ...CAR,
+      name: 'Cone',
+      kind: 'misc',
+      category: 'obstacle',
+      role: 'police',
+    }
+    const next = addEntity(v11(), cone, pose)
+    expect(next.getElementsByTagName('MiscObject')[0].hasAttribute('role')).toBe(false)
+    expect(header(next)).toBe('1')
+  })
+
+  it('修改与清除角色', () => {
+    const doc = addEntity(v11(), CAR, pose)
+    const withRole = setEntityProps(doc, 'Car1', { role: 'ambulance' })
+    expect(parseOpenScenario(withRole).entities[0].role).toBe('ambulance')
+    expect(header(withRole)).toBe('2')
+    const cleared = setEntityProps(withRole, 'Car1', { role: '' })
+    expect(parseOpenScenario(cleared).entities[0].role).toBeUndefined()
+    expect(cleared.getElementsByTagName('Vehicle')[0].hasAttribute('role')).toBe(false)
+  })
+})

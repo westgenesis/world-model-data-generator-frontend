@@ -162,11 +162,13 @@ describe.skipIf(!ESMINI_HOME)('esmini 交叉验证：OpenSCENARIO', { timeout: 1
     const rows = dataRows(runEsmini(control) ?? '').join('\n')
     const roundTrip = runEsmini(exported)
     const same = !!roundTrip && dataRows(roundTrip).join('\n') === rows
+    // 不一致时再跑一次对照副本：对照副本自身前后不一致，说明是 esmini 偶发的不确定性，而不是导出问题
+    const flaky = !same && dataRows(runEsmini(control, '.again') ?? '').join('\n') !== rows
 
     console.info(
-      `[osc] ${file.padEnd(42)} 实体 ${String(frame.length).padStart(2)}  位置偏差 ${worst.toFixed(4)} m  朝向偏差 ${headingWorst.toFixed(4)} rad  未解析 ${missing.join('/') || '-'}  导出回放一致 ${deterministic ? (same ? '是' : '否') : '（esmini 自身不确定，跳过）'}`,
+      `[osc] ${file.padEnd(42)} 实体 ${String(frame.length).padStart(2)}  位置偏差 ${worst.toFixed(4)} m  朝向偏差 ${headingWorst.toFixed(4)} rad  未解析 ${missing.join('/') || '-'}  导出回放一致 ${deterministic && !flaky ? (same ? '是' : '否') : '（esmini 自身不确定，跳过）'}`,
     )
-    if (deterministic) expect(same).toBe(true)
+    if (deterministic && !flaky) expect(same).toBe(true)
     if (!KNOWN_DEVIATIONS[file]) expect(worst).toBeLessThan(0.05)
   })
 })

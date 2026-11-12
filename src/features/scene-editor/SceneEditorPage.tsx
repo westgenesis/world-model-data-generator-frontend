@@ -221,8 +221,7 @@ export const SceneEditorPage = () => {
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <aside className="w-48 shrink-0 overflow-y-auto border-r border-line">
-          <h2 className="px-3 pt-3 text-xs font-medium text-fg-2">元件库</h2>
+        <aside className="flex w-48 shrink-0 flex-col border-r border-line">
           <ElementPalette />
         </aside>
 

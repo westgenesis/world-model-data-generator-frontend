@@ -19,16 +19,18 @@ import type { EntityDraft, InitPose } from './edit-base'
 import {
   childOf,
   cleanupEditorStory,
+  ensureRevMinor,
   findObject,
   initPrivate,
   managedGroup,
   PREFIX,
+  ROLE_REV_MINOR,
   rootOf,
   setInitPose,
 } from './edit-base'
 
 export type { EntityDraft, InitPose, Keyframe } from './edit-base'
-export { setInitPose } from './edit-base'
+export { ensureRevMinor, revMinor, ROLE_REV_MINOR, setInitPose } from './edit-base'
 export { getStopTime, setKeyframes, setStopTime, withHeadings } from './edit-trajectory'
 
 /**
@@ -49,7 +51,13 @@ const definitionSpec = (d: EntityDraft): ElSpec => {
   if (d.kind === 'pedestrian') {
     return [
       'Pedestrian',
-      { name: d.category, mass: 80, model: d.category, pedestrianCategory: d.category },
+      {
+        name: d.category,
+        mass: 80,
+        model: d.category,
+        pedestrianCategory: d.category,
+        ...(d.role ? { role: d.role } : {}),
+      },
       [['ParameterDeclarations'], bbox, ['Properties']],
     ]
   }
@@ -64,11 +72,11 @@ const definitionSpec = (d: EntityDraft): ElSpec => {
   const track = Math.max(d.width - 0.2, 0.3)
   return [
     'Vehicle',
-    { name: d.category, vehicleCategory: d.category },
+    { name: d.category, vehicleCategory: d.category, ...(d.role ? { role: d.role } : {}) },
     [
       ['ParameterDeclarations'],
       bbox,
-      ['Performance', { maxSpeed: 69.444, maxAcceleration: 10, maxDeceleration: 10 }],
+      ['Performance', { maxSpeed: d.maxSpeed ?? 69.444, maxAcceleration: 10, maxDeceleration: 10 }],
       [
         'Axles',
         {},
@@ -121,7 +129,7 @@ export const createEmptyScenario = ({
     s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   return parseXml(`<?xml version="1.0" encoding="UTF-8"?>
 <OpenSCENARIO>
-  <FileHeader revMajor="1" revMinor="1" date="${date}" description="${esc(description)}" author="WMDG Scene Editor"/>
+  <FileHeader revMajor="1" revMinor="2" date="${date}" description="${esc(description)}" author="WMDG Scene Editor"/>
   <ParameterDeclarations/>
   <CatalogLocations/>
   <RoadNetwork>
@@ -168,6 +176,7 @@ export const addEntity = (
     entities,
     build(next, ['ScenarioObject', { name: draft.name }, [definitionSpec(draft)]]),
   )
+  if (draft.role && draft.kind !== 'misc') ensureRevMinor(next, ROLE_REV_MINOR)
   const result = setInitPose(next, draft.name, pose, false)
   return speed === undefined ? result : setInitSpeed(result, draft.name, speed, false)
 }
@@ -255,11 +264,20 @@ export const renameEntity = (doc: XMLDocument, from: string, to: string): XMLDoc
 export const setEntityProps = (
   doc: XMLDocument,
   name: string,
-  props: Partial<Pick<EntityDraft, 'category' | 'length' | 'width' | 'height'>>,
+  props: Partial<Pick<EntityDraft, 'category' | 'length' | 'width' | 'height' | 'role'>>,
 ): XMLDocument => {
   const next = cloneDoc(doc)
   const def = findObject(next, name)?.firstElementChild
   if (!def || def.tagName === 'CatalogReference') return doc
+  // role 为空串表示清除
+  if (props.role !== undefined && def.tagName !== 'MiscObject') {
+    if (props.role) {
+      def.setAttribute('role', props.role)
+      ensureRevMinor(next, ROLE_REV_MINOR)
+    } else {
+      def.removeAttribute('role')
+    }
+  }
   if (props.category) {
     const attr =
       def.tagName === 'Pedestrian'
@@ -297,6 +315,7 @@ export const catalogToInline = (doc: XMLDocument, draft: EntityDraft): XMLDocume
   const ref = findObject(next, draft.name)?.firstElementChild
   if (ref?.tagName !== 'CatalogReference') return doc
   replacePretty(ref, build(next, definitionSpec(draft)))
+  if (draft.role && draft.kind !== 'misc') ensureRevMinor(next, ROLE_REV_MINOR)
   return next
 }
 
