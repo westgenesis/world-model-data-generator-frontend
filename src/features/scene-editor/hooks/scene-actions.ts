@@ -86,7 +86,8 @@ export const addElementAt = (
 ): { name: string; upgraded: boolean } => {
   const doc = ensureScene()
   const { scene } = getSceneModel()
-  const name = uniqueName(scene?.scenario.entities.map((e) => e.name) ?? [], element.prefix)
+  // 默认名称用元件中文名加序号，如「轿车1」
+  const name = uniqueName(scene?.scenario.entities.map((e) => e.name) ?? [], element.label)
   const draft: EntityDraft = {
     name,
     kind: element.kind,

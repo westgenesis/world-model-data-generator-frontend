@@ -167,7 +167,7 @@ describe.skipIf(!ESMINI_HOME)('esmini 交叉验证：编辑结果', { timeout: 1
     expect(coneMove).toBeLessThan(0.05)
   })
 
-  it('1.2 场景：角色车辆、火车按关键帧运动，人行横道、路灯等静态物体不动', () => {
+  it('1.2 场景（中文实体名）：角色车辆、火车按关键帧运动，人行横道、路灯等静态物体不动', () => {
     const police: Keyframe[] = [
       { t: 0, x: 30, y: -1.75 },
       { t: 5, x: 90, y: -1.75 },
@@ -185,23 +185,23 @@ describe.skipIf(!ESMINI_HOME)('esmini 交叉验证：编辑结果', { timeout: 1
     const vehicle = { kind: 'vehicle' as const, height: 1.6 }
     doc = addEntity(
       doc,
-      { ...vehicle, name: 'Police', category: 'car', role: 'police', length: 4.8, width: 1.85 },
+      { ...vehicle, name: '警车1', category: 'car', role: 'police', length: 4.8, width: 1.85 },
       { kind: 'world', x: 30, y: -1.75, h: 0 },
     )
     doc = addEntity(
       doc,
-      { ...vehicle, name: 'Ambulance', category: 'van', role: 'ambulance', length: 5.6, width: 2 },
+      { ...vehicle, name: '救护车1', category: 'van', role: 'ambulance', length: 5.6, width: 2 },
       { kind: 'world', x: 200, y: 1.75, h: Math.PI },
     )
     doc = addEntity(
       doc,
-      { ...vehicle, name: 'Train', category: 'train', length: 50, width: 3, maxSpeed: 44.4 },
+      { ...vehicle, name: '火车1', category: 'train', length: 50, width: 3, maxSpeed: 44.4 },
       { kind: 'world', x: 300, y: -1.75, h: 0 },
     )
     const statics = [
-      { name: 'Crosswalk', category: 'crosswalk', x: 100, y: 0, size: [3, 8, 0.01] },
-      { name: 'Lamp', category: 'streetLamp', x: 80, y: 6, size: [0.3, 0.3, 8] },
-      { name: 'Gantry', category: 'gantry', x: 160, y: 0, size: [1, 12, 6] },
+      { name: '人行横道1', category: 'crosswalk', x: 100, y: 0, size: [3, 8, 0.01] },
+      { name: '路灯1', category: 'streetLamp', x: 80, y: 6, size: [0.3, 0.3, 8] },
+      { name: '龙门架1', category: 'gantry', x: 160, y: 0, size: [1, 12, 6] },
     ]
     for (const o of statics) {
       const [length, width, height] = o.size
@@ -211,9 +211,9 @@ describe.skipIf(!ESMINI_HOME)('esmini 交叉验证：编辑结果', { timeout: 1
         { kind: 'world', x: o.x, y: o.y, h: 0 },
       )
     }
-    doc = setKeyframes(doc, 'Police', police)
-    doc = setKeyframes(doc, 'Ambulance', ambulance)
-    doc = setKeyframes(doc, 'Train', train)
+    doc = setKeyframes(doc, '警车1', police)
+    doc = setKeyframes(doc, '救护车1', ambulance)
+    doc = setKeyframes(doc, '火车1', train)
 
     const text = serializeXml({ doc, declaration: '<?xml version="1.0" encoding="UTF-8"?>' })
     expect(text).toContain('revMinor="2"')
@@ -222,9 +222,9 @@ describe.skipIf(!ESMINI_HOME)('esmini 交叉验证：编辑结果', { timeout: 1
     expect(rows.length, 'esmini 未能运行生成的 1.2 场景').toBeGreaterThan(0)
 
     const results = [
-      deviation(rows, 'Police', police),
-      deviation(rows, 'Ambulance', ambulance),
-      deviation(rows, 'Train', train),
+      deviation(rows, '警车1', police),
+      deviation(rows, '救护车1', ambulance),
+      deviation(rows, '火车1', train),
     ]
     const staticMove = Math.max(
       ...statics.map((o) =>
@@ -234,7 +234,7 @@ describe.skipIf(!ESMINI_HOME)('esmini 交叉验证：编辑结果', { timeout: 1
       ),
     )
     console.info(
-      `[edit] 1.2 场景  ${['Police', 'Ambulance', 'Train']
+      `[edit] 1.2 场景  ${['警车1', '救护车1', '火车1']
         .map((n, i) => `${n} ${results[i].frames} 帧最大偏差 ${results[i].worst.toFixed(4)} m`)
         .join('；')}；静态物体最大位移 ${staticMove.toFixed(4)} m`,
     )
