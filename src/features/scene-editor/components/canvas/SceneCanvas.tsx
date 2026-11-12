@@ -316,8 +316,12 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
           onDragEnd={(e) => {
             const stage = e.target
             if (stage !== stage.getStage()) return
-            setView((v) => ({ ...v, x: v.x + stage.x(), y: v.y + stage.y() }))
+            // 先读出拖动位移再归零：setView 的更新函数可能延后执行，届时 stage 已被归零，读到的位移会是 0，
+            // 导致视图弹回原位
+            const dx = stage.x()
+            const dy = stage.y()
             stage.position({ x: 0, y: 0 })
+            setView((v) => ({ ...v, x: v.x + dx, y: v.y + dy }))
           }}
         >
           <Layer>
