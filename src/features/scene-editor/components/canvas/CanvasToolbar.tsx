@@ -32,7 +32,10 @@ export const CanvasToolbar = ({ onZoom, onFit }: CanvasToolbarProps) => {
   const icon = (Icon: typeof Hand) => <Icon size={15} strokeWidth={1.75} />
 
   return (
-    <div className="pointer-events-auto flex flex-wrap items-center gap-1 rounded-lg border border-line bg-card/95 p-1 shadow-card backdrop-blur">
+    <div
+      data-tour="canvas-toolbar"
+      className="pointer-events-auto flex flex-wrap items-center gap-1 rounded-lg border border-line bg-card/95 p-1 shadow-card backdrop-blur"
+    >
       <Segmented<CanvasTool>
         size="small"
         value={tool}

@@ -1,13 +1,25 @@
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { App, Button, Divider, Dropdown, Spin, Tooltip } from 'antd'
-import { ArrowLeft, CodeXml, Download, FilePlus2, FileUp, Redo2, Save, Undo2 } from 'lucide-react'
+import {
+  ArrowLeft,
+  CircleHelp,
+  CodeXml,
+  Download,
+  FilePlus2,
+  FileUp,
+  Redo2,
+  Save,
+  Undo2,
+} from 'lucide-react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SceneCanvas } from './components/canvas/SceneCanvas'
+import { EditorTour } from './components/EditorTour'
 import { ElementPalette } from './components/ElementPalette'
 import { InspectorPanel } from './components/inspector/InspectorPanel'
 import { Timeline } from './components/Timeline'
 import { useEditorShortcuts } from './hooks/use-editor-shortcuts'
+import { useEditorTour } from './hooks/use-editor-tour'
 import { readDraft, useSceneIo } from './hooks/use-scene-io'
 import type { PaneKind } from './stores/scene-editor-store'
 import { useSceneEditorStore } from './stores/scene-editor-store'
@@ -94,6 +106,7 @@ export const SceneEditorPage = () => {
   }, [saveDraft, message])
 
   useEditorShortcuts(handleSave)
+  const tour = useEditorTour()
 
   /** 拖动分隔条调整 XML 面板宽度（百分比） */
   const handleSplitDown = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -181,6 +194,7 @@ export const SceneEditorPage = () => {
           <Tooltip title="可同时选择 .xodr、.xosc 和传感器配置 .json，也可以直接拖到画布上">
             <Button
               size="small"
+              data-tour="import"
               icon={<FileUp {...iconProps} />}
               onClick={() => inputRef.current?.click()}
             >
@@ -198,7 +212,7 @@ export const SceneEditorPage = () => {
               onClick: ({ key }) => io.exportDoc(key as PaneKind),
             }}
           >
-            <Button size="small" icon={<Download {...iconProps} />}>
+            <Button size="small" data-tour="export" icon={<Download {...iconProps} />}>
               导出
             </Button>
           </Dropdown>
@@ -215,16 +229,27 @@ export const SceneEditorPage = () => {
           <Button
             size="small"
             type={xmlOpen ? 'primary' : 'default'}
+            data-tour="xml"
             icon={<CodeXml {...iconProps} />}
             onClick={() => setUi({ xmlOpen: !xmlOpen })}
           >
             XML
           </Button>
+          <Tooltip title="使用引导">
+            <Button
+              type="text"
+              size="small"
+              aria-label="使用引导"
+              icon={<CircleHelp {...iconProps} />}
+              onClick={tour.start}
+            />
+          </Tooltip>
         </div>
       </header>
+      <EditorTour open={tour.open} onClose={tour.close} />
 
       <div className="flex min-h-0 flex-1">
-        <aside className="flex w-48 shrink-0 flex-col border-r border-line">
+        <aside data-tour="palette" className="flex w-48 shrink-0 flex-col border-r border-line">
           <ElementPalette />
         </aside>
 
@@ -306,12 +331,12 @@ export const SceneEditorPage = () => {
             )}
           </div>
 
-          <div className="h-44 shrink-0 border-t border-line">
+          <div data-tour="timeline" className="h-44 shrink-0 border-t border-line">
             <Timeline />
           </div>
         </main>
 
-        <aside className="w-80 shrink-0 overflow-hidden border-l border-line">
+        <aside data-tour="inspector" className="w-80 shrink-0 overflow-hidden border-l border-line">
           <InspectorPanel />
         </aside>
       </div>

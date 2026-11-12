@@ -278,6 +278,7 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
   return (
     <div
       ref={containerRef}
+      data-tour="canvas"
       className={`relative size-full overflow-hidden bg-[#eef1f5] dark:bg-[#0b0f17] ${
         tool === 'draw' ? 'cursor-crosshair' : tool === 'pan' ? 'cursor-grab' : ''
       }`}
