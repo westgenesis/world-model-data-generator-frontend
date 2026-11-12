@@ -1,33 +1,28 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { Button, Empty } from 'antd'
-import { ArrowLeft } from 'lucide-react'
+import { createFileRoute } from '@tanstack/react-router'
+import { z } from 'zod'
+import { fetchSceneFiles } from '@/features/scene-editor/hooks/use-scene-io'
+import { SceneEditorPage } from '@/features/scene-editor/SceneEditorPage'
+
+/** 查询参数：开发调试时可直接指定 xodr / xosc 地址 */
+const searchSchema = z.object({
+  xodr: z.string().optional().catch(undefined),
+  xosc: z.string().optional().catch(undefined),
+})
 
 /** 场景编辑器：全屏工作台，不使用主布局（参考 docs/原型/M2场景编辑器_原型.html） */
-const SceneEditorPage = () => {
-  const { sceneId } = Route.useParams()
-
-  return (
-    <div className="flex h-screen flex-col bg-card">
-      <div className="flex shrink-0 items-center gap-2 border-b border-line px-3 py-1.5">
-        <Link to="/data-gen/scene-resources">
-          <Button type="text" size="small" icon={<ArrowLeft size={16} strokeWidth={1.75} />}>
-            返回场景资源
-          </Button>
-        </Link>
-        <span className="text-[15px] font-semibold">场景编辑器</span>
-        <span className="text-xs text-fg-3">{sceneId}</span>
-      </div>
-      <div className="flex min-h-0 flex-1">
-        <div className="w-52 shrink-0 border-r border-line" />
-        <div className="flex flex-1 items-center justify-center bg-page">
-          <Empty description="该页面尚未实现，可参考 docs/原型 中对应的原型文件。" />
-        </div>
-        <div className="w-76 shrink-0 border-l border-line" />
-      </div>
-    </div>
-  )
-}
-
 export const Route = createFileRoute('/scene-editor/$sceneId')({
+  validateSearch: searchSchema,
+  loaderDeps: ({ search }) => ({ xodr: search.xodr, xosc: search.xosc }),
+  // 文件内容只在进入页面时获取一次
+  staleTime: Infinity,
+  // 开发调试：按查询参数预取文件；失败时把错误交给页面提示，不阻断编辑器
+  loader: async ({ deps }) => {
+    if (!deps.xodr && !deps.xosc) return { files: [] }
+    try {
+      return { files: await fetchSceneFiles(deps) }
+    } catch (e) {
+      return { files: [], error: e instanceof Error ? e.message : String(e) }
+    }
+  },
   component: SceneEditorPage,
 })
