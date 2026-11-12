@@ -33,7 +33,10 @@ export const InspectorPanel = () => {
       size="small"
       activeKey={tab}
       onChange={(k) => setUi({ inspectorTab: k as InspectorTab })}
-      className="h-full [&_.ant-tabs-content]:h-full [&_.ant-tabs-nav]:mb-0! [&_.ant-tabs-nav]:px-3 [&_.ant-tabs-tabpane]:h-full [&_.ant-tabs-tabpane]:overflow-y-auto"
+      // antd v6 的标签页内容位于 .ant-tabs（纵向 flex）> .ant-tabs-body-holder > .ant-tabs-body 中。
+      // 让 body-holder 填满剩余高度并自行滚动；否则内容撑高面板，外层 overflow-hidden 的容器
+      // 会在聚焦输入框时被浏览器整体滚走。antd 样式不在 Tailwind 的 layer 内，需用 ! 提升优先级
+      className="h-full [&_.ant-tabs-body-holder]:min-h-0! [&_.ant-tabs-body-holder]:overflow-x-hidden! [&_.ant-tabs-body-holder]:overflow-y-auto! [&_.ant-tabs-nav]:mb-0! [&_.ant-tabs-nav]:px-3"
       items={[
         { key: 'entity', label: '目标物', children: <EntityInspector scene={scene} /> },
         { key: 'scene', label: '场景', children: <ScenePanel road={road} scene={scene} /> },
