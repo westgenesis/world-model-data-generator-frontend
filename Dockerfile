@@ -4,13 +4,18 @@
 FROM node:24-alpine AS build
 WORKDIR /app
 
+# npm 源：构建机无法直连官方源时，通过 --build-arg NPM_REGISTRY=<镜像源> 切换
+# corepack 下载 pnpm 与 pnpm 安装依赖都使用该源
+ARG NPM_REGISTRY=https://registry.npmjs.org
+ENV COREPACK_NPM_REGISTRY=${NPM_REGISTRY}
+
 # 使用 package.json 中声明的 pnpm 版本
 RUN corepack enable
 
 # 先复制依赖清单以利用层缓存
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile --ignore-scripts
+    pnpm install --frozen-lockfile --ignore-scripts --registry="${NPM_REGISTRY}"
 
 COPY . .
 
