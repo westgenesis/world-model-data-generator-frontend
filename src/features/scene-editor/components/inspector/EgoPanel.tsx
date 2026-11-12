@@ -8,6 +8,7 @@ import { addSensor, addSensorKit, removeSensor, setEgoVehicle } from '../../hook
 import { convertToInline } from '../../hooks/scene-actions'
 import type { SceneModel } from '../../hooks/use-scene-model'
 import { useSceneEditorStore } from '../../stores/scene-editor-store'
+import { Hint } from './fields'
 import { SensorForm } from './SensorForm'
 
 /** 传感器类型图标 */
@@ -58,7 +59,18 @@ export const EgoPanel = ({ scene }: { scene: SceneModel | undefined }) => {
   return (
     <div className="flex flex-col gap-4 p-3">
       <section className="flex flex-col gap-2">
-        <h3 className="text-xs font-medium text-fg-3">自车指定</h3>
+        <h3 className="flex items-center gap-1 text-xs font-medium text-fg-3">
+          自车
+          <Hint
+            title={
+              <>
+                自车写入 Vehicle/Properties：type=ego_vehicle（CARLA 约定）；
+                <br />
+                传感器配置单独保存为 JSON，由自车的 File 引用
+              </>
+            }
+          />
+        </h3>
         <Select
           size="small"
           placeholder={vehicles.length ? '选择一辆车作为自车' : '场景中还没有车辆'}
@@ -67,7 +79,7 @@ export const EgoPanel = ({ scene }: { scene: SceneModel | undefined }) => {
           onChange={(name?: string) => run(() => setEgoVehicle(name))}
           options={vehicles.map((v) => ({
             value: v.name,
-            label: v.catalog ? `${v.name}（目录引用，需先转为内联）` : v.name,
+            label: v.catalog ? `${v.name}（目录引用）` : v.name,
             disabled: !!v.catalog,
           }))}
         />
@@ -76,12 +88,12 @@ export const EgoPanel = ({ scene }: { scene: SceneModel | undefined }) => {
             type="error"
             showIcon
             className="px-2! py-1.5! text-xs!"
-            title={`有 ${egos.length} 辆车都标记为自车（${egos.map((e) => e.name).join('、')}），请重新选择一辆`}
+            title={`多辆车被标记为自车：${egos.map((e) => e.name).join('、')}，请重新选择`}
           />
         )}
         {vehicles.some((v) => v.catalog) && (
           <p className="text-[11px] leading-4 text-fg-3">
-            目录引用的车辆需先转为内联定义：
+            转为内联后可设为自车：
             {vehicles
               .filter((v) => v.catalog)
               .map((v) => (
@@ -99,11 +111,8 @@ export const EgoPanel = ({ scene }: { scene: SceneModel | undefined }) => {
         )}
         {ego && (
           <div className="flex items-center gap-2 rounded-lg bg-sunken px-2.5 py-2 text-xs text-fg-2">
-            <Tag color="blue" variant="filled" className="me-0!">
-              自车
-            </Tag>
             <span className="min-w-0 flex-1 truncate">
-              {ego.name} · {ego.category}
+              <span className="font-medium text-fg">{ego.name}</span> · {ego.category}
               {ego.role ? ` / ${ego.role}` : ''} · {ego.length}×{ego.width}×{ego.height} m
             </span>
             <Tooltip title="在画布中定位">
@@ -120,20 +129,20 @@ export const EgoPanel = ({ scene }: { scene: SceneModel | undefined }) => {
             </Tooltip>
           </div>
         )}
-        <p className="text-[11px] leading-4 text-fg-3">
-          写入自车 Properties：type=ego_vehicle（CARLA 约定）；传感器配置单独保存为 JSON，由自车的
-          File 引用。
-        </p>
       </section>
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-xs font-medium text-fg-3">传感器（{list.length}）</h3>
+          <h3 className="flex items-center gap-1 text-xs font-medium text-fg-3">
+            传感器（{list.length}）{sensors && <Hint title={`配置文件：${sensors.fileName}`} />}
+          </h3>
           <div className="ms-auto flex gap-1">
             {list.length === 0 && (
-              <Button size="small" disabled={!ego} onClick={() => run(addSensorKit)}>
-                默认套件
-              </Button>
+              <Tooltip title={ego ? '前视主相机 + 主激光雷达 + 前向毫米波雷达' : '请先指定自车'}>
+                <Button size="small" disabled={!ego} onClick={() => run(addSensorKit)}>
+                  默认套件
+                </Button>
+              </Tooltip>
             )}
             <Dropdown
               disabled={!ego}
@@ -148,16 +157,19 @@ export const EgoPanel = ({ scene }: { scene: SceneModel | undefined }) => {
             </Dropdown>
           </div>
         </div>
-        {!ego && <p className="text-xs text-fg-3">先指定自车，再添加传感器。</p>}
+        {list.length === 0 && !(sensorFile && !sensors) && (
+          <p className="py-2 text-center text-xs text-fg-3">
+            {ego ? '暂无传感器' : '请先指定自车'}
+          </p>
+        )}
         {sensorFile && !sensors && (
           <Alert
             type="warning"
             showIcon
             className="px-2! py-1.5! text-xs!"
-            title={`场景引用了传感器配置「${sensorFile}」，但还没有加载，请一起导入该文件`}
+            title={`缺少传感器配置「${sensorFile}」，请一并导入`}
           />
         )}
-        {sensors && <p className="text-[11px] text-fg-3">文件：{sensors.fileName}</p>}
         {list.length > 0 && (
           <ul className="-mx-1 space-y-0.5">
             {list.map((s) => {

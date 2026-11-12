@@ -11,7 +11,7 @@ import type {
 } from '../../core/sensors/types'
 import { SENSOR_TYPE_LABEL } from '../../core/sensors/types'
 import { importCameraCalibration, renameSensor, updateSensor } from '../../hooks/ego-actions'
-import { Field, NumberField, TextField } from './fields'
+import { Field, Hint, NumberField, TextField } from './fields'
 
 /** 位姿字段：键、标签、单位 */
 const POSE_FIELDS: [keyof SensorPose, string][] = [
@@ -47,14 +47,12 @@ export const SensorForm = ({ sensor, run }: SensorFormProps) => {
       <h4 className="col-span-full flex items-center gap-2 text-xs font-medium text-fg-3">
         {SENSOR_TYPE_LABEL[sensor.type]}参数
       </h4>
-      <div className="col-span-full grid grid-cols-2 gap-2">
-        <Field label="名称">
-          <TextField value={sensor.name} onCommit={(name) => name.trim() && patch({ name })} />
-        </Field>
-        <Field label="id">
-          <TextField value={id} onCommit={(next) => run(() => renameSensor(id, next))} />
-        </Field>
-      </div>
+      <Field label="名称">
+        <TextField value={sensor.name} onCommit={(name) => name.trim() && patch({ name })} />
+      </Field>
+      <Field label="id">
+        <TextField value={id} onCommit={(next) => run(() => renameSensor(id, next))} />
+      </Field>
       <Field label="频率 Hz">
         <NumberField
           value={sensor.frequency}
@@ -63,9 +61,10 @@ export const SensorForm = ({ sensor, run }: SensorFormProps) => {
           onCommit={(frequency) => patch({ frequency })}
         />
       </Field>
-      <p className="col-span-2 self-end pb-1.5 text-[11px] leading-4 text-fg-3">
-        位姿：车辆坐标系，原点为后轴中心，x 前、y 左、z 上
-      </p>
+      <h5 className="col-span-full mt-1 flex items-center gap-1 text-xs font-medium text-fg-3">
+        安装位姿
+        <Hint title="车辆坐标系：原点为后轴中心，x 向前、y 向左、z 向上；角度单位为度，偏航向左为正" />
+      </h5>
       {POSE_FIELDS.map(([key, label]) => (
         <Field key={key} label={label}>
           <NumberField value={sensor.pose[key]} onCommit={(v) => patchPose(key, v)} />
@@ -115,9 +114,11 @@ const CameraFields = ({
             已标定
           </Tag>
         ) : (
-          <Tag variant="filled" className="me-0!">
-            内参由 FOV 推算
-          </Tag>
+          <Tooltip title="内参由 FOV 与分辨率推算，修改 FOV 时自动更新">
+            <Tag variant="filled" className="me-0!">
+              未标定
+            </Tag>
+          </Tooltip>
         )}
         <span className="ms-auto flex gap-1">
           <input
@@ -195,14 +196,16 @@ const CameraFields = ({
           onChange={(model) => patch({ model })}
         />
       </Field>
-      {(['fx', 'fy', 'cx', 'cy'] as const).map((key) => (
-        <Field key={key} label={key}>
-          <NumberField
-            value={k[key]}
-            onCommit={(v) => patch({ intrinsics: { ...k, [key]: v }, calibrated: true })}
-          />
-        </Field>
-      ))}
+      <div className="col-span-full grid grid-cols-4 gap-2">
+        {(['fx', 'fy', 'cx', 'cy'] as const).map((key) => (
+          <Field key={key} label={key}>
+            <NumberField
+              value={k[key]}
+              onCommit={(v) => patch({ intrinsics: { ...k, [key]: v }, calibrated: true })}
+            />
+          </Field>
+        ))}
+      </div>
       <div className="col-span-full">
         <Field label={camera.model === 'fisheye' ? '畸变 k1 k2 k3 k4' : '畸变 k1 k2 p1 p2 k3'} wide>
           <TextField

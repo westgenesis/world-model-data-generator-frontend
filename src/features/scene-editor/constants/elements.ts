@@ -222,7 +222,7 @@ export const SCENE_ELEMENTS: SceneElement[] = [
 ]
 
 /** 因角色属性把场景升级到 1.2 时的提示 */
-export const UPGRADE_NOTICE = '已将场景升级为 OpenSCENARIO 1.2（角色属性需要 1.2 及以上）'
+export const UPGRADE_NOTICE = '场景已升级为 OpenSCENARIO 1.2 以支持角色属性'
 
 /** 拖拽数据类型（HTML5 DataTransfer） */
 export const ELEMENT_DRAG_TYPE = 'application/x-wmdg-element'

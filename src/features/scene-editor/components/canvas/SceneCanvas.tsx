@@ -236,7 +236,7 @@ export const SceneCanvas = ({ onDropFiles }: SceneCanvasProps) => {
         const result = addElementById(id, w.x, w.y)
         if (result?.upgraded) message.info(UPGRADE_NOTICE)
         if (result?.autoEgo) {
-          message.info(`已将「${result.name}」设为自车，可在「自车」页签更换并配置传感器`)
+          message.info(`「${result.name}」已设为自车`)
         }
         setUi({ inspectorTab: 'entity' })
       } catch (err) {

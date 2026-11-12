@@ -10,6 +10,7 @@ import {
 } from '../constants/elements'
 import { addElementAt } from '../hooks/scene-actions'
 import { useSceneEditorStore } from '../stores/scene-editor-store'
+import { Hint } from './inspector/fields'
 
 /**
  * 元件是否匹配搜索词（名称、类别、角色、关键字，不区分大小写）
@@ -47,8 +48,7 @@ export const ElementPalette = () => {
     try {
       const result = addElementAt(element, viewCenter.x, viewCenter.y)
       if (result.upgraded) message.info(UPGRADE_NOTICE)
-      if (result.autoEgo)
-        message.info(`已将「${result.name}」设为自车，可在「自车」页签更换并配置传感器`)
+      if (result.autoEgo) message.info(`「${result.name}」已设为自车`)
       setUi({ inspectorTab: 'entity' })
     } catch (e) {
       message.error(e instanceof Error ? e.message : String(e))
@@ -67,7 +67,10 @@ export const ElementPalette = () => {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-col gap-2 border-b border-line p-3">
-        <h2 className="text-xs font-medium text-fg-2">元件库</h2>
+        <h2 className="flex items-center gap-1 text-xs font-medium text-fg-2">
+          元件库
+          <Hint title="拖到画布上放置，或单击添加到视野中心；带 1.2 标记的元件需要 OpenSCENARIO 1.2" />
+        </h2>
         <Input
           size="small"
           allowClear
@@ -77,7 +80,6 @@ export const ElementPalette = () => {
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
         />
-        <p className="text-[11px] leading-4 text-fg-3">拖到画布上放置，或单击添加到视野中心</p>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
@@ -150,7 +152,6 @@ const PaletteItem = ({
       )}
       <Icon size={20} strokeWidth={1.6} className="transition-transform group-hover:scale-110" />
       <span className="max-w-full truncate">{element.label}</span>
-      {!element.dynamic && <span className="text-[10px] text-fg-3">静态</span>}
     </button>
   )
   return element.role ? (

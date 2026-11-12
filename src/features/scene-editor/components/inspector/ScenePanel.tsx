@@ -3,7 +3,7 @@ import { getStopTime } from '../../core/openscenario/edit'
 import { updateLogicFile, updateStopTime } from '../../hooks/scene-actions'
 import type { RoadModel, SceneModel } from '../../hooks/use-scene-model'
 import { useSceneEditorStore } from '../../stores/scene-editor-store'
-import { Field, NumberField, TextField } from './fields'
+import { Field, Hint, NumberField, TextField } from './fields'
 
 interface ScenePanelProps {
   road?: RoadModel
@@ -47,7 +47,7 @@ export const ScenePanel = ({ road, scene }: ScenePanelProps) => {
           {scene.scenario.description && (
             <p className="col-span-full text-fg-2">{scene.scenario.description}</p>
           )}
-          <Field label="LogicFile（引用的路网路径）" wide>
+          <Field label="路网文件" hint="RoadNetwork/LogicFile：相对 xosc 的 .xodr 路径" wide>
             <TextField
               value={scene.scenario.logicFile ?? ''}
               placeholder="road.xodr"
@@ -64,7 +64,7 @@ export const ScenePanel = ({ road, scene }: ScenePanelProps) => {
               onCommit={updateStopTime}
             />
           </Field>
-          <Field label="帧率（关键帧吸附）">
+          <Field label="帧率" hint="拖动关键帧和逐帧播放时按此帧率吸附">
             <Select
               size="small"
               value={fps}
@@ -72,17 +72,22 @@ export const ScenePanel = ({ road, scene }: ScenePanelProps) => {
               options={[10, 20, 25, 30].map((v) => ({ value: v, label: `${v} fps` }))}
             />
           </Field>
-          <p className="col-span-full text-xs text-fg-3">
+          <p className="col-span-full flex items-center gap-1 text-xs text-fg-3">
             OpenSCENARIO {scene.scenario.version} · 实体 {scene.scenario.entities.length} · 轨迹{' '}
             {scene.scenario.trajectories.length}
-            {stopTime === undefined && ' · 停止条件由原文件定义'}
+            {stopTime === undefined && (
+              <Hint title="停止条件由原文件定义，修改仿真时长后由编辑器管理" />
+            )}
           </p>
         </section>
       )}
 
       {road && (
         <section>
-          <h3 className="mb-2 text-xs font-medium text-fg-3">路网 · {xodrName}</h3>
+          <h3 className="mb-2 flex items-center gap-1 text-xs font-medium text-fg-3">
+            路网 · {xodrName}
+            <Hint title="路网暂不支持图形化编辑，可在 XML 面板中直接修改" />
+          </h3>
           <Descriptions
             size="small"
             column={2}
@@ -102,9 +107,6 @@ export const ScenePanel = ({ road, scene }: ScenePanelProps) => {
               </Tag>
             ))}
           </div>
-          <p className="mt-2 text-xs text-fg-3">
-            路网暂不支持图形化编辑，可在 XML 面板中直接修改。
-          </p>
         </section>
       )}
 

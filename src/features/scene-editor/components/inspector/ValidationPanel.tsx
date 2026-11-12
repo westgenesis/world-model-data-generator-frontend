@@ -1,6 +1,7 @@
 import { CircleAlert, CircleCheck, Info, TriangleAlert } from 'lucide-react'
 import type { Issue } from '../../core/validate'
 import { useSceneEditorStore } from '../../stores/scene-editor-store'
+import { Hint } from './fields'
 
 const ICONS = {
   error: <CircleAlert size={15} strokeWidth={1.75} className="mt-0.5 shrink-0 text-danger" />,
@@ -30,6 +31,9 @@ export const ValidationPanel = ({ issues }: { issues: Issue[] }) => {
           <CircleCheck size={16} strokeWidth={1.75} />
         )}
         {blocking ? `发现 ${blocking} 个问题` : '未发现问题'}
+        <span className="ms-auto">
+          <Hint title="校验在浏览器中进行；导出后可用 esmini 等仿真器做最终确认" />
+        </span>
       </div>
       <ul className="space-y-0.5">
         {issues.map((issue, i) => (
@@ -50,9 +54,6 @@ export const ValidationPanel = ({ issues }: { issues: Issue[] }) => {
           </li>
         ))}
       </ul>
-      <p className="text-xs text-fg-3">
-        校验在浏览器中进行；导出后可用 esmini 等仿真器做最终确认。
-      </p>
     </div>
   )
 }

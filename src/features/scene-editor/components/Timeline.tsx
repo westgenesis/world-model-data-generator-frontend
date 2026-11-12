@@ -282,11 +282,7 @@ export const Timeline = () => {
             )
           })}
 
-          {entities.length === 0 && (
-            <p className="p-3 text-xs text-fg-3">
-              添加车辆或行人后，可在这里查看和调整关键帧时刻。
-            </p>
-          )}
+          {entities.length === 0 && <p className="p-3 text-xs text-fg-3">暂无动态目标物</p>}
 
           {/* 播放头 */}
           <div

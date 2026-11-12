@@ -1,9 +1,29 @@
-import { Input, InputNumber } from 'antd'
+import { Input, InputNumber, Tooltip } from 'antd'
+import { CircleHelp } from 'lucide-react'
 import type { ReactNode } from 'react'
+
+/**
+ * 说明图标：悬停或键盘聚焦时显示次要说明，避免在界面上常驻大段提示
+ * @param props.title - 说明内容
+ */
+export const Hint = ({ title }: { title: ReactNode }) => (
+  <Tooltip title={title}>
+    <span
+      tabIndex={0}
+      role="img"
+      aria-label={typeof title === 'string' ? title : '说明'}
+      className="inline-flex cursor-help rounded-full align-[-2px] text-fg-3 transition-colors hover:text-fg-2 focus-visible:outline-2 focus-visible:outline-primary"
+    >
+      <CircleHelp size={12} strokeWidth={1.75} />
+    </span>
+  </Tooltip>
+)
 
 interface FieldProps {
   label: ReactNode
   children: ReactNode
+  /** 标签旁的说明（显示为问号图标 + 提示框） */
+  hint?: ReactNode
   /** 占满整行 */
   wide?: boolean
 }
@@ -12,11 +32,15 @@ interface FieldProps {
  * 属性行：上方标签 + 控件
  * @param props.label - 标签
  * @param props.children - 控件
+ * @param props.hint - 标签旁的说明
  * @param props.wide - 是否占满整行
  */
-export const Field = ({ label, children, wide }: FieldProps) => (
+export const Field = ({ label, children, hint, wide }: FieldProps) => (
   <label className={`flex min-w-0 flex-col gap-1 ${wide ? 'col-span-full' : ''}`}>
-    <span className="text-xs text-fg-3">{label}</span>
+    <span className="flex items-center gap-1 text-xs text-fg-3">
+      {label}
+      {hint && <Hint title={hint} />}
+    </span>
     {children}
   </label>
 )

@@ -238,8 +238,8 @@ export const SceneEditorPage = () => {
                   <div className="pointer-events-auto flex flex-col items-center gap-3 rounded-xl border border-dashed border-line-strong bg-card/90 px-10 py-8 text-center shadow-card backdrop-blur">
                     <FileUp size={28} strokeWidth={1.5} className="text-primary" />
                     <div>
-                      <p className="text-sm font-medium">导入 OpenDRIVE 路网和 OpenSCENARIO 场景</p>
-                      <p className="mt-1 text-xs text-fg-3">把 .xodr / .xosc 文件拖到这里，或</p>
+                      <p className="text-sm font-medium">导入路网与场景</p>
+                      <p className="mt-1 text-xs text-fg-3">拖入 .xodr / .xosc / .json 文件，或</p>
                     </div>
                     <div className="flex gap-2">
                       <Button type="primary" size="small" onClick={() => inputRef.current?.click()}>

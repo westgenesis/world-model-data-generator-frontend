@@ -240,7 +240,7 @@ export const XmlPane = () => {
           type="warning"
           showIcon
           className="rounded-none! border-x-0! border-t-0! py-1.5! text-xs!"
-          title="文档在画布中又被修改过，这份文本草稿基于旧版本。"
+          title="画布已有新修改，此草稿基于旧版本"
           action={
             <div className="flex gap-1">
               <Button size="small" onClick={discard}>
@@ -285,7 +285,7 @@ export const XmlPane = () => {
         ) : (
           <p className="p-6 text-center text-xs text-fg-3">
             {tab === 'sensors'
-              ? '尚未配置传感器：在右侧「自车」面板添加，或导入传感器配置 .json'
+              ? '暂无传感器配置'
               : `尚未加载 ${tab === 'xodr' ? 'OpenDRIVE（.xodr）' : 'OpenSCENARIO（.xosc）'} 文件`}
           </p>
         )}

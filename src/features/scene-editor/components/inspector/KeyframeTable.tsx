@@ -107,7 +107,13 @@ export const KeyframeTable = ({ name, motion }: KeyframeTableProps) => {
                   <td
                     className={`text-center tabular-nums ${seg?.jump ? 'font-medium text-warning' : 'text-fg-2'}`}
                   >
-                    {seg ? (Number.isFinite(seg.speed) ? seg.speed.toFixed(1) : '∞') : '—'}
+                    <Tooltip
+                      title={seg?.jump ? '与上一段速度相差超过 15%，可能导致加速度突变' : undefined}
+                    >
+                      <span>
+                        {seg ? (Number.isFinite(seg.speed) ? seg.speed.toFixed(1) : '∞') : '—'}
+                      </span>
+                    </Tooltip>
                   </td>
                   <td>
                     {i > 0 && (
@@ -138,11 +144,6 @@ export const KeyframeTable = ({ name, motion }: KeyframeTableProps) => {
       <Button size="small" icon={<Plus size={14} strokeWidth={1.75} />} onClick={recordAtPlayhead}>
         在 t={snapToFrame(time, fps).toFixed(1)}s 记录关键帧
       </Button>
-      {speeds.some((s) => s.jump) && (
-        <p className="text-xs text-warning">
-          橙色速度表示与上一段相差超过 15%，可能导致加速度突变。
-        </p>
-      )}
     </div>
   )
 }

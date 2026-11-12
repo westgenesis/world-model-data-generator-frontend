@@ -21,7 +21,7 @@ import {
 } from '../../hooks/scene-actions'
 import type { SceneModel } from '../../hooks/use-scene-model'
 import { useSceneEditorStore } from '../../stores/scene-editor-store'
-import { Field, NumberField, TextField } from './fields'
+import { Field, Hint, NumberField, TextField } from './fields'
 import { KeyframeTable } from './KeyframeTable'
 
 /** 位置写法的中文名 */
@@ -165,7 +165,7 @@ export const EntityInspector = ({ scene }: { scene: SceneModel | undefined }) =>
       {entity ? (
         <EntityProps key={entity.name} entity={entity} scene={scene} run={run} onRemove={remove} />
       ) : (
-        <p className="p-4 text-center text-xs text-fg-3">在画布或列表中选择目标物以编辑属性</p>
+        <p className="p-4 text-center text-xs text-fg-3">选择目标物以编辑属性</p>
       )}
 
       {entity && (
@@ -215,7 +215,37 @@ const EntityProps = ({ entity, scene, run, onRemove }: EntityPropsProps) => {
   return (
     <div className="flex flex-col gap-4 p-3">
       <section className="grid grid-cols-2 gap-x-2 gap-y-2.5">
-        <h3 className="col-span-full text-xs font-medium text-fg-3">选中对象属性</h3>
+        <div className="col-span-full flex h-6 items-center gap-2">
+          <h3 className="text-xs font-medium text-fg-3">属性</h3>
+          {entity.kind === 'vehicle' &&
+            (entity.ego ? (
+              <>
+                <Tag variant="filled" color="geekblue" className="me-0!">
+                  自车
+                </Tag>
+                <Button
+                  type="link"
+                  size="small"
+                  className="ms-auto px-0!"
+                  onClick={() => setUi({ inspectorTab: 'ego' })}
+                >
+                  配置传感器
+                </Button>
+              </>
+            ) : (
+              <Tooltip title={isCatalog ? '目录引用的车辆需先转为内联' : undefined}>
+                <Button
+                  type="link"
+                  size="small"
+                  className="ms-auto px-0!"
+                  disabled={isCatalog}
+                  onClick={() => run(() => setEgoVehicle(entity.name))}
+                >
+                  设为自车
+                </Button>
+              </Tooltip>
+            ))}
+        </div>
         <Field label="名称" wide>
           <TextField
             value={entity.name}
@@ -229,8 +259,11 @@ const EntityProps = ({ entity, scene, run, onRemove }: EntityPropsProps) => {
             showIcon={false}
             title={
               <div className="flex items-center justify-between gap-2">
-                <span>
-                  目录引用 {entity.catalog?.catalogName} / {entity.catalog?.entryName}，尺寸为估算值
+                <span className="flex min-w-0 items-center gap-1">
+                  <span className="truncate">目录引用：{entity.catalog?.entryName}</span>
+                  <Hint
+                    title={`目录 ${entity.catalog?.catalogName} 未加载，尺寸为估算值；转为内联定义后可编辑`}
+                  />
                 </span>
                 <Button
                   size="small"
@@ -253,36 +286,12 @@ const EntityProps = ({ entity, scene, run, onRemove }: EntityPropsProps) => {
             onChange={(category) => run(() => updateEntityProps(entity.name, { category }))}
           />
         </Field>
-        {entity.kind === 'vehicle' && (
-          <div className="col-span-full flex items-center gap-2 text-xs text-fg-3">
-            {entity.ego ? (
-              <>
-                <Tag variant="filled" color="geekblue" className="me-0!">
-                  自车
-                </Tag>
-                传感器在「自车」页签配置
-                <Button
-                  type="link"
-                  size="small"
-                  className="ms-auto px-0!"
-                  onClick={() => setUi({ inspectorTab: 'ego' })}
-                >
-                  配置传感器
-                </Button>
-              </>
-            ) : (
-              <Button
-                size="small"
-                disabled={isCatalog}
-                onClick={() => run(() => setEgoVehicle(entity.name))}
-              >
-                设为自车
-              </Button>
-            )}
-          </div>
-        )}
         {entity.kind !== 'misc' && (
-          <Field label="角色（OpenSCENARIO 1.2）" wide>
+          <Field
+            label="角色"
+            hint="OpenSCENARIO 1.2 属性（警车、救护车等）；设置后场景会升级到 1.2"
+            wide
+          >
             <Select
               size="small"
               value={entity.role ?? ''}
@@ -341,9 +350,17 @@ const EntityProps = ({ entity, scene, run, onRemove }: EntityPropsProps) => {
         <h3 className="col-span-full flex items-center gap-2 text-xs font-medium text-fg-3">
           初始状态
           {position && position.kind !== 'unsupported' && (
-            <Tag variant="filled" className="me-0!">
-              {POSITION_LABEL[position.kind]}
-            </Tag>
+            <Tooltip
+              title={
+                position.kind === 'lane'
+                  ? `道路 ${position.roadId} · 车道 ${position.laneId} · s=${position.s.toFixed(1)}；修改坐标后改为世界坐标`
+                  : undefined
+              }
+            >
+              <Tag variant="filled" className="me-0!">
+                {POSITION_LABEL[position.kind]}
+              </Tag>
+            </Tooltip>
           )}
         </h3>
         <Field label="X m">
@@ -382,12 +399,6 @@ const EntityProps = ({ entity, scene, run, onRemove }: EntityPropsProps) => {
             }
           />
         </Field>
-        {position?.kind === 'lane' && (
-          <p className="col-span-full text-xs text-fg-3">
-            道路 {position.roadId} · 车道 {position.laneId} · s={position.s.toFixed(1)}
-            ；修改坐标后改为世界坐标
-          </p>
-        )}
         {entity.kind !== 'misc' && (
           <Field label="初始速度 m/s" wide>
             <NumberField
@@ -436,22 +447,28 @@ const EntityProps = ({ entity, scene, run, onRemove }: EntityPropsProps) => {
           {hasTrajectory && motion ? (
             <KeyframeTable name={entity.name} motion={motion} />
           ) : (
-            <div className="flex flex-col gap-2 rounded-lg border border-dashed border-line p-3 text-xs text-fg-3">
-              <p>还没有轨迹。可以：</p>
-              <ul className="list-inside list-disc space-y-0.5">
-                <li>选择「绘制轨迹」工具，在画布上逐点单击</li>
-                <li>把播放头移到其他时刻，再拖动目标物（自动记帧）</li>
-              </ul>
+            <div className="flex items-center gap-1.5 rounded-lg border border-dashed border-line px-3 py-2 text-xs text-fg-3">
+              暂无轨迹
+              <Hint
+                title={
+                  <>
+                    用「绘制轨迹」工具在画布上逐点单击；
+                    <br />
+                    或把播放头移到其他时刻再拖动目标物（自动记帧）
+                  </>
+                }
+              />
               <Button
                 size="small"
+                className="ms-auto"
                 icon={<Crosshair size={14} strokeWidth={1.75} />}
                 onClick={() => setUi({ tool: 'draw' })}
               >
-                开始绘制轨迹
+                绘制轨迹
               </Button>
             </div>
           )}
-          <Field label="绘制速度 m/s（新增点的时刻 = 距离 / 速度）">
+          <Field label="绘制速度 m/s" hint="绘制轨迹时，新增点的时刻 = 上一点时刻 + 距离 / 速度">
             <NumberField
               value={drawSpeed}
               min={0.1}
