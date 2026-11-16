@@ -1,20 +1,86 @@
 import ky, { HTTPError } from 'ky'
-import type { z } from 'zod'
+import { z } from 'zod'
+import { envelope } from '@/api/common'
+import { tokenPairSchema } from '@/api/token'
+import { isAccessTokenExpiring, useAuthStore } from '@/stores/auth-store'
 import { env } from './env'
 
-/** 本地存储中的登录令牌键名 */
-export const TOKEN_STORAGE_KEY = 'wmdg-token'
+/** 认证类接口路径片段：这些接口返回 401 时不触发刷新令牌 */
+const AUTH_PATH = '/v1/auth/'
 
-/** 统一的 ky 实例：自动附加令牌、超时与重试策略 */
+/** 进行中的刷新请求，并发 401 时共用同一次刷新 */
+let refreshing: Promise<string | null> | null = null
+
+/**
+ * 用刷新令牌换取新的访问令牌；失败时清空登录态
+ * @returns 新的访问令牌，刷新失败时为 null
+ */
+const refreshAccessToken = (): Promise<string | null> => {
+  refreshing ??= (async () => {
+    const { refreshToken, setTokens, clear } = useAuthStore.getState()
+    if (!refreshToken) return null
+    try {
+      const res = await ky
+        .post(`${env.VITE_API_BASE_URL}${AUTH_PATH}refresh`, {
+          json: { refresh_token: refreshToken },
+          retry: 0,
+        })
+        .json()
+      const tokens = envelope(tokenPairSchema).parse(res)
+      setTokens({
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresIn: tokens.expires_in,
+      })
+      return tokens.access_token
+    } catch {
+      clear()
+      return null
+    }
+  })().finally(() => {
+    refreshing = null
+  })
+  return refreshing
+}
+
+/**
+ * 登录失效后跳转登录页，并记录当前地址以便登录后返回
+ */
+const redirectToLogin = async (): Promise<void> => {
+  // 动态引入以避免 router → 路由 → api → http 的循环依赖
+  const { router } = await import('@/app/router')
+  if (router.state.location.pathname === '/login') return
+  await router.navigate({ to: '/login', search: { redirect: router.state.location.href } })
+}
+
+/** 统一的 ky 实例：自动附加令牌、超时与重试策略，401 时自动刷新令牌 */
 export const http = ky.create({
   prefix: env.VITE_API_BASE_URL,
   timeout: 30_000,
   retry: { limit: 1, methods: ['get'] },
   hooks: {
     beforeRequest: [
-      ({ request }) => {
-        const token = localStorage.getItem(TOKEN_STORAGE_KEY)
+      async ({ request }) => {
+        // 令牌临近过期时提前刷新，避免请求发出后被 401 打断
+        let token = useAuthStore.getState().accessToken
+        if (isAccessTokenExpiring()) {
+          token = (await refreshAccessToken()) ?? useAuthStore.getState().accessToken
+        }
         if (token) request.headers.set('Authorization', `Bearer ${token}`)
+      },
+    ],
+    afterResponse: [
+      async ({ request, response, retryCount }) => {
+        if (response.status !== 401 || new URL(request.url).pathname.includes(AUTH_PATH)) return
+        const token = retryCount === 0 ? await refreshAccessToken() : null
+        if (!token) {
+          useAuthStore.getState().clear()
+          void redirectToLogin()
+          return
+        }
+        const headers = new Headers(request.headers)
+        headers.set('Authorization', `Bearer ${token}`)
+        return ky.retry({ request: new Request(request, { headers }), delay: 0 })
       },
     ],
   },
@@ -87,6 +153,12 @@ export const sendJson = async <T extends z.ZodType = z.ZodVoid>(
 export const isHttpStatus = (error: unknown, status: number): boolean =>
   error instanceof HTTPError && error.response.status === status
 
+/** 后端错误响应体：`{ error: { message } }` 或 `{ message }` */
+const errorBodySchema = z.union([
+  z.object({ error: z.object({ message: z.string() }) }).transform((b) => b.error.message),
+  z.object({ message: z.string() }).transform((b) => b.message),
+])
+
 /**
  * 从错误中提取可展示给用户的提示文案（优先使用后端返回的 message 字段）
  * @param error - 捕获到的错误
@@ -95,10 +167,8 @@ export const isHttpStatus = (error: unknown, status: number): boolean =>
  */
 export const getErrorMessage = (error: unknown, fallback = '操作失败，请稍后重试'): string => {
   if (error instanceof HTTPError) {
-    const { data } = error
-    if (typeof data === 'object' && data && 'message' in data && typeof data.message === 'string') {
-      return data.message
-    }
+    const parsed = errorBodySchema.safeParse(error.data)
+    if (parsed.success) return parsed.data
     return `${fallback}（${error.response.status}）`
   }
   return error instanceof Error && error.message ? error.message : fallback

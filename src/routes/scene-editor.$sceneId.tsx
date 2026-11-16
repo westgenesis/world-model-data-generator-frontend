@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { fetchSceneFiles } from '@/features/scene-editor/hooks/use-scene-io'
 import { SceneEditorPage } from '@/features/scene-editor/SceneEditorPage'
+import { requireAuth } from '@/lib/auth-guard'
 
 /** 查询参数：开发调试时可直接指定 xodr / xosc 地址 */
 const searchSchema = z.object({
@@ -13,6 +14,7 @@ const searchSchema = z.object({
 export const Route = createFileRoute('/scene-editor/$sceneId')({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => ({ xodr: search.xodr, xosc: search.xosc }),
+  beforeLoad: requireAuth,
   // 文件内容只在进入页面时获取一次
   staleTime: Infinity,
   // 开发调试：按查询参数预取文件；失败时把错误交给页面提示，不阻断编辑器

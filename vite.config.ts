@@ -21,11 +21,11 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      port: 5173,
+      port: 8080,
       proxy: {
-        // Mock 关闭时，/api 请求转发到后端服务
+        // /api 请求转发到后端服务
         '/api': {
-          target: env.VITE_PROXY_TARGET || 'http://localhost:8080',
+          target: env.VITE_PROXY_TARGET || 'http://localhost:8000',
           changeOrigin: true,
         },
       },
