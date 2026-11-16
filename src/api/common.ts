@@ -25,5 +25,16 @@ export interface PageResult<T> {
   total: number
 }
 
+/**
+ * 解包后端统一响应 `{ data, request_id }`，只保留 data
+ * @param data - data 字段的 schema
+ * @returns 输出为 data 的 schema
+ */
+export const envelope = <T extends z.ZodType>(data: T) =>
+  z
+    .object({ data: z.unknown(), request_id: z.string() })
+    .transform((res) => res.data)
+    .pipe(data)
+
 /** 可空的 ISO 时间字符串 */
 export const nullableDateTime = z.iso.datetime().nullable()

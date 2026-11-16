@@ -19,16 +19,15 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
 
 COPY . .
 
-# 生产构建不启用 Mock；接口统一走相对路径 /api，由 nginx 在运行时代理
-ENV VITE_API_BASE_URL=/api \
-    VITE_ENABLE_MOCK=false
-RUN pnpm build && rm -f dist/mockServiceWorker.js
+# 接口统一走相对路径 /api，由 nginx 在运行时代理
+ENV VITE_API_BASE_URL=/api
+RUN pnpm build
 
 # ---------- 运行阶段 ----------
 FROM nginx:stable-alpine AS runtime
 
 # 后端服务地址，容器启动时注入到 nginx 配置
-ENV API_UPSTREAM=http://backend:8080 \
+ENV API_UPSTREAM=http://backend:8000 \
     NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1
 
 COPY deploy/nginx/default.conf.template /etc/nginx/templates/default.conf.template

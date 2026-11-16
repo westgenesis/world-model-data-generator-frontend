@@ -2,19 +2,18 @@
 
 ## 技术栈
 
-| 分类      | 选型                                                    |
-| --------- | ------------------------------------------------------- |
-| 构建      | Vite + React 19 + TypeScript（SPA）                     |
-| 包管理    | pnpm                                                    |
-| UI 组件   | Ant Design 6（主题 token 见 `src/theme/antd-theme.ts`） |
-| 样式      | Tailwind CSS v4（设计 token 见 `src/styles/index.css`） |
-| 路由      | TanStack Router（文件路由，`src/routes`）               |
-| 数据请求  | TanStack Query + ky + Zod 校验                          |
-| 全局状态  | Zustand                                                 |
-| 表单      | AntD Form + Zod                                         |
-| 接口 Mock | MSW                                                     |
-| 代码规范  | ESLint + Prettier，lefthook + commitlint                |
-| 测试      | Vitest + Testing Library，Playwright（E2E）             |
+| 分类     | 选型                                                    |
+| -------- | ------------------------------------------------------- |
+| 构建     | Vite + React 19 + TypeScript（SPA）                     |
+| 包管理   | pnpm                                                    |
+| UI 组件  | Ant Design 6（主题 token 见 `src/theme/antd-theme.ts`） |
+| 样式     | Tailwind CSS v4（设计 token 见 `src/styles/index.css`） |
+| 路由     | TanStack Router（文件路由，`src/routes`）               |
+| 数据请求 | TanStack Query + ky + Zod 校验                          |
+| 全局状态 | Zustand                                                 |
+| 表单     | AntD Form + Zod                                         |
+| 代码规范 | ESLint + Prettier，lefthook + commitlint                |
+| 测试     | Vitest + Testing Library，Playwright（E2E）             |
 
 ## 快速开始
 
@@ -27,7 +26,7 @@ pnpm dev
 
 | 命令                        | 说明                                                       |
 | --------------------------- | ---------------------------------------------------------- |
-| `pnpm dev`                  | 启动开发服务器（默认启用 MSW Mock）                        |
+| `pnpm dev`                  | 启动开发服务器                                             |
 | `pnpm build`                | 生产构建并类型检查                                         |
 | `pnpm lint` / `pnpm format` | 代码检查 / 格式化                                          |
 | `pnpm test`                 | 单元测试（watch 模式）                                     |
@@ -73,7 +72,7 @@ pnpm docker:down --env prod
 | `NPM_REGISTRY`             | 构建时使用的 npm 源，默认 `https://registry.npmmirror.com`  |
 
 - 不使用脚本时：`docker compose -f deploy/docker-compose.yml --env-file deploy/env/dev.env up -d --build`。
-- 只用镜像时：`docker run -d -p 8080:80 -e API_UPSTREAM=http://backend:8080 <镜像>`。
+- 只用镜像时：`docker run -d -p 8080:80 -e API_UPSTREAM=http://backend:8000 <镜像>`。
 - 健康检查：`GET /healthz` 返回 `ok`，镜像已内置 `HEALTHCHECK`。
 - 缓存策略：`/assets/*` 长期缓存，`index.html` 不缓存，发版后刷新即生效。
 - 配置文件：`deploy/docker-compose.yml`、`deploy/nginx/default.conf.template`、`scripts/docker.mjs`。
@@ -105,7 +104,6 @@ src/
 ├── hooks/        # 通用 Hooks（列表筛选分页、抽屉状态、写操作封装）
 ├── layouts/      # 布局（顶栏 / 侧栏）
 ├── lib/          # http、queryClient、环境变量等基础设施
-├── mocks/        # MSW Mock 接口
 ├── routes/       # 文件路由（routeTree.gen.ts 自动生成，勿手改）
 ├── stores/       # Zustand 全局状态
 ├── styles/       # 全局样式与 Tailwind 主题
@@ -117,7 +115,7 @@ src/
 
 见 `.env.example`。本地覆盖请新建 `.env.local`。
 
-- `VITE_ENABLE_MOCK=false` 关闭 Mock 后，`/api` 请求经 Vite 代理转发到 `VITE_PROXY_TARGET`。
+- `VITE_PROXY_TARGET`：开发环境 `/api` 请求代理转发的后端地址。
 
 ## 约定
 
@@ -126,7 +124,7 @@ src/
 - 图标统一使用 `lucide-react`，默认 `strokeWidth={1.75}`，菜单/按钮尺寸 16–18。
 - 业务枚举统一在 `src/constants/enums.ts` 中用 `defineEnum` 定义（取值、文案、色调），表单选项、zod 校验与标签展示都从这里派生。
 - 路由文件只做路由声明，页面实现放在 `src/features/<模块>/`。
-- 接口在 `src/api/` 中以 zod schema 定义，请求 schema 同时用于表单校验（`zodRule`）；后端未就绪时在 `src/mocks/` 中补充 Mock。
+- 接口在 `src/api/` 中以 zod schema 定义，请求 schema 同时用于表单校验（`zodRule`）。
 - 颜色使用语义 token（如 `bg-card`、`text-fg-2`、`border-line`），不要写死色值，以保证暗色模式可用。
 - 全屏页面（如场景编辑器）放在 `src/routes` 根层级，不经过 `_app` 布局。
 - 注释使用中文，函数使用箭头函数并附 JSDoc，单文件不超过 500 行。

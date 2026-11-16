@@ -9,14 +9,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores([
-    'dist',
-    'coverage',
-    'playwright-report',
-    'test-results',
-    'public/mockServiceWorker.js',
-    'src/routeTree.gen.ts',
-  ]),
+  globalIgnores(['dist', 'coverage', 'playwright-report', 'test-results', 'src/routeTree.gen.ts']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
