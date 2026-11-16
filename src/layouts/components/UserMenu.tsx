@@ -16,7 +16,11 @@ export const UserMenu = () => {
 
   const name = user?.full_name || user?.username || '…'
 
-  /** 退出登录：先作废后端刷新令牌，再清空本地令牌与缓存，回到登录页 */
+  /**
+   * 退出登录：作废后端刷新令牌，清空本地令牌，跳转登录页后再清空查询缓存。
+   * 缓存必须在跳转之后清理：跳转会卸载当前布局（含本组件的 useQuery 观察者），
+   * 若先 clear 缓存，仍被观察的 ['auth','me'] 查询会被触发重新请求 /users/me。
+   */
   const handleLogout = async () => {
     try {
       if (refreshToken) await logout({ refresh_token: refreshToken })
@@ -24,8 +28,8 @@ export const UserMenu = () => {
       // 后端登出失败不阻断本地退出
     }
     clearAuth()
-    queryClient.clear()
     await navigate({ to: '/login', replace: true })
+    queryClient.clear()
   }
 
   const items: MenuProps['items'] = [
