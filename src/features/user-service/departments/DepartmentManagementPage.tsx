@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { App, Button, Input, Select } from 'antd'
+import { App, Button } from 'antd'
 import { Plus } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { Department } from '@/api/departments'
 import {
   deleteDepartment,
@@ -9,11 +9,8 @@ import {
   departmentListQueryOptions,
   updateDepartment,
 } from '@/api/departments'
-import { FilterBar, FilterField } from '@/components/FilterBar'
 import { PageHeader } from '@/components/PageHeader'
 import { StatGrid } from '@/components/StatCard'
-import type { DepartmentStatus } from '@/constants/enums'
-import { DepartmentStatus as DepartmentStatusEnum } from '@/constants/enums'
 import { useActionMutation } from '@/hooks/use-action-mutation'
 import { useDrawerState } from '@/hooks/use-drawer-state'
 import { DepartmentFormDrawer } from './components/DepartmentFormDrawer'
@@ -22,10 +19,8 @@ import { DepartmentTable } from './components/DepartmentTable'
 /** 部门管理页面（接口：GET / POST /v1/departments） */
 export const DepartmentManagementPage = () => {
   const { modal } = App.useApp()
-  const { data, isPending } = useQuery(departmentListQueryOptions)
+  const { data, isPending, isFetching } = useQuery(departmentListQueryOptions)
   const drawer = useDrawerState<Department>()
-  const [keyword, setKeyword] = useState('')
-  const [status, setStatus] = useState<DepartmentStatus>()
 
   const departments = useMemo(() => data ?? [], [data])
 
@@ -37,15 +32,6 @@ export const DepartmentManagementPage = () => {
     }),
     [departments],
   )
-
-  const filtered = useMemo(() => {
-    const kw = keyword.trim().toLowerCase()
-    return departments.filter(
-      (item) =>
-        (!kw || item.name.toLowerCase().includes(kw)) &&
-        (status === undefined || item.is_active === (status === 'active')),
-    )
-  }, [departments, keyword, status])
 
   const toggleStatus = useActionMutation({
     mutationFn: (department: Department) =>
@@ -68,11 +54,6 @@ export const DepartmentManagementPage = () => {
       okButtonProps: { danger: true },
       onOk: () => remove.mutateAsync(department),
     })
-  }
-
-  const reset = () => {
-    setKeyword('')
-    setStatus(undefined)
   }
 
   return (
@@ -100,31 +81,9 @@ export const DepartmentManagementPage = () => {
         ]}
       />
 
-      <FilterBar onReset={reset}>
-        <FilterField label="状态">
-          <Select
-            className="w-32"
-            placeholder="全部"
-            allowClear
-            value={status}
-            onChange={(value) => setStatus(value)}
-            options={DepartmentStatusEnum.options}
-          />
-        </FilterField>
-        <FilterField label="关键词">
-          <Input
-            className="w-56"
-            placeholder="部门名称"
-            allowClear
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-          />
-        </FilterField>
-      </FilterBar>
-
       <DepartmentTable
-        data={filtered}
-        loading={isPending}
+        data={departments}
+        loading={isFetching}
         onEdit={drawer.show}
         onToggleStatus={toggleStatus.mutate}
         onDelete={confirmRemove}

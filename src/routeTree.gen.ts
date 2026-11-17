@@ -36,7 +36,6 @@ import { Route as AppUserServiceLogsRouteImport } from './routes/_app/user-servi
 import { Route as AppUserServiceMessagesRouteImport } from './routes/_app/user-service/messages'
 import { Route as AppUserServicePermissionsRouteImport } from './routes/_app/user-service/permissions'
 import { Route as AppUserServicePortalRouteImport } from './routes/_app/user-service/portal'
-import { Route as AppUserServiceSecurityRouteImport } from './routes/_app/user-service/security'
 import { Route as AppUserServiceUsersRouteImport } from './routes/_app/user-service/users'
 import { Route as AppUserServiceProjectsIndexRouteImport } from './routes/_app/user-service/projects/index'
 import { Route as AppUserServiceProjectsProjectIdRouteImport } from './routes/_app/user-service/projects/$projectId'
@@ -178,11 +177,6 @@ const AppUserServicePortalRoute = AppUserServicePortalRouteImport.update({
   path: '/user-service/portal',
   getParentRoute: () => AppRoute,
 } as any)
-const AppUserServiceSecurityRoute = AppUserServiceSecurityRouteImport.update({
-  id: '/user-service/security',
-  path: '/user-service/security',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppUserServiceUsersRoute = AppUserServiceUsersRouteImport.update({
   id: '/user-service/users',
   path: '/user-service/users',
@@ -225,7 +219,6 @@ export interface FileRoutesByFullPath {
   '/user-service/messages': typeof AppUserServiceMessagesRoute
   '/user-service/permissions': typeof AppUserServicePermissionsRoute
   '/user-service/portal': typeof AppUserServicePortalRoute
-  '/user-service/security': typeof AppUserServiceSecurityRoute
   '/user-service/users': typeof AppUserServiceUsersRoute
   '/data-gen/': typeof AppDataGenIndexRoute
   '/dataset/': typeof AppDatasetIndexRoute
@@ -257,7 +250,6 @@ export interface FileRoutesByTo {
   '/user-service/messages': typeof AppUserServiceMessagesRoute
   '/user-service/permissions': typeof AppUserServicePermissionsRoute
   '/user-service/portal': typeof AppUserServicePortalRoute
-  '/user-service/security': typeof AppUserServiceSecurityRoute
   '/user-service/users': typeof AppUserServiceUsersRoute
   '/data-gen': typeof AppDataGenIndexRoute
   '/dataset': typeof AppDatasetIndexRoute
@@ -291,7 +283,6 @@ export interface FileRoutesById {
   '/_app/user-service/messages': typeof AppUserServiceMessagesRoute
   '/_app/user-service/permissions': typeof AppUserServicePermissionsRoute
   '/_app/user-service/portal': typeof AppUserServicePortalRoute
-  '/_app/user-service/security': typeof AppUserServiceSecurityRoute
   '/_app/user-service/users': typeof AppUserServiceUsersRoute
   '/_app/data-gen/': typeof AppDataGenIndexRoute
   '/_app/dataset/': typeof AppDatasetIndexRoute
@@ -325,7 +316,6 @@ export interface FileRouteTypes {
     | '/user-service/messages'
     | '/user-service/permissions'
     | '/user-service/portal'
-    | '/user-service/security'
     | '/user-service/users'
     | '/data-gen/'
     | '/dataset/'
@@ -357,7 +347,6 @@ export interface FileRouteTypes {
     | '/user-service/messages'
     | '/user-service/permissions'
     | '/user-service/portal'
-    | '/user-service/security'
     | '/user-service/users'
     | '/data-gen'
     | '/dataset'
@@ -390,7 +379,6 @@ export interface FileRouteTypes {
     | '/_app/user-service/messages'
     | '/_app/user-service/permissions'
     | '/_app/user-service/portal'
-    | '/_app/user-service/security'
     | '/_app/user-service/users'
     | '/_app/data-gen/'
     | '/_app/dataset/'
@@ -597,13 +585,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUserServicePortalRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/user-service/security': {
-      id: '/_app/user-service/security'
-      path: '/user-service/security'
-      fullPath: '/user-service/security'
-      preLoaderRoute: typeof AppUserServiceSecurityRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/user-service/users': {
       id: '/_app/user-service/users'
       path: '/user-service/users'
@@ -649,7 +630,6 @@ interface AppRouteChildren {
   AppUserServiceMessagesRoute: typeof AppUserServiceMessagesRoute
   AppUserServicePermissionsRoute: typeof AppUserServicePermissionsRoute
   AppUserServicePortalRoute: typeof AppUserServicePortalRoute
-  AppUserServiceSecurityRoute: typeof AppUserServiceSecurityRoute
   AppUserServiceUsersRoute: typeof AppUserServiceUsersRoute
   AppDataGenIndexRoute: typeof AppDataGenIndexRoute
   AppDatasetIndexRoute: typeof AppDatasetIndexRoute
@@ -679,7 +659,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppUserServiceMessagesRoute: AppUserServiceMessagesRoute,
   AppUserServicePermissionsRoute: AppUserServicePermissionsRoute,
   AppUserServicePortalRoute: AppUserServicePortalRoute,
-  AppUserServiceSecurityRoute: AppUserServiceSecurityRoute,
   AppUserServiceUsersRoute: AppUserServiceUsersRoute,
   AppDataGenIndexRoute: AppDataGenIndexRoute,
   AppDatasetIndexRoute: AppDatasetIndexRoute,
