@@ -1,117 +1,198 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 import { z } from 'zod'
-import { Department, ExtraPermission, UserRole, UserStatus } from '@/constants/enums'
+import { UserStatus } from '@/constants/enums'
 import { getJson, sendJson } from '@/lib/http'
 import type { PageParams } from './common'
-import { nullableDateTime, pageSchema } from './common'
+import { envelope, pagedSchema } from './common'
 
 /* --------------------------------- 数据模型 --------------------------------- */
 
-/** 用户 schema */
-export const userSchema = z.object({
-  id: z.string(),
+/** 后端时间：带时区偏移的 ISO 字符串 */
+const dateTime = z.iso.datetime({ offset: true })
+
+/** 用户所属部门（列表里只带部门名） */
+export const userDepartmentSchema = z.object({
+  department_id: z.number().int(),
   name: z.string(),
-  account: z.string(),
-  phone: z.string().nullable(),
+})
+
+/** 用户全局角色；未分配角色时为 null */
+export const userRoleSchema = z.object({
+  role_id: z.number().int(),
+  code: z.string(),
+  name: z.string(),
+})
+
+/** 超级管理员的角色 code：该账号不允许被操作 */
+export const SUPER_ADMIN_ROLE_CODE = 'super_admin'
+
+/** 用户 schema（对应后端 UserItem） */
+export const userSchema = z.object({
+  user_id: z.number().int(),
+  username: z.string(),
+  full_name: z.string(),
   email: z.string().nullable(),
-  department: z.enum(Department.values),
-  role: z.enum(UserRole.values),
+  phone: z.string().nullable(),
+  department: userDepartmentSchema.nullable(),
+  role: userRoleSchema.nullable(),
   status: z.enum(UserStatus.values),
-  lastLoginAt: nullableDateTime,
-  createdAt: z.iso.datetime(),
+  must_change_password: z.boolean(),
+  login_throttled: z.boolean().default(false),
+  last_login_at: dateTime.nullable(),
+  created_at: dateTime,
 })
 
 /** 用户 */
 export type User = z.infer<typeof userSchema>
 
-/** 用户精简信息（下拉选择、成员选择等场景） */
-export const userBriefSchema = userSchema.pick({
-  id: true,
-  name: true,
-  account: true,
-  department: true,
-  role: true,
-})
-
-/** 用户精简信息 */
-export type UserBrief = z.infer<typeof userBriefSchema>
+/** 用户精简信息（项目负责人、成员选择等场景） */
+export interface UserBrief {
+  id: string
+  name: string
+  account: string
+  /** 所属部门名称，未分配时为 null */
+  department: string | null
+  /** 全局角色名称，未分配时为 null */
+  role: string | null
+}
 
 /** 用户统计 schema */
 export const userStatsSchema = z.object({
-  total: z.number(),
-  enabled: z.number(),
-  disabled: z.number(),
-  newThisMonth: z.number(),
+  total: z.number().int(),
+  active: z.number().int(),
+  disabled: z.number().int(),
+  pending: z.number().int(),
+  new_this_month: z.number().int(),
 })
 
-/** 批量导入预览行 schema */
-export const userImportRowSchema = z.object({
-  name: z.string(),
-  account: z.string(),
-  department: z.enum(Department.values).nullable(),
-  role: z.enum(UserRole.values).nullable(),
-  /** 校验失败原因，为 null 表示通过 */
-  error: z.string().nullable(),
+/** 用户统计 */
+export type UserStats = z.infer<typeof userStatsSchema>
+
+/** 新建用户的响应：服务端生成初始密码时只在这里返回一次 */
+export const userCreatedSchema = userSchema.extend({
+  initial_password: z.string().nullable(),
 })
 
-/** 批量导入预览行 */
-export type UserImportRow = z.infer<typeof userImportRowSchema>
+/** 新建用户的结果 */
+export type UserCreated = z.infer<typeof userCreatedSchema>
+
+/** 重置密码的结果 */
+export const passwordResetResultSchema = z.object({
+  user_id: z.number().int(),
+  username: z.string(),
+  initial_password: z.string().nullable(),
+  must_change_password: z.boolean(),
+  auth_version: z.number().int(),
+})
+
+/** 重置密码的结果 */
+export type PasswordResetResult = z.infer<typeof passwordResetResultSchema>
+
+/** 解除登录限流的结果 */
+export const userUnlockedSchema = z.object({
+  user_id: z.number().int(),
+  username: z.string(),
+  cleared_failures: z.number().int(),
+})
 
 /* --------------------------------- 表单 / 请求 --------------------------------- */
 
-/** 手机号（选填） */
+/** 手机号（选填），为空表示不填写 */
 const phoneField = z
   .string()
-  .regex(/^1[3-9]\d{9}$/, '请输入正确的手机号')
-  .optional()
+  .trim()
+  .regex(/^\+?[0-9][0-9 -]{5,19}$/, '请输入正确的手机号')
   .or(z.literal(''))
 
-/** 邮箱（选填） */
-const emailField = z.email('请输入正确的邮箱').optional().or(z.literal(''))
+/** 邮箱（选填），为空表示不填写 */
+const emailField = z.email('请输入正确的邮箱').or(z.literal(''))
 
-/** 新增用户请求 schema，同时用于表单校验 */
+/** 新增用户表单 schema，同时用于表单校验 */
 export const userCreateSchema = z.object({
-  name: z.string('请输入姓名').trim().min(1, '请输入姓名').max(32, '姓名不超过 32 个字符'),
-  account: z
+  username: z
     .string('请输入登录账号')
     .trim()
-    .min(1, '请输入登录账号')
-    .regex(/^[a-zA-Z0-9._-]{2,32}$/, '账号为 2–32 位字母、数字或 . _ -'),
+    .regex(
+      /^[A-Za-z0-9][A-Za-z0-9_.-]{2,63}$/,
+      '账号为 3–64 位字母、数字或 . _ -，以字母或数字开头',
+    ),
+  full_name: z.string('请输入姓名').trim().min(1, '请输入姓名').max(64, '姓名不超过 64 个字符'),
+  department_id: z.number('请选择所属部门').int().positive(),
+  /** 全局角色，留空表示暂不分配 */
+  role_id: z.number().int().positive().optional(),
   phone: phoneField,
   email: emailField,
-  department: z.enum(Department.values, '请选择所属部门'),
+  /** 初始密码，留空由服务端生成 */
+  password: z.string().max(64, '初始密码不超过 64 个字符'),
   /** 首次登录强制修改密码 */
-  forceResetPassword: z.boolean(),
+  must_change_password: z.boolean(),
   /** 发送账号信息到邮箱 */
-  sendAccountEmail: z.boolean(),
+  send_account_info_to_email: z.boolean(),
 })
 
-/** 新增用户请求 */
-export type UserCreateInput = z.infer<typeof userCreateSchema>
+/** 新增用户表单值 */
+export type UserCreateValues = z.infer<typeof userCreateSchema>
 
-/** 编辑用户请求 schema（账号不可修改） */
-export const userUpdateSchema = userCreateSchema
-  .pick({ name: true, phone: true, email: true, department: true })
-  .extend({ status: z.enum(UserStatus.values) })
+/** 新增用户请求体 */
+export interface UserCreateInput {
+  username: string
+  full_name: string
+  phone: string | null
+  email: string | null
+  department_id: number
+  /** 全局角色，null 表示暂不分配 */
+  role_id: number | null
+  password: string | null
+  must_change_password: boolean
+  send_account_info_to_email: boolean
+}
 
-/** 编辑用户请求 */
-export type UserUpdateInput = z.infer<typeof userUpdateSchema>
-
-/** 用户授权请求 schema */
-export const userGrantSchema = z.object({
-  permission: z.enum(ExtraPermission.values, '请选择附加权限'),
-  /** 有效期起止（ISO 日期） */
-  startAt: z.iso.datetime(),
-  endAt: z.iso.datetime(),
-  reason: z.string('请填写授权原因').trim().min(1, '请填写授权原因').max(200, '不超过 200 个字符'),
+/** 编辑用户表单 schema，同时用于表单校验（账号创建后不可修改） */
+export const userUpdateSchema = z.object({
+  full_name: z.string('请输入姓名').trim().min(1, '请输入姓名').max(64, '姓名不超过 64 个字符'),
+  /** 传 null 表示清空部门归属 */
+  department_id: z.number().int().positive().nullable(),
+  /** 全局角色，留空表示清空角色 */
+  role_id: z.number().int().positive().optional(),
+  phone: phoneField,
+  email: emailField,
 })
 
-/** 用户授权请求 */
-export type UserGrantInput = z.infer<typeof userGrantSchema>
+/** 编辑用户表单值 */
+export type UserUpdateValues = z.infer<typeof userUpdateSchema>
+
+/** 编辑用户请求体 */
+export interface UserUpdateInput {
+  full_name: string
+  phone: string | null
+  email: string | null
+  department_id: number | null
+  /** 全局角色，null 表示清空角色 */
+  role_id: number | null
+}
+
+/** 重置密码表单 schema，同时用于表单校验 */
+export const passwordResetSchema = z.object({
+  /** 新密码，留空由服务端生成 */
+  new_password: z.string().max(128, '密码不超过 128 个字符'),
+  /** 重置后是否要求对方下次登录先改密码 */
+  must_change_password: z.boolean(),
+})
+
+/** 重置密码表单值 */
+export type PasswordResetValues = z.infer<typeof passwordResetSchema>
+
+/** 重置密码请求体 */
+export interface PasswordResetInput {
+  new_password: string | null
+  must_change_password: boolean
+}
 
 /** 用户列表查询参数 */
 export interface UserListParams extends PageParams {
   status?: UserStatus
+  /** 所属部门 */
+  departmentId?: number
   /** 姓名 / 账号 */
   keyword?: string
 }
@@ -128,20 +209,40 @@ export const USERS_QUERY_KEY = ['users'] as const
 export const userListQueryOptions = (params: UserListParams) =>
   queryOptions({
     queryKey: [...USERS_QUERY_KEY, 'list', params],
-    queryFn: () => getJson('users', pageSchema(userSchema), { ...params }),
+    queryFn: () =>
+      getJson('v1/users', envelope(pagedSchema(userSchema)), {
+        keyword: params.keyword,
+        department_id: params.departmentId,
+        status: params.status,
+        page: params.page,
+        size: params.pageSize,
+      }),
     placeholderData: keepPreviousData,
   })
 
 /** 用户统计查询配置 */
 export const userStatsQueryOptions = queryOptions({
   queryKey: [...USERS_QUERY_KEY, 'stats'],
-  queryFn: () => getJson('users/stats', userStatsSchema),
+  queryFn: () => getJson('v1/users/statistics', envelope(userStatsSchema)),
 })
 
-/** 启用状态的用户精简列表（负责人、成员选择等） */
+/** 启用状态的用户精简列表（项目负责人、成员选择等） */
 export const userOptionsQueryOptions = queryOptions({
   queryKey: [...USERS_QUERY_KEY, 'options'],
-  queryFn: () => getJson('users/options', z.array(userBriefSchema)),
+  queryFn: async (): Promise<UserBrief[]> => {
+    const page = await getJson('v1/users', envelope(pagedSchema(userSchema)), {
+      status: 'active',
+      page: 1,
+      size: 100,
+    })
+    return page.items.map((user) => ({
+      id: String(user.user_id),
+      name: user.full_name,
+      account: user.username,
+      department: user.department?.name ?? null,
+      role: user.role?.name ?? null,
+    }))
+  },
   staleTime: 5 * 60_000,
 })
 
@@ -150,51 +251,45 @@ export const userOptionsQueryOptions = queryOptions({
 /**
  * 新增用户
  * @param input - 用户信息
+ * @returns 新建的用户（含服务端生成的初始密码）
  */
-export const createUser = (input: UserCreateInput) => sendJson('post', 'users', input)
+export const createUser = (input: UserCreateInput): Promise<UserCreated> =>
+  sendJson('post', 'v1/users', input, envelope(userCreatedSchema))
 
 /**
  * 编辑用户
  * @param id - 用户 ID
  * @param input - 用户信息
+ * @returns 修改后的用户
  */
-export const updateUser = (id: string, input: UserUpdateInput) =>
-  sendJson('put', `users/${id}`, input)
+export const updateUser = (id: number, input: UserUpdateInput): Promise<User> =>
+  sendJson('put', `v1/users/${id}`, input, envelope(userSchema))
 
 /**
  * 启用 / 停用用户
  * @param id - 用户 ID
- * @param status - 目标状态
+ * @param isEnabled - true 启用，false 停用
+ * @returns 修改后的用户
  */
-export const updateUserStatus = (id: string, status: UserStatus) =>
-  sendJson('patch', `users/${id}/status`, { status })
+export const updateUserStatus = (id: number, isEnabled: boolean): Promise<User> =>
+  sendJson('post', `v1/users/${id}/status`, { is_enabled: isEnabled }, envelope(userSchema))
 
 /**
- * 授予用户临时附加权限
+ * 重置用户密码
  * @param id - 用户 ID
- * @param input - 授权信息
+ * @param input - 新密码与是否强制修改
+ * @returns 重置结果（服务端生成密码时会返回初始密码）
  */
-export const grantUserPermission = (id: string, input: UserGrantInput) =>
-  sendJson('post', `users/${id}/grants`, input)
+export const resetUserPassword = (
+  id: number,
+  input: PasswordResetInput,
+): Promise<PasswordResetResult> =>
+  sendJson('post', `v1/users/${id}/password`, input, envelope(passwordResetResultSchema))
 
 /**
- * 上传导入文件并获取校验预览
- * @param file - .xlsx / .csv 文件
- * @returns 预览行
+ * 解除用户登录限流
+ * @param id - 用户 ID
+ * @returns 解除结果
  */
-export const previewUserImport = (file: File) => {
-  const body = new FormData()
-  body.append('file', file)
-  return sendJson('post', 'users/import/preview', body, z.array(userImportRowSchema))
-}
-
-/**
- * 确认导入校验通过的用户
- * @param rows - 待导入的行（仅包含校验通过的行）
- * @returns 实际导入条数
- */
-export const confirmUserImport = (rows: UserImportRow[]) =>
-  sendJson('post', 'users/import', { rows }, z.object({ imported: z.number() }))
-
-/** 导入模板下载地址 */
-export const USER_IMPORT_TEMPLATE_URL = 'users/import/template'
+export const unlockUser = (id: number) =>
+  sendJson('post', `v1/users/${id}/unlock`, undefined, envelope(userUnlockedSchema))

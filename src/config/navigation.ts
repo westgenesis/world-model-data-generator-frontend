@@ -5,6 +5,7 @@ import {
   BadgeCheck,
   BellRing,
   Boxes,
+  Building2,
   CalendarClock,
   Clapperboard,
   Database,
@@ -51,7 +52,14 @@ export interface NavNode {
   to?: AppPath
   /** 子节点 */
   children?: NavNode[]
+  /** 一级模块的一句话说明，用于模块切换面板 */
+  description?: string
+  /** 一级模块的强调色，取自全局语义 token */
+  accent?: ModuleAccent
 }
+
+/** 模块强调色，对应 src/layouts/components/module-accent.ts 中的样式映射 */
+export type ModuleAccent = 'primary' | 'purple' | 'warning' | 'success'
 
 /** 叶子节点及其祖先链，用于搜索与面包屑 */
 export interface NavLeaf {
@@ -80,6 +88,8 @@ export const NAV_TREE: NavNode[] = [
     key: 'data-gen',
     label: '数据生成',
     icon: Sparkles,
+    description: '场景准备、任务编排与质检归档的全流程生产',
+    accent: 'primary',
     children: [
       {
         key: 'data-gen/prepare',
@@ -122,6 +132,8 @@ export const NAV_TREE: NavNode[] = [
     key: 'dataset',
     label: '数据集管理',
     icon: Database,
+    description: '数据接入、处理、合成与质量反馈的资产管理',
+    accent: 'purple',
     children: [
       page('数据接入', '/dataset/ingestion', FolderInput),
       page('数据处理', '/dataset/processing', DatabaseZap),
@@ -134,8 +146,11 @@ export const NAV_TREE: NavNode[] = [
     key: 'user-service',
     label: '用户服务管理',
     icon: UsersRound,
+    description: '用户、权限、项目与组织配置的统一管理',
+    accent: 'warning',
     children: [
       page('用户管理', '/user-service/users', UserCog),
+      page('部门管理', '/user-service/departments', Building2),
       page('权限管理', '/user-service/permissions', KeyRound),
       page('门户个性化', '/user-service/portal', Palette),
       page('安全管理', '/user-service/security', ShieldCheck),
@@ -163,6 +178,9 @@ export const flattenLeaves = (nodes: NavNode[], parents: NavNode[] = []): NavLea
 /** 全部叶子页面（静态缓存） */
 export const NAV_LEAVES = flattenLeaves(NAV_TREE)
 
+/** 顶级模块列表，模块切换器与侧栏导航共用 */
+export const NAV_MODULES = NAV_TREE
+
 /**
  * 根据当前路径找到匹配的叶子页面；子路由（如详情页）匹配其最长前缀页面
  * @param pathname - 当前路由路径
@@ -173,3 +191,18 @@ export const matchLeaf = (pathname: string, leaves: NavLeaf[] = NAV_LEAVES): Nav
   leaves
     .filter(({ node }) => pathname === node.to || pathname.startsWith(`${node.to}/`))
     .sort((a, b) => b.node.to.length - a.node.to.length)[0]
+
+/**
+ * 找到当前路径所属的顶级模块
+ * @param pathname - 当前路由路径
+ * @returns 顶级模块，未匹配时返回 undefined
+ */
+export const moduleOf = (pathname: string): NavNode | undefined => matchLeaf(pathname)?.trail[0]
+
+/**
+ * 模块的默认落地页（深度优先的第一个叶子页面）
+ * @param module - 顶级模块
+ * @returns 默认页面节点，模块下无页面时返回 undefined
+ */
+export const firstLeafOf = (module: NavNode): NavLeaf['node'] | undefined =>
+  flattenLeaves(module.children ?? [])[0]?.node

@@ -3,8 +3,7 @@ import { Input, Table } from 'antd'
 import { Search } from 'lucide-react'
 import { useState } from 'react'
 import type { UserBrief } from '@/api/users'
-import { EnumTag } from '@/components/EnumTag'
-import { Department, UserRole } from '@/constants/enums'
+import { EMPTY_TEXT } from '@/lib/format'
 
 interface UserPickerProps {
   /** 可选用户 */
@@ -27,12 +26,12 @@ const COLUMNS: TableProps<UserBrief>['columns'] = [
   {
     title: '全局角色',
     dataIndex: 'role',
-    render: (v: UserBrief['role']) => <EnumTag enumDef={UserRole} value={v} />,
+    render: (v: UserBrief['role']) => v ?? EMPTY_TEXT,
   },
   {
     title: '所属部门',
     dataIndex: 'department',
-    render: (v: UserBrief['department']) => Department.getLabel(v),
+    render: (v: UserBrief['department']) => v ?? EMPTY_TEXT,
   },
 ]
 

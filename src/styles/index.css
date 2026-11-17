@@ -275,8 +275,23 @@
     }
   }
 
+  /* 切换模块时，新模块的导航整体淡入下移 */
+  .app-nav-module {
+    animation: app-nav-module-in 0.22s cubic-bezier(0.2, 0, 0, 1) both;
+  }
+
+  @keyframes app-nav-module-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .app-nav .ant-menu-sub.ant-menu-inline > li {
+      animation: none;
+    }
+    .app-nav-module {
       animation: none;
     }
     .app-nav .ant-menu-inline .ant-menu-item::before,

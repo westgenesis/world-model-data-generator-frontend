@@ -7,9 +7,10 @@ import { defineEnum } from '@/lib/enum'
 
 /* ---------------------------------- 用户 ---------------------------------- */
 
-/** 用户账号状态 */
+/** 用户账号状态：待激活 → 启用 ⇄ 停用（对应后端 UserStatus） */
 export const UserStatus = defineEnum([
-  { value: 'enabled', label: '启用', tone: 'success' },
+  { value: 'pending', label: '待激活', tone: 'warning' },
+  { value: 'active', label: '启用', tone: 'success' },
   { value: 'disabled', label: '停用', tone: 'default' },
 ])
 export type UserStatus = EnumValue<typeof UserStatus>
@@ -23,23 +24,12 @@ export const Department = defineEnum([
 ])
 export type Department = EnumValue<typeof Department>
 
-/** 用户全局角色 */
-export const UserRole = defineEnum([
-  { value: 'system_admin', label: '系统管理员', tone: 'danger' },
-  { value: 'data_admin', label: '数据管理员', tone: 'info' },
-  { value: 'algorithm_engineer', label: '算法工程师', tone: 'purple' },
-  { value: 'annotator', label: '标注员', tone: 'default' },
-  { value: 'guest', label: '访客', tone: 'default' },
+/** 部门状态（接口用 is_active 布尔值，这里用于筛选与标签展示） */
+export const DepartmentStatus = defineEnum([
+  { value: 'active', label: '启用', tone: 'success' },
+  { value: 'inactive', label: '停用', tone: 'default' },
 ])
-export type UserRole = EnumValue<typeof UserRole>
-
-/** 可临时授予用户的附加权限 */
-export const ExtraPermission = defineEnum([
-  { value: 'task:terminate', label: 'task:terminate（临时）' },
-  { value: 'system:config', label: 'system:config（临时）' },
-  { value: 'data:delete', label: 'data:delete（临时）' },
-])
-export type ExtraPermission = EnumValue<typeof ExtraPermission>
+export type DepartmentStatus = EnumValue<typeof DepartmentStatus>
 
 /* ---------------------------------- 项目 ---------------------------------- */
 

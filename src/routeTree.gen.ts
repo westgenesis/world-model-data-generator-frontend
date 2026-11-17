@@ -31,6 +31,7 @@ import { Route as AppDatasetSeedRouteImport } from './routes/_app/dataset/seed'
 import { Route as AppDatasetSyntheticRouteImport } from './routes/_app/dataset/synthetic'
 import { Route as AppUserServiceIndexRouteImport } from './routes/_app/user-service/index'
 import { Route as AppUserServiceConfigRouteImport } from './routes/_app/user-service/config'
+import { Route as AppUserServiceDepartmentsRouteImport } from './routes/_app/user-service/departments'
 import { Route as AppUserServiceLogsRouteImport } from './routes/_app/user-service/logs'
 import { Route as AppUserServiceMessagesRouteImport } from './routes/_app/user-service/messages'
 import { Route as AppUserServicePermissionsRouteImport } from './routes/_app/user-service/permissions'
@@ -150,6 +151,12 @@ const AppUserServiceConfigRoute = AppUserServiceConfigRouteImport.update({
   path: '/user-service/config',
   getParentRoute: () => AppRoute,
 } as any)
+const AppUserServiceDepartmentsRoute =
+  AppUserServiceDepartmentsRouteImport.update({
+    id: '/user-service/departments',
+    path: '/user-service/departments',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppUserServiceLogsRoute = AppUserServiceLogsRouteImport.update({
   id: '/user-service/logs',
   path: '/user-service/logs',
@@ -213,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/dataset/seed': typeof AppDatasetSeedRoute
   '/dataset/synthetic': typeof AppDatasetSyntheticRoute
   '/user-service/config': typeof AppUserServiceConfigRoute
+  '/user-service/departments': typeof AppUserServiceDepartmentsRoute
   '/user-service/logs': typeof AppUserServiceLogsRoute
   '/user-service/messages': typeof AppUserServiceMessagesRoute
   '/user-service/permissions': typeof AppUserServicePermissionsRoute
@@ -244,6 +252,7 @@ export interface FileRoutesByTo {
   '/dataset/seed': typeof AppDatasetSeedRoute
   '/dataset/synthetic': typeof AppDatasetSyntheticRoute
   '/user-service/config': typeof AppUserServiceConfigRoute
+  '/user-service/departments': typeof AppUserServiceDepartmentsRoute
   '/user-service/logs': typeof AppUserServiceLogsRoute
   '/user-service/messages': typeof AppUserServiceMessagesRoute
   '/user-service/permissions': typeof AppUserServicePermissionsRoute
@@ -277,6 +286,7 @@ export interface FileRoutesById {
   '/_app/dataset/seed': typeof AppDatasetSeedRoute
   '/_app/dataset/synthetic': typeof AppDatasetSyntheticRoute
   '/_app/user-service/config': typeof AppUserServiceConfigRoute
+  '/_app/user-service/departments': typeof AppUserServiceDepartmentsRoute
   '/_app/user-service/logs': typeof AppUserServiceLogsRoute
   '/_app/user-service/messages': typeof AppUserServiceMessagesRoute
   '/_app/user-service/permissions': typeof AppUserServicePermissionsRoute
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/dataset/seed'
     | '/dataset/synthetic'
     | '/user-service/config'
+    | '/user-service/departments'
     | '/user-service/logs'
     | '/user-service/messages'
     | '/user-service/permissions'
@@ -341,6 +352,7 @@ export interface FileRouteTypes {
     | '/dataset/seed'
     | '/dataset/synthetic'
     | '/user-service/config'
+    | '/user-service/departments'
     | '/user-service/logs'
     | '/user-service/messages'
     | '/user-service/permissions'
@@ -373,6 +385,7 @@ export interface FileRouteTypes {
     | '/_app/dataset/seed'
     | '/_app/dataset/synthetic'
     | '/_app/user-service/config'
+    | '/_app/user-service/departments'
     | '/_app/user-service/logs'
     | '/_app/user-service/messages'
     | '/_app/user-service/permissions'
@@ -549,6 +562,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppUserServiceConfigRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/user-service/departments': {
+      id: '/_app/user-service/departments'
+      path: '/user-service/departments'
+      fullPath: '/user-service/departments'
+      preLoaderRoute: typeof AppUserServiceDepartmentsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/user-service/logs': {
       id: '/_app/user-service/logs'
       path: '/user-service/logs'
@@ -624,6 +644,7 @@ interface AppRouteChildren {
   AppDatasetSeedRoute: typeof AppDatasetSeedRoute
   AppDatasetSyntheticRoute: typeof AppDatasetSyntheticRoute
   AppUserServiceConfigRoute: typeof AppUserServiceConfigRoute
+  AppUserServiceDepartmentsRoute: typeof AppUserServiceDepartmentsRoute
   AppUserServiceLogsRoute: typeof AppUserServiceLogsRoute
   AppUserServiceMessagesRoute: typeof AppUserServiceMessagesRoute
   AppUserServicePermissionsRoute: typeof AppUserServicePermissionsRoute
@@ -653,6 +674,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDatasetSeedRoute: AppDatasetSeedRoute,
   AppDatasetSyntheticRoute: AppDatasetSyntheticRoute,
   AppUserServiceConfigRoute: AppUserServiceConfigRoute,
+  AppUserServiceDepartmentsRoute: AppUserServiceDepartmentsRoute,
   AppUserServiceLogsRoute: AppUserServiceLogsRoute,
   AppUserServiceMessagesRoute: AppUserServiceMessagesRoute,
   AppUserServicePermissionsRoute: AppUserServicePermissionsRoute,

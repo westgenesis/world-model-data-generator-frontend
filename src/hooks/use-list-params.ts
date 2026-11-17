@@ -19,17 +19,27 @@ export const useDebouncedValue = <T>(value: T, delay = 300): T => {
   return debounced
 }
 
+/** useListParams 配置项 */
+interface ListParamsOptions {
+  /** 每页条数 */
+  pageSize?: number
+  /** 手动查询：筛选条件经 submit 提交后才用于请求，配合「查询」按钮使用 */
+  manualSearch?: boolean
+}
+
 /**
- * 管理列表页的筛选条件与分页：筛选变化时回到第一页，参数防抖后用于请求
+ * 管理列表页的筛选条件与分页：筛选变化时回到第一页，参数按需防抖后用于请求
  * @param initialFilters - 筛选条件初始值（同时作为重置值）
- * @param pageSize - 每页条数
- * @returns 筛选条件、请求参数与 antd 分页配置
+ * @param options - 每页条数与是否手动查询
+ * @returns 筛选条件、查询提交函数、请求参数与 antd 分页配置
  */
 export const useListParams = <F extends object>(
   initialFilters: F,
-  pageSize = DEFAULT_PAGE_SIZE,
+  { pageSize = DEFAULT_PAGE_SIZE, manualSearch = false }: ListParamsOptions = {},
 ) => {
   const [filters, setFilters] = useState(initialFilters)
+  /** 已提交的筛选条件：手动查询模式下用于请求 */
+  const [appliedFilters, setAppliedFilters] = useState(initialFilters)
   const [page, setPage] = useState({ page: 1, pageSize })
   const debouncedFilters = useDebouncedValue(filters)
 
@@ -40,12 +50,19 @@ export const useListParams = <F extends object>(
    */
   const setFilter = <K extends keyof F>(key: K, value: F[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
+    if (!manualSearch) setPage((prev) => ({ ...prev, page: 1 }))
+  }
+
+  /** 应用当前筛选条件并回到第一页（手动查询模式下由查询按钮触发） */
+  const submit = () => {
+    setAppliedFilters(filters)
     setPage((prev) => ({ ...prev, page: 1 }))
   }
 
   /** 重置筛选条件并回到第一页 */
   const reset = () => {
     setFilters(initialFilters)
+    setAppliedFilters(initialFilters)
     setPage((prev) => ({ ...prev, page: 1 }))
   }
 
@@ -64,5 +81,12 @@ export const useListParams = <F extends object>(
       setPage({ page: size === page.pageSize ? current : 1, pageSize: size }),
   })
 
-  return { filters, setFilter, reset, params: { ...debouncedFilters, ...page }, getPagination }
+  return {
+    filters,
+    setFilter,
+    submit,
+    reset,
+    params: { ...(manualSearch ? appliedFilters : debouncedFilters), ...page },
+    getPagination,
+  }
 }

@@ -29,3 +29,4 @@ deploy/env/*.local.env
 !.vscode/settings.json
 .idea
 .DS_Store
+.tanstack/*

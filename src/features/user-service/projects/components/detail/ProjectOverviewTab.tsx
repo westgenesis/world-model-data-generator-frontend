@@ -46,12 +46,18 @@ export const ProjectOverviewTab = ({ project }: { project: ProjectDetail }) => {
       <StatGrid
         loading={isPending}
         items={[
-          { key: 'size', label: '数据量', value: formatNumber(project.dataSizeTb, 1), unit: 'TB' },
-          { key: 'tasks', label: '生成任务', value: formatNumber(project.taskCount) },
-          { key: 'scenes', label: '场景数', value: formatNumber(project.sceneCount) },
-          { key: 'datasets', label: '数据集', value: formatNumber(data?.datasetCount) },
-          { key: 'clips', label: '合成片段', value: formatNumber(data?.clipCount) },
-          { key: 'members', label: '成员', value: formatNumber(project.memberCount) },
+          {
+            key: 'size',
+            label: '数据量',
+            value: project.dataSizeTb,
+            fractionDigits: 1,
+            unit: 'TB',
+          },
+          { key: 'tasks', label: '生成任务', value: project.taskCount },
+          { key: 'scenes', label: '场景数', value: project.sceneCount },
+          { key: 'datasets', label: '数据集', value: data?.datasetCount },
+          { key: 'clips', label: '合成片段', value: data?.clipCount },
+          { key: 'members', label: '成员', value: project.memberCount },
         ]}
       />
       <div className="grid gap-4 lg:grid-cols-2">

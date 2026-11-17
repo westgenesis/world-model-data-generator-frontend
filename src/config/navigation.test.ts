@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { NavNode } from './navigation'
-import { flattenLeaves, matchLeaf, NAV_LEAVES } from './navigation'
+import { flattenLeaves, matchLeaf, moduleOf, NAV_LEAVES } from './navigation'
 
 describe('navigation', () => {
   it('展开任意层级的叶子并保留祖先链', () => {
@@ -25,6 +25,12 @@ describe('navigation', () => {
   it('子路由匹配到所属页面', () => {
     expect(matchLeaf('/data-gen/tasks/GEN-1')?.node.to).toBe('/data-gen/tasks')
     expect(matchLeaf('/unknown')).toBeUndefined()
+  })
+
+  it('根据路径识别所属顶级模块', () => {
+    expect(moduleOf('/data-gen/tasks/GEN-1')?.key).toBe('data-gen')
+    expect(moduleOf('/user-service/projects/P-1')?.key).toBe('user-service')
+    expect(moduleOf('/unknown')).toBeUndefined()
   })
 
   it('叶子路径全局唯一', () => {

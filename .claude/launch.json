@@ -6,6 +6,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev"],
       "port": 8080
+    },
+    {
+      "name": "dev-verify",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev", "--port", "8090"],
+      "port": 8090
     }
   ]
 }

@@ -18,8 +18,8 @@ export const UserMenu = () => {
   const [passwordOpen, setPasswordOpen] = useState(false)
 
   const name = user?.full_name || user?.username || '…'
-  /** 首次登录或密码被重置时强制修改密码，弹窗不可关闭 */
-  const mustChangePassword = user?.must_change_password ?? false
+  /** 首次登录或密码被重置时强制修改密码，弹窗不可关闭；开发环境不自动弹出，避免阻碍本地调试 */
+  const mustChangePassword = (user?.must_change_password ?? false) && !import.meta.env.DEV
 
   /**
    * 退出登录：作废后端刷新令牌，清空本地令牌，跳转登录页后再清空查询缓存。

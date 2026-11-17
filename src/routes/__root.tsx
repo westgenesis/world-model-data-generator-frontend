@@ -11,21 +11,8 @@ interface RouterContext {
 /** 开发调试面板，仅在开发环境按需加载 */
 const Devtools = import.meta.env.DEV
   ? lazy(async () => {
-      const [{ TanStackRouterDevtools }, { ReactQueryDevtools }] = await Promise.all([
-        import('@tanstack/react-router-devtools'),
-        import('@tanstack/react-query-devtools'),
-      ])
-      return {
-        default: () => (
-          <>
-            <TanStackRouterDevtools position="bottom-right" />
-            {/* 与路由调试按钮并排，避免遮挡侧栏 */}
-            <div className="fixed right-38 bottom-2 z-99999">
-              <ReactQueryDevtools buttonPosition="relative" />
-            </div>
-          </>
-        ),
-      }
+      const { DevtoolsDock } = await import('@/components/DevtoolsDock')
+      return { default: DevtoolsDock }
     })
   : () => null
 

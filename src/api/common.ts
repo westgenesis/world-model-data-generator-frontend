@@ -26,6 +26,27 @@ export interface PageResult<T> {
 }
 
 /**
+ * 生成后端分页响应 schema（`{ items, total, page, size }`）
+ * @param item - 列表项 schema
+ * @returns 分页结构的 schema
+ */
+export const pagedSchema = <T extends z.ZodType>(item: T) =>
+  z.object({
+    items: z.array(item),
+    total: z.number().int().nonnegative(),
+    page: z.number().int().positive(),
+    size: z.number().int().positive(),
+  })
+
+/** 后端分页响应 */
+export interface PagedResult<T> {
+  items: T[]
+  total: number
+  page: number
+  size: number
+}
+
+/**
  * 解包后端统一响应 `{ data, request_id }`，只保留 data
  * @param data - data 字段的 schema
  * @returns 输出为 data 的 schema
