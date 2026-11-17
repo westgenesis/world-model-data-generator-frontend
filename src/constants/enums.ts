@@ -24,6 +24,15 @@ export const Department = defineEnum([
 ])
 export type Department = EnumValue<typeof Department>
 
+/** 临时授权状态：未生效 → 生效中 → 已过期 / 已撤销 */
+export const UserGrantStatus = defineEnum([
+  { value: 'pending', label: '未生效', tone: 'warning' },
+  { value: 'active', label: '生效中', tone: 'success' },
+  { value: 'expired', label: '已过期', tone: 'default' },
+  { value: 'revoked', label: '已撤销', tone: 'danger' },
+])
+export type UserGrantStatus = EnumValue<typeof UserGrantStatus>
+
 /** 部门状态（接口用 is_active 布尔值，这里用于筛选与标签展示） */
 export const DepartmentStatus = defineEnum([
   { value: 'active', label: '启用', tone: 'success' },

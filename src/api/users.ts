@@ -246,6 +246,23 @@ export const userOptionsQueryOptions = queryOptions({
   staleTime: 5 * 60_000,
 })
 
+/**
+ * 启用用户搜索查询配置（授权、筛选等按关键词选择用户的场景）
+ * @param keyword - 账号 / 姓名关键词
+ */
+export const userSearchQueryOptions = (keyword: string) =>
+  queryOptions({
+    queryKey: [...USERS_QUERY_KEY, 'search', keyword],
+    queryFn: () =>
+      getJson('v1/users', envelope(pagedSchema(userSchema)), {
+        status: 'active',
+        keyword: keyword || undefined,
+        page: 1,
+        size: 50,
+      }),
+    staleTime: 60_000,
+  })
+
 /* --------------------------------- 写操作 --------------------------------- */
 
 /**
