@@ -45,6 +45,15 @@ export const loginSchema = z.object({
 /** 登录表单 */
 export type LoginInput = z.infer<typeof loginSchema>
 
+/** 修改密码请求 schema（对应后端 PasswordChange），同时用于表单校验 */
+export const passwordChangeSchema = z.object({
+  old_password: z.string('请输入原密码').min(1, '请输入原密码').max(128, '密码不超过 128 个字符'),
+  new_password: z.string('请输入新密码').min(1, '请输入新密码').max(128, '密码不超过 128 个字符'),
+})
+
+/** 修改密码请求 */
+export type PasswordChangeInput = z.infer<typeof passwordChangeSchema>
+
 /* --------------------------------- 接口 --------------------------------- */
 
 /**
@@ -54,6 +63,14 @@ export type LoginInput = z.infer<typeof loginSchema>
  */
 export const login = (input: LoginInput): Promise<TokenPair> =>
   sendJson('post', 'v1/auth/login', input, envelope(tokenPairSchema))
+
+/**
+ * 修改自己的密码，成功后后端会签发新的令牌对
+ * @param input - 原密码与新密码
+ * @returns 新的令牌
+ */
+export const changePassword = (input: PasswordChangeInput): Promise<TokenPair> =>
+  sendJson('post', 'v1/users/me/password', input, envelope(tokenPairSchema))
 
 /**
  * 退出登录：作废本次刷新令牌。

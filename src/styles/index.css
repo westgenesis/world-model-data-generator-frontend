@@ -106,35 +106,15 @@
   --spacing-sidebar: 232px;
   --spacing-sidebar-collapsed: 64px;
 
-  /* 登录页动画：入场上浮、流光边框旋转、背景光晕漂移 */
-  --animate-rise: rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  --animate-border-spin: border-spin 5s linear infinite;
-  --animate-aurora: aurora 16s ease-in-out infinite alternate;
+  /* 登录页卡片入场上浮动画 */
+  --animate-fade-up: fade-up 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 
-  @keyframes rise {
+  @keyframes fade-up {
     from {
       opacity: 0;
-      transform: translateY(16px);
-      filter: blur(6px);
+      transform: translateY(12px);
     }
   }
-  @keyframes border-spin {
-    to {
-      --wm-angle: 360deg;
-    }
-  }
-  @keyframes aurora {
-    to {
-      transform: translate3d(8%, -6%, 0) scale(1.15);
-    }
-  }
-}
-
-/* 流光边框的渐变角度，注册为可插值属性以支持动画 */
-@property --wm-angle {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 0deg;
 }
 
 @layer base {
