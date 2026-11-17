@@ -5,7 +5,7 @@
       "name": "dev",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev"],
-      "port": 8080
+      "port": 8081
     },
     {
       "name": "dev-verify",

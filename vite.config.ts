@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      port: 8080,
+      port: 8081,
       proxy: {
         // /api 请求转发到后端服务
         '/api': {

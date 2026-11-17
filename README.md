@@ -41,9 +41,9 @@ pnpm dev
 
 | 文件                     | 环境   | 默认端口 |
 | ------------------------ | ------ | -------- |
-| `deploy/env/dev.env`     | 开发   | 8080     |
+| `deploy/env/dev.env`     | 开发   | 8081     |
 | `deploy/env/staging.env` | 预发布 | 8081     |
-| `deploy/env/prod.env`    | 生产   | 80       |
+| `deploy/env/prod.env`    | 生产   | 8081     |
 
 ```bash
 pnpm docker:build    # 选择环境 → 构建镜像 → 询问是否启动
@@ -72,7 +72,7 @@ pnpm docker:down --env prod
 | `NPM_REGISTRY`             | 构建时使用的 npm 源，默认 `https://registry.npmmirror.com`  |
 
 - 不使用脚本时：`docker compose -f deploy/docker-compose.yml --env-file deploy/env/dev.env up -d --build`。
-- 只用镜像时：`docker run -d -p 8080:80 -e API_UPSTREAM=http://backend:8000 <镜像>`。
+- 只用镜像时：`docker run -d -p 8081:80 -e API_UPSTREAM=http://backend:8000 <镜像>`。
 - 健康检查：`GET /healthz` 返回 `ok`，镜像已内置 `HEALTHCHECK`。
 - 缓存策略：`/assets/*` 长期缓存，`index.html` 不缓存，发版后刷新即生效。
 - 配置文件：`deploy/docker-compose.yml`、`deploy/nginx/default.conf.template`、`scripts/docker.mjs`。
