@@ -61,7 +61,8 @@ export const userStatsSchema = z.object({
   total: z.number().int(),
   active: z.number().int(),
   disabled: z.number().int(),
-  pending: z.number().int(),
+  /** 待激活用户数；统计接口暂未返回该字段 */
+  pending: z.number().int().optional(),
   new_this_month: z.number().int(),
 })
 

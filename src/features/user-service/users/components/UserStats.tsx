@@ -29,14 +29,19 @@ export const UserStats = () => {
           icon: <UserCheck size={ICON_SIZE} strokeWidth={1.75} />,
           ratio: total ? (data?.active ?? 0) / total : undefined,
         },
-        {
-          key: 'pending',
-          label: '待激活',
-          tone: 'warning',
-          value: data?.pending,
-          icon: <Clock size={ICON_SIZE} strokeWidth={1.75} />,
-          ratio: total ? (data?.pending ?? 0) / total : undefined,
-        },
+        // 统计接口暂未返回待激活数量，没有该字段时不展示此卡片
+        ...(data?.pending === undefined
+          ? []
+          : [
+              {
+                key: 'pending',
+                label: '待激活',
+                tone: 'warning' as const,
+                value: data.pending,
+                icon: <Clock size={ICON_SIZE} strokeWidth={1.75} />,
+                ratio: total ? data.pending / total : undefined,
+              },
+            ]),
         {
           key: 'disabled',
           label: '停用',
