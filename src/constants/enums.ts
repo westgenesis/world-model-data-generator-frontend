@@ -123,3 +123,30 @@ export const ProjectDetailTab = defineEnum([
   { value: 'resources', label: '资源消耗' },
 ])
 export type ProjectDetailTab = EnumValue<typeof ProjectDetailTab>
+
+/* ---------------------------------- 日志 ---------------------------------- */
+
+/** 日志大类：操作日志 / 业务日志 / 运行异常 */
+export const LogCategory = defineEnum([
+  { value: 'operation', label: '操作日志', tone: 'info' },
+  { value: 'business', label: '业务日志', tone: 'success' },
+  { value: 'runtime', label: '运行异常', tone: 'danger' },
+])
+export type LogCategory = EnumValue<typeof LogCategory>
+
+/** 日志级别 */
+export const LogLevel = defineEnum([
+  { value: 'DEBUG', label: 'DEBUG' },
+  { value: 'INFO', label: 'INFO', tone: 'info' },
+  { value: 'WARNING', label: 'WARNING', tone: 'warning' },
+  { value: 'ERROR', label: 'ERROR', tone: 'danger' },
+  { value: 'CRITICAL', label: 'CRITICAL', tone: 'danger' },
+])
+export type LogLevel = EnumValue<typeof LogLevel>
+
+/** 日志写入进程：Web 服务 / Celery 任务进程 */
+export const LogSource = defineEnum([
+  { value: 'api', label: 'Web 服务', tone: 'info' },
+  { value: 'worker', label: '任务进程', tone: 'purple' },
+])
+export type LogSource = EnumValue<typeof LogSource>

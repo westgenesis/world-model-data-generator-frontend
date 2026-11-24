@@ -52,3 +52,23 @@ export const formatSignedPercent = (ratio: number | null | undefined): string =>
  */
 export const toPercent = (used: number, total: number): number =>
   total > 0 ? Math.min(100, Math.floor((used / total) * 100)) : 0
+
+/** 字节单位，按 1024 进制向上换算 */
+const BYTE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'] as const
+
+/**
+ * 格式化字节数
+ * @param bytes - 字节数
+ * @returns 如 `512 B`、`2.4 GB`；空值返回占位符
+ */
+export const formatBytes = (bytes: number | null | undefined): string => {
+  if (bytes === null || bytes === undefined) return EMPTY_TEXT
+  if (bytes < 1024) return `${bytes} B`
+  let value = bytes
+  let unitIndex = 0
+  while (value >= 1024 && unitIndex < BYTE_UNITS.length - 1) {
+    value /= 1024
+    unitIndex += 1
+  }
+  return `${formatNumber(value, value >= 100 ? 0 : 1)} ${BYTE_UNITS[unitIndex]}`
+}
