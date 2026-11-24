@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import type { SelectProps } from 'antd'
 import { Select } from 'antd'
 import { useMemo, useState } from 'react'
-import { userSearchQueryOptions } from '@/api/users'
+import type { UserOption } from '@/api/users'
+import { USER_OPTION_LIMIT, userOptionQueryOptions } from '@/api/users'
 import { useDebouncedValue } from '@/hooks/use-list-params'
 
 export interface UserSelectProps extends Omit<
@@ -13,6 +14,16 @@ export interface UserSelectProps extends Omit<
   enabled?: boolean
 }
 
+/** 下拉候选项，超出条数上限时追加一条不可选提示 */
+interface UserSelectOption {
+  value: number | string
+  label: string
+  disabled?: boolean
+}
+
+/** 超出 limit 后追加的提示项，禁用后不会被选中 */
+const MORE_HINT_VALUE = '__user_option_more__'
+
 /** 已选用户选项，用于搜索词变化后仍能展示已选用户的名称 */
 interface SelectedOption {
   value: number
@@ -20,7 +31,17 @@ interface SelectedOption {
 }
 
 /**
- * 用户选择器：按账号 / 姓名远程搜索启用中的用户，可直接作为 Form.Item 的受控组件使用
+ * 拼接候选文案：姓名（账号 · 部门），无部门时省略部门
+ * @param user - 用户候选
+ * @returns 展示文案
+ */
+const formatOptionLabel = (user: UserOption): string =>
+  user.department_name
+    ? `${user.full_name}（${user.username} · ${user.department_name}）`
+    : `${user.full_name}（${user.username}）`
+
+/**
+ * 用户选择器：按账号 / 姓名远程搜索用户候选，可直接作为 Form.Item 的受控组件使用
  * @param props - 选中值、是否加载选项及其他 Select 配置
  */
 export const UserSelect = ({
@@ -33,22 +54,31 @@ export const UserSelect = ({
   const [keyword, setKeyword] = useState('')
   const debouncedKeyword = useDebouncedValue(keyword, 300)
   const { data, isFetching } = useQuery({
-    ...userSearchQueryOptions(debouncedKeyword),
+    ...userOptionQueryOptions(debouncedKeyword),
     enabled,
   })
   const [selected, setSelected] = useState<SelectedOption | null>(null)
 
   const options = useMemo(() => {
-    const list: SelectedOption[] = (data?.items ?? []).map((user) => ({
+    const list: UserSelectOption[] = (data?.items ?? []).map((user) => ({
       value: user.user_id,
-      label: `${user.full_name}（${user.username}）`,
+      label: formatOptionLabel(user),
     }))
     // 搜索词变化后结果里可能没有已选用户，补充一条选项以继续展示名称
     const needFallback =
       selected !== null &&
       value === selected.value &&
       !list.some((option) => option.value === selected.value)
-    return needFallback ? [selected, ...list] : list
+    const merged: UserSelectOption[] = needFallback ? [selected, ...list] : list
+    if (!data?.has_more) return merged
+    return [
+      ...merged,
+      {
+        value: MORE_HINT_VALUE,
+        label: `仅展示前 ${USER_OPTION_LIMIT} 条，输入关键词查看更多`,
+        disabled: true,
+      },
+    ]
   }, [data, selected, value])
 
   return (

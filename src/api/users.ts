@@ -1,7 +1,7 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 import { z } from 'zod'
 import { UserStatus } from '@/constants/enums'
-import { getJson, sendJson } from '@/lib/http'
+import { getJson, http, sendJson } from '@/lib/http'
 import type { PageParams } from './common'
 import { envelope, pagedSchema } from './common'
 
@@ -56,6 +56,30 @@ export interface UserBrief {
   role: string | null
 }
 
+/** 用户下拉候选（对应后端 UserOption，只带区分用的字段） */
+export const userOptionSchema = z.object({
+  user_id: z.number().int(),
+  username: z.string(),
+  full_name: z.string(),
+  /** 未分配部门时为 null */
+  department_name: z.string().nullable(),
+})
+
+/** 用户下拉候选 */
+export type UserOption = z.infer<typeof userOptionSchema>
+
+/** 用户下拉候选响应：超出 limit 时截断，has_more 表示还有更多 */
+export const userOptionPageSchema = z.object({
+  items: z.array(userOptionSchema),
+  has_more: z.boolean(),
+})
+
+/** 用户下拉候选响应 */
+export type UserOptionPage = z.infer<typeof userOptionPageSchema>
+
+/** 下拉候选默认返回条数（后端上限 50） */
+export const USER_OPTION_LIMIT = 20
+
 /** 用户统计 schema */
 export const userStatsSchema = z.object({
   total: z.number().int(),
@@ -95,6 +119,52 @@ export const userUnlockedSchema = z.object({
   username: z.string(),
   cleared_failures: z.number().int(),
 })
+
+/** 批量导入的逐行问题 */
+export const userImportIssueSchema = z.object({
+  /** Excel 行号，从 1 开始 */
+  row: z.number().int().positive(),
+  /** 出问题的列名 */
+  column: z.string(),
+  message: z.string(),
+})
+
+/** 批量导入预览结果 */
+export const userImportPreviewSchema = z.object({
+  /** 后续确认导入的唯一凭据 */
+  file_id: z.string(),
+  /** 上传时的文件名，仅用于展示 */
+  filename: z.string(),
+  /** 识别到的数据行数（空行不计） */
+  total: z.number().int().nonnegative(),
+  /** 通过校验的行数 */
+  valid: z.number().int().nonnegative(),
+  /** 存在问题的行数 */
+  invalid: z.number().int().nonnegative(),
+  /** 逐行问题，每行最多一条 */
+  issues: z.array(userImportIssueSchema),
+})
+
+/** 批量导入预览结果 */
+export type UserImportPreview = z.infer<typeof userImportPreviewSchema>
+
+/** 批量导入任务状态 */
+export const importTaskStatusSchema = z.enum([
+  'pending',
+  'running',
+  'succeeded',
+  'failed',
+  'cancelled',
+])
+
+/** 批量导入受理结果：任务在后台执行 */
+export const userImportAcceptedSchema = z.object({
+  job_id: z.string(),
+  status: importTaskStatusSchema,
+})
+
+/** 批量导入受理结果 */
+export type UserImportAccepted = z.infer<typeof userImportAcceptedSchema>
 
 /* --------------------------------- 表单 / 请求 --------------------------------- */
 
@@ -248,19 +318,19 @@ export const userOptionsQueryOptions = queryOptions({
 })
 
 /**
- * 启用用户搜索查询配置（授权、筛选等按关键词选择用户的场景）
+ * 用户下拉候选查询配置（对应 v1/users/options）：按账号 / 姓名远程搜索用户
  * @param keyword - 账号 / 姓名关键词
+ * @param limit - 返回条数上限，默认 20（后端上限 50）
  */
-export const userSearchQueryOptions = (keyword: string) =>
+export const userOptionQueryOptions = (keyword: string, limit = USER_OPTION_LIMIT) =>
   queryOptions({
-    queryKey: [...USERS_QUERY_KEY, 'search', keyword],
+    queryKey: [...USERS_QUERY_KEY, 'option', keyword, limit],
     queryFn: () =>
-      getJson('v1/users', envelope(pagedSchema(userSchema)), {
-        status: 'active',
+      getJson('v1/users/options', envelope(userOptionPageSchema), {
         keyword: keyword || undefined,
-        page: 1,
-        size: 50,
+        limit,
       }),
+    placeholderData: keepPreviousData,
     staleTime: 60_000,
   })
 
@@ -311,3 +381,58 @@ export const resetUserPassword = (
  */
 export const unlockUser = (id: number) =>
   sendJson('post', `v1/users/${id}/unlock`, undefined, envelope(userUnlockedSchema))
+
+/* --------------------------------- 批量导入 --------------------------------- */
+
+/** 批量导入模板地址 */
+const USER_IMPORT_TEMPLATE_URL = 'v1/users/import/template'
+
+/**
+ * 解析 Content-Disposition 中的文件名
+ * @param header - 响应头
+ * @returns 文件名；无法解析时为 null
+ */
+const parseAttachmentFilename = (header: string | null): string | null => {
+  if (!header) return null
+  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(header)
+  if (encoded) return decodeURIComponent(encoded[1])
+  return /filename="?([^";]+)"?/i.exec(header)?.[1] ?? null
+}
+
+/** 导入模板文件 */
+export interface UserImportTemplateFile {
+  blob: Blob
+  filename: string
+}
+
+/**
+ * 下载用户批量导入模板
+ * @returns 文件内容与服务端建议的文件名
+ */
+export const downloadUserImportTemplate = async (): Promise<UserImportTemplateFile> => {
+  const response = await http.get(USER_IMPORT_TEMPLATE_URL)
+  return {
+    blob: await response.blob(),
+    filename:
+      parseAttachmentFilename(response.headers.get('content-disposition')) ?? '用户导入模板.xlsx',
+  }
+}
+
+/**
+ * 上传导入文件并获取校验预览
+ * @param file - 按模板填写的 .xlsx 文件
+ * @returns 预览结果（含后续提交所需的 file_id）
+ */
+export const previewUserImport = (file: File): Promise<UserImportPreview> => {
+  const body = new FormData()
+  body.append('file', file)
+  return sendJson('post', 'v1/users/import/preview', body, envelope(userImportPreviewSchema))
+}
+
+/**
+ * 提交批量导入任务
+ * @param fileId - 预览阶段返回的 file_id
+ * @returns 已受理的任务信息
+ */
+export const submitUserImport = (fileId: string): Promise<UserImportAccepted> =>
+  sendJson('post', 'v1/users/import', { file_id: fileId }, envelope(userImportAcceptedSchema))

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Button, Input, Select } from 'antd'
-import { Plus } from 'lucide-react'
+import { Plus, Upload } from 'lucide-react'
 import type { User } from '@/api/users'
 import { userListQueryOptions } from '@/api/users'
 import { FilterBar, FilterField } from '@/components/FilterBar'
@@ -12,6 +12,7 @@ import { useDrawerState } from '@/hooks/use-drawer-state'
 import { useListParams } from '@/hooks/use-list-params'
 import { UserFormDrawer } from './components/UserFormDrawer'
 import { UserGrantDrawer } from './components/UserGrantDrawer'
+import { UserImportDrawer } from './components/UserImportDrawer'
 import { UserResetPasswordDrawer } from './components/UserResetPasswordDrawer'
 import { UserStats } from './components/UserStats'
 import { UserTable } from './components/UserTable'
@@ -36,6 +37,7 @@ export const UserManagementPage = () => {
   const formDrawer = useDrawerState<User>()
   const grantDrawer = useDrawerState<User>()
   const resetPasswordDrawer = useDrawerState<User>()
+  const importDrawer = useDrawerState()
   const toggleStatus = useToggleUserStatus()
   const unlock = useUnlockUser()
 
@@ -45,13 +47,21 @@ export const UserManagementPage = () => {
         title="用户管理"
         description="维护平台用户身份、所属部门与账号启停状态；权限在「权限管理」中按人分配。"
         extra={
-          <Button
-            type="primary"
-            icon={<Plus size={16} strokeWidth={1.75} />}
-            onClick={() => formDrawer.show()}
-          >
-            新增用户
-          </Button>
+          <>
+            <Button
+              icon={<Upload size={16} strokeWidth={1.75} />}
+              onClick={() => importDrawer.show()}
+            >
+              批量导入
+            </Button>
+            <Button
+              type="primary"
+              icon={<Plus size={16} strokeWidth={1.75} />}
+              onClick={() => formDrawer.show()}
+            >
+              新增用户
+            </Button>
+          </>
         }
       />
 
@@ -101,6 +111,7 @@ export const UserManagementPage = () => {
       />
 
       <UserFormDrawer open={formDrawer.open} user={formDrawer.record} onClose={formDrawer.close} />
+      <UserImportDrawer open={importDrawer.open} onClose={importDrawer.close} />
       <UserGrantDrawer
         open={grantDrawer.open}
         user={grantDrawer.record}
