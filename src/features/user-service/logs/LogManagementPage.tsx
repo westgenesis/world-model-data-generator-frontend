@@ -15,6 +15,7 @@ import { useListParams } from '@/hooks/use-list-params'
 import { LogContextModal } from './components/LogContextModal'
 import { LogDetailModal } from './components/LogDetailModal'
 import { LogStats } from './components/LogStats'
+import { LogStorageTab } from './components/LogStorageTab'
 import { LogTable } from './components/LogTable'
 
 /** 日志列表筛选条件 */
@@ -101,8 +102,6 @@ export const LogManagementPage = () => {
         }
       />
 
-      <LogStats />
-
       <Tabs
         defaultActiveKey="query"
         items={[
@@ -111,6 +110,7 @@ export const LogManagementPage = () => {
             label: '日志查询',
             children: (
               <>
+                <LogStats />
                 <FilterBar onSearch={submit} onReset={reset}>
                   <FilterField label="时间范围">
                     <DatePicker.RangePicker
@@ -173,6 +173,11 @@ export const LogManagementPage = () => {
                 />
               </>
             ),
+          },
+          {
+            key: 'storage',
+            label: '收集与存储',
+            children: <LogStorageTab />,
           },
         ]}
       />

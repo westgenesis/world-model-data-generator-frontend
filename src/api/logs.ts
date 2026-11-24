@@ -1,7 +1,7 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 import { z } from 'zod'
 import { LogCategory, LogLevel, LogSource } from '@/constants/enums'
-import { getJson, http } from '@/lib/http'
+import { getJson, http, sendJson } from '@/lib/http'
 import type { PageParams } from './common'
 import { envelope, pagedSchema } from './common'
 
@@ -65,6 +65,49 @@ export const logStatisticsSchema = z.object({
 
 /** 日志统计 */
 export type LogStatistics = z.infer<typeof logStatisticsSchema>
+
+/** 日志写入端今日写入情况 schema（对应后端 LogWriter） */
+export const logWriterSchema = z.object({
+  source: z.enum(LogSource.values),
+  /** 今天写入的条数 */
+  today: z.number().int(),
+  /** 最近一条日志的写入时间 */
+  last_ts: z.string().nullable(),
+})
+
+/** 日志写入端今日写入情况 */
+export type LogWriter = z.infer<typeof logWriterSchema>
+
+/** 日志存储与写入端状态 schema（对应后端 LogStorage） */
+export const logStorageSchema = z.object({
+  /** 热存储天数 */
+  hot_days: z.number().int(),
+  /** 温存储天数 */
+  warm_days: z.number().int(),
+  /** 冷存储天数 */
+  cold_days: z.number().int(),
+  /** 库内日志条数 */
+  rows: z.number().int(),
+  /** 库内日志字节数 */
+  total_bytes: z.number().int(),
+  /** 今天写入的日志字节数 */
+  today_bytes: z.number().int(),
+  /** 按写入端统计的今日数据 */
+  writers: z.array(logWriterSchema),
+})
+
+/** 日志存储与写入端状态 */
+export type LogStorage = z.infer<typeof logStorageSchema>
+
+/** 日志冷热存储天数 schema（对应后端 LogStoragePolicy） */
+export const logStoragePolicySchema = z.object({
+  hot_days: z.number().int().min(1),
+  warm_days: z.number().int().min(1),
+  cold_days: z.number().int().min(1),
+})
+
+/** 日志冷热存储天数 */
+export type LogStoragePolicy = z.infer<typeof logStoragePolicySchema>
 
 /* --------------------------------- 查询参数 --------------------------------- */
 
@@ -135,6 +178,18 @@ export const logStatisticsQueryOptions = queryOptions({
   queryFn: () => getJson('v1/logs/statistics', envelope(logStatisticsSchema)),
 })
 
+/** 日志存储与写入端状态查询配置 */
+export const logStorageQueryOptions = queryOptions({
+  queryKey: [...LOGS_QUERY_KEY, 'storage'],
+  queryFn: () => getJson('v1/logs/storage', envelope(logStorageSchema)),
+})
+
+/** 冷热存储天数查询配置 */
+export const logStoragePolicyQueryOptions = queryOptions({
+  queryKey: [...LOGS_QUERY_KEY, 'storage-policy'],
+  queryFn: () => getJson('v1/logs/storage-policy', envelope(logStoragePolicySchema)),
+})
+
 /**
  * 日志详情查询配置
  * @param id - 日志 ID
@@ -158,6 +213,16 @@ export const logContextQueryOptions = (id: number | undefined, enabled = true) =
     queryFn: () => getJson(`v1/logs/${id}/context`, envelope(z.array(logItemSchema))),
     enabled: enabled && id !== undefined,
   })
+
+/* --------------------------------- 写操作 --------------------------------- */
+
+/**
+ * 修改冷热存储天数
+ * @param input - 热 / 温 / 冷存储天数
+ * @returns 修改后的存储策略
+ */
+export const updateStoragePolicy = (input: LogStoragePolicy): Promise<LogStoragePolicy> =>
+  sendJson('put', 'v1/logs/storage-policy', input, envelope(logStoragePolicySchema))
 
 /* --------------------------------- 导出 --------------------------------- */
 
