@@ -1,28 +1,21 @@
 import type { QueryClient } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { createRootRouteWithContext, Link, Outlet } from '@tanstack/react-router'
+import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { Button, Result } from 'antd'
-import { lazy, Suspense } from 'react'
 
 /** 路由上下文 */
 interface RouterContext {
   queryClient: QueryClient
 }
 
-/** 开发调试面板，仅在开发环境按需加载 */
-const Devtools = import.meta.env.DEV
-  ? lazy(async () => {
-      const { DevtoolsDock } = await import('@/components/DevtoolsDock')
-      return { default: DevtoolsDock }
-    })
-  : () => null
-
 /** 根组件 */
 const RootComponent = () => (
   <>
     <Outlet />
-    <Suspense>
-      <Devtools />
-    </Suspense>
+    {/* 官方 Devtools 仅在开发环境渲染，生产构建时会被移除 */}
+    <TanStackRouterDevtools position="bottom-left" />
+    <ReactQueryDevtools buttonPosition="bottom-right" />
   </>
 )
 
