@@ -3,6 +3,8 @@ import { Button, Table } from 'antd'
 import type { AuditItem } from '@/api/audits'
 import { EnumTag } from '@/components/EnumTag'
 import { AuditRiskLevel, AuditStatus } from '@/constants/enums'
+import { PERMISSION } from '@/constants/permissions'
+import { usePermissions } from '@/hooks/use-permissions'
 import { EMPTY_TEXT, formatDateTime } from '@/lib/format'
 
 interface AuditTableProps {
@@ -20,6 +22,9 @@ interface AuditTableProps {
  * @param props - 数据、分页与行操作回调
  */
 export const AuditTable = ({ data, loading, pagination, onDetail, onHandle }: AuditTableProps) => {
+  const { has } = usePermissions()
+  const canHandle = has(PERMISSION.auditHandle)
+
   const columns: TableProps<AuditItem>['columns'] = [
     {
       title: '时间',
@@ -87,9 +92,11 @@ export const AuditTable = ({ data, loading, pagination, onDetail, onHandle }: Au
           <Button type="link" size="small" onClick={() => onDetail(audit)}>
             详情
           </Button>
-          <Button type="link" size="small" onClick={() => onHandle(audit)}>
-            处置
-          </Button>
+          {canHandle && (
+            <Button type="link" size="small" onClick={() => onHandle(audit)}>
+              处置
+            </Button>
+          )}
         </div>
       ),
     },

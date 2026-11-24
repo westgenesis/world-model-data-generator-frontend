@@ -4,8 +4,9 @@ import { Menu, Tooltip } from 'antd'
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { AppLogo } from '@/components/AppLogo'
-import type { AppPath, NavNode } from '@/config/navigation'
-import { matchLeaf, moduleOf, NAV_MODULES } from '@/config/navigation'
+import type { AppPath, NavLeaf, NavNode } from '@/config/navigation'
+import { matchLeaf, moduleOf } from '@/config/navigation'
+import { useNavTree } from '@/hooks/use-nav-tree'
 import { useAppStore } from '@/stores/app-store'
 import { ClusterStatus } from './ClusterStatus'
 import { ModuleSwitcher } from './ModuleSwitcher'
@@ -46,10 +47,11 @@ const toMenuItems = (nodes: NavNode[], collapsed: boolean, depth = 0): MenuItem[
 /**
  * 计算当前路径对应页面在所属模块内的所有祖先目录 key
  * @param pathname - 当前路由路径
+ * @param leaves - 当前用户可见的叶子页面
  * @returns 祖先目录 key 列表（不含顶级模块）
  */
-const ancestorKeysOf = (pathname: string): string[] =>
-  matchLeaf(pathname)
+const ancestorKeysOf = (pathname: string, leaves: NavLeaf[]): string[] =>
+  matchLeaf(pathname, leaves)
     ?.trail.slice(1, -1)
     .map((n) => n.key) ?? []
 
@@ -59,18 +61,19 @@ export const Sidebar = () => {
   const pathname = useLocation({ select: (l) => l.pathname })
   const collapsed = useAppStore((s) => s.sidebarCollapsed)
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
+  const { modules, leaves } = useNavTree()
 
-  const activeModule = moduleOf(pathname) ?? NAV_MODULES[0]
+  const activeModule = moduleOf(pathname, leaves) ?? modules[0]
 
-  const [openKeys, setOpenKeys] = useState(() => ancestorKeysOf(pathname))
+  const [openKeys, setOpenKeys] = useState(() => ancestorKeysOf(pathname, leaves))
   const [prevPathname, setPrevPathname] = useState(pathname)
-  const [prevModuleKey, setPrevModuleKey] = useState(activeModule.key)
+  const [prevModuleKey, setPrevModuleKey] = useState(activeModule?.key)
   // 路由变化时自动展开当前页面的祖先目录；切换模块时重置为当前模块的展开项
   if (prevPathname !== pathname) {
     setPrevPathname(pathname)
-    const keys = ancestorKeysOf(pathname)
-    if (prevModuleKey !== activeModule.key) {
-      setPrevModuleKey(activeModule.key)
+    const keys = ancestorKeysOf(pathname, leaves)
+    if (prevModuleKey !== activeModule?.key) {
+      setPrevModuleKey(activeModule?.key)
       setOpenKeys(keys)
     } else {
       setOpenKeys((current) => [...new Set([...current, ...keys])])
@@ -78,11 +81,13 @@ export const Sidebar = () => {
   }
 
   const menuItems = useMemo(
-    () => toMenuItems(activeModule.children ?? [], collapsed),
+    () => toMenuItems(activeModule?.children ?? [], collapsed),
     [activeModule, collapsed],
   )
 
-  const selectedKey = matchLeaf(pathname)?.node.to
+  if (!activeModule) return null
+
+  const selectedKey = matchLeaf(pathname, leaves)?.node.to
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose
   const toggleLabel = collapsed ? '展开导航' : '收起导航'
 

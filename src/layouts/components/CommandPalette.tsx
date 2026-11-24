@@ -5,7 +5,7 @@ import { CornerDownLeft, FileText, Search } from 'lucide-react'
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { NavLeaf } from '@/config/navigation'
-import { NAV_LEAVES } from '@/config/navigation'
+import { useNavTree } from '@/hooks/use-nav-tree'
 
 /** 是否为 macOS，用于显示 ⌘ 或 Ctrl */
 const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
@@ -23,6 +23,7 @@ const Kbd = ({ children }: { children: string }) => (
 /** 全局命令面板：⌘/Ctrl + K 打开，快速搜索并跳转到任意页面 */
 export const CommandPalette = () => {
   const navigate = useNavigate()
+  const { leaves } = useNavTree()
   const inputRef = useRef<InputRef>(null)
   const [open, setOpen] = useState(false)
   const [keyword, setKeyword] = useState('')
@@ -45,15 +46,17 @@ export const CommandPalette = () => {
 
   const results = useMemo(() => {
     const kw = keyword.trim().toLowerCase()
-    return NAV_LEAVES.map((leaf) => ({
-      leaf,
-      label: leaf.node.label,
-      path: leaf.trail
-        .slice(0, -1)
-        .map((n) => n.label)
-        .join(' / '),
-    })).filter(({ label, path }) => !kw || `${label} ${path}`.toLowerCase().includes(kw))
-  }, [keyword])
+    return leaves
+      .map((leaf) => ({
+        leaf,
+        label: leaf.node.label,
+        path: leaf.trail
+          .slice(0, -1)
+          .map((n) => n.label)
+          .join(' / '),
+      }))
+      .filter(({ label, path }) => !kw || `${label} ${path}`.toLowerCase().includes(kw))
+  }, [keyword, leaves])
 
   /**
    * 关闭面板并重置状态

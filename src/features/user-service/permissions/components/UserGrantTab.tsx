@@ -11,10 +11,12 @@ import {
 import { FilterBar, FilterField } from '@/components/FilterBar'
 import type { UserGrantStatus } from '@/constants/enums'
 import { UserGrantStatus as UserGrantStatusEnum } from '@/constants/enums'
+import { PERMISSION } from '@/constants/permissions'
 import { UserSelect } from '@/features/user-service/components/UserSelect'
 import { useActionMutation } from '@/hooks/use-action-mutation'
 import { useDrawerState } from '@/hooks/use-drawer-state'
 import { useListParams } from '@/hooks/use-list-params'
+import { usePermissions } from '@/hooks/use-permissions'
 import { ExtendGrantModal } from './ExtendGrantModal'
 import { GrantFormModal } from './GrantFormModal'
 import { UserGrantTable } from './UserGrantTable'
@@ -37,6 +39,7 @@ export const UserGrantTab = () => {
   )
   const query = useQuery(userGrantListQueryOptions(params))
   const grants = query.data?.items ?? []
+  const { has } = usePermissions()
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([])
   const selectedGrants = grants.filter((grant) => selectedRowKeys.includes(grant.grant_id))
 
@@ -105,26 +108,32 @@ export const UserGrantTab = () => {
           )}
         </span>
         <div className="ms-auto flex flex-wrap items-center gap-2">
-          <Button
-            danger
-            disabled={selectedRowKeys.length === 0}
-            onClick={() => confirmRevoke(selectedGrants)}
-          >
-            批量收回
-          </Button>
-          <Button
-            disabled={selectedRowKeys.length === 0}
-            onClick={() => extendModal.show(selectedGrants)}
-          >
-            批量延期
-          </Button>
-          <Button
-            type="primary"
-            icon={<Plus size={16} strokeWidth={1.75} />}
-            onClick={() => grantModal.show()}
-          >
-            添加授权
-          </Button>
+          {has(PERMISSION.userPermissionRevoke) && (
+            <Button
+              danger
+              disabled={selectedRowKeys.length === 0}
+              onClick={() => confirmRevoke(selectedGrants)}
+            >
+              批量收回
+            </Button>
+          )}
+          {has(PERMISSION.userPermissionExtend) && (
+            <Button
+              disabled={selectedRowKeys.length === 0}
+              onClick={() => extendModal.show(selectedGrants)}
+            >
+              批量延期
+            </Button>
+          )}
+          {has(PERMISSION.userPermissionGrant) && (
+            <Button
+              type="primary"
+              icon={<Plus size={16} strokeWidth={1.75} />}
+              onClick={() => grantModal.show()}
+            >
+              添加授权
+            </Button>
+          )}
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { Button, DatePicker, Input, Select, Tabs } from 'antd'
+import type { TabsProps } from 'antd'
+import { Button, DatePicker, Input, Result, Select, Tabs } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { Download } from 'lucide-react'
@@ -9,9 +10,11 @@ import { FilterBar, FilterField } from '@/components/FilterBar'
 import { PageHeader } from '@/components/PageHeader'
 import type { LogCategory, LogLevel } from '@/constants/enums'
 import { LogCategory as LogCategoryEnum, LogLevel as LogLevelEnum } from '@/constants/enums'
+import { PERMISSION } from '@/constants/permissions'
 import { useActionMutation } from '@/hooks/use-action-mutation'
 import { useDrawerState } from '@/hooks/use-drawer-state'
 import { useListParams } from '@/hooks/use-list-params'
+import { usePermissions } from '@/hooks/use-permissions'
 import { AuditTab } from './components/AuditTab'
 import { LogContextModal } from './components/LogContextModal'
 import { LogDetailModal } from './components/LogDetailModal'
@@ -71,6 +74,7 @@ export const LogManagementPage = () => {
     createInitialFilters(),
     { manualSearch: true },
   )
+  const { has } = usePermissions()
 
   const listParams: LogListParams = {
     ...toFilterParams(params),
@@ -87,25 +91,12 @@ export const LogManagementPage = () => {
     onSuccess: saveFile,
   })
 
-  return (
-    <>
-      <PageHeader
-        title="日志管理"
-        description="记录用户操作、业务事件与运行异常，支持按时间、分类与级别查询并导出。"
-        extra={
-          <Button
-            icon={<Download size={16} strokeWidth={1.75} />}
-            loading={exportMutation.isPending}
-            onClick={() => exportMutation.mutate()}
-          >
-            导出日志
-          </Button>
-        }
-      />
+  const canViewLog = has(PERMISSION.logRead)
+  const canViewAudit = has(PERMISSION.auditRead)
 
-      <Tabs
-        defaultActiveKey="query"
-        items={[
+  const tabs: TabsProps['items'] = [
+    ...(canViewLog
+      ? [
           {
             key: 'query',
             label: '日志查询',
@@ -175,18 +166,39 @@ export const LogManagementPage = () => {
               </>
             ),
           },
-          {
-            key: 'audit',
-            label: '安全审计',
-            children: <AuditTab />,
-          },
-          {
-            key: 'storage',
-            label: '收集与存储',
-            children: <LogStorageTab />,
-          },
-        ]}
+        ]
+      : []),
+    ...(canViewAudit ? [{ key: 'audit', label: '安全审计', children: <AuditTab /> }] : []),
+    ...(canViewLog ? [{ key: 'storage', label: '收集与存储', children: <LogStorageTab /> }] : []),
+  ]
+
+  return (
+    <>
+      <PageHeader
+        title="日志管理"
+        description="记录用户操作、业务事件与运行异常，支持按时间、分类与级别查询并导出。"
+        extra={
+          canViewLog && (
+            <Button
+              icon={<Download size={16} strokeWidth={1.75} />}
+              loading={exportMutation.isPending}
+              onClick={() => exportMutation.mutate()}
+            >
+              导出日志
+            </Button>
+          )
+        }
       />
+
+      {tabs.length > 0 ? (
+        <Tabs defaultActiveKey={tabs[0].key} items={tabs} />
+      ) : (
+        <Result
+          status="info"
+          title="暂无可查看的日志内容"
+          subTitle="当前账号没有日志或安全审计的查看权限。"
+        />
+      )}
 
       <LogDetailModal
         open={detailDrawer.open}

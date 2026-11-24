@@ -31,6 +31,8 @@ import {
   Workflow,
 } from 'lucide-react'
 import type { FileRouteTypes } from '@/routeTree.gen'
+import type { PermissionCode } from '@/constants/permissions'
+import { PERMISSION } from '@/constants/permissions'
 
 /** 应用内可跳转的路由路径（由 TanStack Router 生成的路由树推导） */
 export type AppPath = FileRouteTypes['to']
@@ -55,6 +57,8 @@ export interface NavNode {
   description?: string
   /** 一级模块的强调色，取自全局语义 token */
   accent?: ModuleAccent
+  /** 访问该页面所需的权限，任一命中即可；缺省表示不限制 */
+  permission?: readonly PermissionCode[]
 }
 
 /** 模块强调色，对应 src/layouts/components/module-accent.ts 中的样式映射 */
@@ -72,13 +76,20 @@ export interface NavLeaf {
  * @param label - 菜单文案
  * @param to - 路由路径
  * @param icon - 菜单图标
+ * @param permission - 访问该页面所需的权限
  * @returns 叶子导航节点
  */
-const page = (label: string, to: AppPath, icon?: LucideIcon): NavNode => ({
+const page = (
+  label: string,
+  to: AppPath,
+  icon?: LucideIcon,
+  permission?: readonly PermissionCode[],
+): NavNode => ({
   key: to,
   label,
   to,
   icon,
+  permission,
 })
 
 /** 全站导航树 */
@@ -148,14 +159,20 @@ export const NAV_TREE: NavNode[] = [
     description: '用户、权限、项目与组织配置的统一管理',
     accent: 'warning',
     children: [
-      page('用户管理', '/user-service/users', UserCog),
-      page('部门管理', '/user-service/departments', Building2),
-      page('权限管理', '/user-service/permissions', KeyRound),
+      page('用户管理', '/user-service/users', UserCog, [PERMISSION.userRead]),
+      page('部门管理', '/user-service/departments', Building2, [PERMISSION.departmentRead]),
+      page('权限管理', '/user-service/permissions', KeyRound, [
+        PERMISSION.roleRead,
+        PERMISSION.userPermissionRead,
+      ]),
       page('门户个性化', '/user-service/portal', Palette),
-      page('日志管理', '/user-service/logs', ScrollText),
+      page('日志管理', '/user-service/logs', ScrollText, [
+        PERMISSION.logRead,
+        PERMISSION.auditRead,
+      ]),
       page('项目管理', '/user-service/projects', FolderKanban),
       page('消息中心', '/user-service/messages', Mail),
-      page('统一配置管理', '/user-service/config', SlidersHorizontal),
+      page('统一配置管理', '/user-service/config', SlidersHorizontal, [PERMISSION.settingRead]),
     ],
   },
 ]
@@ -179,6 +196,44 @@ export const NAV_LEAVES = flattenLeaves(NAV_TREE)
 /** 顶级模块列表，模块切换器与侧栏导航共用 */
 export const NAV_MODULES = NAV_TREE
 
+/** 权限判定函数：传入所需权限，返回是否任一命中 */
+export type PermissionHasAny = (codes: readonly PermissionCode[]) => boolean
+
+/**
+ * 判断导航节点是否可访问；未配置权限的节点始终可访问
+ * @param node - 导航节点
+ * @param hasAny - 权限判定函数
+ * @returns 是否可访问
+ */
+export const canAccessNode = (node: NavNode, hasAny: PermissionHasAny): boolean =>
+  !node.permission?.length || hasAny(node.permission)
+
+/**
+ * 按权限裁剪导航树：移除无权叶子；目录下已无可见页面时目录本身一并移除
+ * @param nodes - 导航树
+ * @param hasAny - 权限判定函数
+ * @returns 裁剪后的导航树
+ */
+export const filterNavTree = (nodes: NavNode[], hasAny: PermissionHasAny): NavNode[] =>
+  nodes.flatMap((node) => {
+    if (node.children?.length) {
+      const children = filterNavTree(node.children, hasAny)
+      return children.length ? [{ ...node, children }] : []
+    }
+    return node.to && canAccessNode(node, hasAny) ? [node] : []
+  })
+
+/**
+ * 第一处可访问的叶子页面，按导航树深度优先顺序
+ * @param nodes - 导航树
+ * @param hasAny - 权限判定函数
+ * @returns 可访问的叶子；全部不可访问时为 undefined
+ */
+export const firstAccessibleLeaf = (
+  nodes: NavNode[],
+  hasAny: PermissionHasAny,
+): NavLeaf['node'] | undefined => flattenLeaves(filterNavTree(nodes, hasAny))[0]?.node
+
 /**
  * 根据当前路径找到匹配的叶子页面；子路由（如详情页）匹配其最长前缀页面
  * @param pathname - 当前路由路径
@@ -193,9 +248,11 @@ export const matchLeaf = (pathname: string, leaves: NavLeaf[] = NAV_LEAVES): Nav
 /**
  * 找到当前路径所属的顶级模块
  * @param pathname - 当前路由路径
+ * @param leaves - 叶子列表，默认全站
  * @returns 顶级模块，未匹配时返回 undefined
  */
-export const moduleOf = (pathname: string): NavNode | undefined => matchLeaf(pathname)?.trail[0]
+export const moduleOf = (pathname: string, leaves: NavLeaf[] = NAV_LEAVES): NavNode | undefined =>
+  matchLeaf(pathname, leaves)?.trail[0]
 
 /**
  * 模块的默认落地页（深度优先的第一个叶子页面）

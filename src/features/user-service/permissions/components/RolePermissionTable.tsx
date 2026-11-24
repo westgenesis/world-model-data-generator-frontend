@@ -2,7 +2,9 @@ import type { TableProps } from 'antd'
 import { Alert, Button, Checkbox, Skeleton, Table, Tooltip } from 'antd'
 import type { Permission } from '@/api/permissions'
 import type { Role } from '@/api/roles'
+import { PERMISSION } from '@/constants/permissions'
 import type { PermissionTreeRow } from '@/hooks/use-permission-tree'
+import { usePermissions } from '@/hooks/use-permissions'
 
 interface RolePermissionTableProps {
   /** 权限树展开后的表格行 */
@@ -44,6 +46,8 @@ export const RolePermissionTable = ({
   onToggle,
   onRetryFailed,
 }: RolePermissionTableProps) => {
+  const { has } = usePermissions()
+  const canEdit = has(PERMISSION.rolePermissionUpdate)
   const columns: NonNullable<TableProps<PermissionTreeRow>['columns']> = [
     {
       title: '模块',
@@ -106,6 +110,19 @@ export const RolePermissionTable = ({
       }
       if (loadingRoleIds.has(role.role_id)) {
         return <Skeleton.Button size="small" active />
+      }
+      if (!canEdit) {
+        return (
+          <Tooltip title="当前账号没有修改角色权限的权限">
+            <span className="inline-flex">
+              <Checkbox
+                checked={codesByRole.get(role.role_id)?.has(row.code) ?? false}
+                disabled
+                aria-label={`${role.name}：${row.name}，只读`}
+              />
+            </span>
+          </Tooltip>
+        )
       }
       return (
         <Checkbox

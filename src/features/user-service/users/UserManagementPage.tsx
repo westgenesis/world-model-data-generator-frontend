@@ -7,9 +7,11 @@ import { FilterBar, FilterField } from '@/components/FilterBar'
 import { PageHeader } from '@/components/PageHeader'
 import type { UserStatus } from '@/constants/enums'
 import { UserStatus as UserStatusEnum } from '@/constants/enums'
+import { PERMISSION } from '@/constants/permissions'
 import { DepartmentSelect } from '@/features/user-service/components/DepartmentSelect'
 import { useDrawerState } from '@/hooks/use-drawer-state'
 import { useListParams } from '@/hooks/use-list-params'
+import { usePermissions } from '@/hooks/use-permissions'
 import { UserFormDrawer } from './components/UserFormDrawer'
 import { UserGrantDrawer } from './components/UserGrantDrawer'
 import { UserImportDrawer } from './components/UserImportDrawer'
@@ -33,6 +35,9 @@ export const UserManagementPage = () => {
     { manualSearch: true },
   )
   const { data, isFetching } = useQuery(userListQueryOptions(params))
+  const { has } = usePermissions()
+  const canImport = has(PERMISSION.userImport)
+  const canCreate = has(PERMISSION.userCreate)
 
   const formDrawer = useDrawerState<User>()
   const grantDrawer = useDrawerState<User>()
@@ -47,21 +52,27 @@ export const UserManagementPage = () => {
         title="用户管理"
         description="维护平台用户身份、所属部门与账号启停状态；权限在「权限管理」中按人分配。"
         extra={
-          <>
-            <Button
-              icon={<Upload size={16} strokeWidth={1.75} />}
-              onClick={() => importDrawer.show()}
-            >
-              批量导入
-            </Button>
-            <Button
-              type="primary"
-              icon={<Plus size={16} strokeWidth={1.75} />}
-              onClick={() => formDrawer.show()}
-            >
-              新增用户
-            </Button>
-          </>
+          (canImport || canCreate) && (
+            <>
+              {canImport && (
+                <Button
+                  icon={<Upload size={16} strokeWidth={1.75} />}
+                  onClick={() => importDrawer.show()}
+                >
+                  批量导入
+                </Button>
+              )}
+              {canCreate && (
+                <Button
+                  type="primary"
+                  icon={<Plus size={16} strokeWidth={1.75} />}
+                  onClick={() => formDrawer.show()}
+                >
+                  新增用户
+                </Button>
+              )}
+            </>
+          )
         }
       />
 

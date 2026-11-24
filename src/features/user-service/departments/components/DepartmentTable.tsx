@@ -3,6 +3,8 @@ import { Button, Table } from 'antd'
 import type { Department } from '@/api/departments'
 import { EnumTag } from '@/components/EnumTag'
 import { DepartmentStatus } from '@/constants/enums'
+import { PERMISSION } from '@/constants/permissions'
+import { usePermissions } from '@/hooks/use-permissions'
 
 interface DepartmentTableProps {
   data: Department[]
@@ -26,7 +28,12 @@ export const DepartmentTable = ({
   onToggleStatus,
   onDelete,
 }: DepartmentTableProps) => {
-  const columns: TableProps<Department>['columns'] = [
+  const { has } = usePermissions()
+  const canUpdate = has(PERMISSION.departmentUpdate)
+  const canDelete = has(PERMISSION.departmentDelete)
+  const hasRowActions = canUpdate || canDelete
+
+  const allColumns: NonNullable<TableProps<Department>['columns']> = [
     {
       title: '部门名称',
       dataIndex: 'name',
@@ -47,24 +54,32 @@ export const DepartmentTable = ({
       fixed: 'end',
       render: (_, department) => (
         <div className="-ms-2 flex">
-          <Button type="link" size="small" onClick={() => onEdit(department)}>
-            编辑
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger={department.is_active}
-            onClick={() => onToggleStatus(department)}
-          >
-            {department.is_active ? '停用' : '启用'}
-          </Button>
-          <Button type="link" size="small" danger onClick={() => onDelete(department)}>
-            删除
-          </Button>
+          {canUpdate && (
+            <Button type="link" size="small" onClick={() => onEdit(department)}>
+              编辑
+            </Button>
+          )}
+          {canUpdate && (
+            <Button
+              type="link"
+              size="small"
+              danger={department.is_active}
+              onClick={() => onToggleStatus(department)}
+            >
+              {department.is_active ? '停用' : '启用'}
+            </Button>
+          )}
+          {canDelete && (
+            <Button type="link" size="small" danger onClick={() => onDelete(department)}>
+              删除
+            </Button>
+          )}
         </div>
       ),
     },
   ]
+
+  const columns = allColumns.filter((column) => hasRowActions || column.key !== 'actions')
 
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-card shadow-card">

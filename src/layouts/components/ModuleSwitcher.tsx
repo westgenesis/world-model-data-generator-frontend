@@ -1,17 +1,12 @@
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { Popover, Tooltip } from 'antd'
 import { Check, ChevronDown } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AppPath } from '@/config/navigation'
-import { firstLeafOf, flattenLeaves, moduleOf, NAV_LEAVES, NAV_MODULES } from '@/config/navigation'
+import { firstLeafOf, flattenLeaves, moduleOf } from '@/config/navigation'
+import { useNavTree } from '@/hooks/use-nav-tree'
 import { useAppStore } from '@/stores/app-store'
 import { MODULE_ACCENT } from './module-accent'
-
-/** 模块条目：模块节点与页面数量，结构静态、渲染前预计算 */
-const MODULE_ENTRIES = NAV_MODULES.map((module) => ({
-  module,
-  count: flattenLeaves(module.children ?? []).length,
-}))
 
 /**
  * 侧栏模块切换器：下拉选择模块后跳转到该模块页面，侧栏随之只显示该模块的导航；
@@ -21,19 +16,23 @@ export const ModuleSwitcher = () => {
   const navigate = useNavigate()
   const pathname = useLocation({ select: (l) => l.pathname })
   const collapsed = useAppStore((s) => s.sidebarCollapsed)
+  const { modules, leaves } = useNavTree()
   const [open, setOpen] = useState(false)
   const lastPathRef = useRef<Record<string, string>>({})
 
-  const activeModule = moduleOf(pathname) ?? NAV_MODULES[0]
-  const ActiveIcon = activeModule.icon
-  const activeAccent = MODULE_ACCENT[activeModule.accent ?? 'primary']
-  const activeEntry =
-    MODULE_ENTRIES.find((entry) => entry.module.key === activeModule.key) ?? MODULE_ENTRIES[0]
+  /** 模块条目：模块节点与当前用户可见的页面数量 */
+  const moduleEntries = useMemo(
+    () => modules.map((module) => ({ module, count: flattenLeaves(module.children ?? []).length })),
+    [modules],
+  )
+
+  const activeModule = moduleOf(pathname, leaves) ?? modules[0]
+  const activeEntryLoose = moduleEntries.find((entry) => entry.module.key === activeModule?.key)
 
   useEffect(() => {
-    const current = moduleOf(pathname)
+    const current = moduleOf(pathname, leaves)
     if (current) lastPathRef.current[current.key] = pathname
-  }, [pathname])
+  }, [pathname, leaves])
 
   /**
    * 切换模块：优先回到该模块上次浏览的页面，否则进入其第一个页面
@@ -41,21 +40,27 @@ export const ModuleSwitcher = () => {
    */
   const selectModule = (key: string) => {
     setOpen(false)
-    if (key === activeModule.key) return
-    const target = NAV_MODULES.find((module) => module.key === key)
+    if (key === activeModule?.key) return
+    const target = modules.find((module) => module.key === key)
     const to = lastPathRef.current[key] ?? (target ? firstLeafOf(target)?.to : undefined)
     if (to) void navigate({ to: to as AppPath })
   }
+
+  if (!activeModule) return null
+
+  const ActiveIcon = activeModule.icon
+  const activeAccent = MODULE_ACCENT[activeModule.accent ?? 'primary']
+  const activeEntry = activeEntryLoose ?? moduleEntries[0] ?? { module: activeModule, count: 0 }
 
   const panel = (
     <div className="w-84 max-w-[calc(100vw-32px)]">
       <div className="flex items-center justify-between border-b border-line px-3.5 py-2.5">
         <span className="text-[11px] font-semibold tracking-[0.08em] text-fg-3">切换模块</span>
-        <span className="text-[11px] text-fg-3">共 {NAV_LEAVES.length} 个页面</span>
+        <span className="text-[11px] text-fg-3">共 {leaves.length} 个页面</span>
       </div>
 
       <div className="space-y-0.5 p-1.5">
-        {MODULE_ENTRIES.map(({ module, count }) => {
+        {moduleEntries.map(({ module, count }) => {
           const Icon = module.icon
           const accent = MODULE_ACCENT[module.accent ?? 'primary']
           const isActive = module.key === activeModule.key

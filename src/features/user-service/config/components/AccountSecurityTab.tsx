@@ -5,7 +5,9 @@ import { useMemo } from 'react'
 import type { SettingItem } from '@/api/settings'
 import { SETTINGS_QUERY_KEY, settingsQueryOptions, updateSettings } from '@/api/settings'
 import { SectionCard } from '@/components/SectionCard'
+import { PERMISSION } from '@/constants/permissions'
 import { useActionMutation } from '@/hooks/use-action-mutation'
+import { usePermissions } from '@/hooks/use-permissions'
 
 /** 账号安全配置项的展示与校验信息 */
 interface SecurityField {
@@ -124,6 +126,8 @@ const fieldRules = (field: SecurityField): FormRule[] => [
 export const AccountSecurityTab = () => {
   const [form] = Form.useForm<SecurityFormValues>()
   const { data, isPending, isError, refetch } = useQuery(settingsQueryOptions)
+  const { has } = usePermissions()
+  const canUpdate = has(PERMISSION.settingUpdate)
 
   const initialValues = useMemo(() => buildFormValues(data ?? []), [data])
 
@@ -170,6 +174,7 @@ export const AccountSecurityTab = () => {
       <Form<SecurityFormValues>
         form={form}
         layout="vertical"
+        disabled={!canUpdate}
         initialValues={initialValues}
         onFinish={(values) => save.mutate(values)}
       >
@@ -193,11 +198,13 @@ export const AccountSecurityTab = () => {
             </Form.Item>
           ))}
         </div>
-        <div className="flex justify-end">
-          <Button type="primary" htmlType="submit" loading={save.isPending}>
-            保存
-          </Button>
-        </div>
+        {canUpdate && (
+          <div className="flex justify-end">
+            <Button type="primary" htmlType="submit" loading={save.isPending}>
+              保存
+            </Button>
+          </div>
+        )}
       </Form>
     </SectionCard>
   )

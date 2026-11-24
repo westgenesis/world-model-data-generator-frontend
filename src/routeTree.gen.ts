@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppForbiddenRouteImport } from './routes/_app/forbidden'
 import { Route as SceneEditorSceneIdRouteImport } from './routes/scene-editor.$sceneId'
 import { Route as AppDataGenIndexRouteImport } from './routes/_app/data-gen/index'
 import { Route as AppDataGenCategoriesRouteImport } from './routes/_app/data-gen/categories'
@@ -53,6 +54,11 @@ const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppForbiddenRoute = AppForbiddenRouteImport.update({
+  id: '/forbidden',
+  path: '/forbidden',
+  getParentRoute: () => AppRoute,
 } as any)
 const SceneEditorSceneIdRoute = SceneEditorSceneIdRouteImport.update({
   id: '/scene-editor/$sceneId',
@@ -198,6 +204,7 @@ const AppUserServiceProjectsProjectIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/forbidden': typeof AppForbiddenRoute
   '/scene-editor/$sceneId': typeof SceneEditorSceneIdRoute
   '/data-gen/categories': typeof AppDataGenCategoriesRoute
   '/data-gen/flows': typeof AppDataGenFlowsRoute
@@ -229,6 +236,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/forbidden': typeof AppForbiddenRoute
   '/scene-editor/$sceneId': typeof SceneEditorSceneIdRoute
   '/data-gen/categories': typeof AppDataGenCategoriesRoute
   '/data-gen/flows': typeof AppDataGenFlowsRoute
@@ -262,6 +270,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/forbidden': typeof AppForbiddenRoute
   '/scene-editor/$sceneId': typeof SceneEditorSceneIdRoute
   '/_app/data-gen/categories': typeof AppDataGenCategoriesRoute
   '/_app/data-gen/flows': typeof AppDataGenFlowsRoute
@@ -295,6 +304,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/forbidden'
     | '/scene-editor/$sceneId'
     | '/data-gen/categories'
     | '/data-gen/flows'
@@ -326,6 +336,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/forbidden'
     | '/scene-editor/$sceneId'
     | '/data-gen/categories'
     | '/data-gen/flows'
@@ -358,6 +369,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/forbidden'
     | '/scene-editor/$sceneId'
     | '/_app/data-gen/categories'
     | '/_app/data-gen/flows'
@@ -416,6 +428,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/forbidden': {
+      id: '/_app/forbidden'
+      path: '/forbidden'
+      fullPath: '/forbidden'
+      preLoaderRoute: typeof AppForbiddenRouteImport
+      parentRoute: typeof AppRoute
     }
     '/scene-editor/$sceneId': {
       id: '/scene-editor/$sceneId'
@@ -610,6 +629,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppForbiddenRoute: typeof AppForbiddenRoute
   AppDataGenCategoriesRoute: typeof AppDataGenCategoriesRoute
   AppDataGenFlowsRoute: typeof AppDataGenFlowsRoute
   AppDataGenMonitorRoute: typeof AppDataGenMonitorRoute
@@ -639,6 +659,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppForbiddenRoute: AppForbiddenRoute,
   AppDataGenCategoriesRoute: AppDataGenCategoriesRoute,
   AppDataGenFlowsRoute: AppDataGenFlowsRoute,
   AppDataGenMonitorRoute: AppDataGenMonitorRoute,

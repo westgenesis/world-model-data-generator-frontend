@@ -5,6 +5,7 @@ import { env } from '@/lib/env'
 import { getJson, sendJson } from '@/lib/http'
 import { useAuthStore } from '@/stores/auth-store'
 import { envelope } from './common'
+import { permissionModuleSchema } from './permissions'
 import {
   logoutResultSchema,
   tokenPairSchema,
@@ -35,6 +36,35 @@ export const currentUserSchema = z.object({
 
 /** 当前登录用户 */
 export type CurrentUser = z.infer<typeof currentUserSchema>
+
+/** 当前用户生效中的一条权限（对应后端 MyPermissionItem） */
+export const myPermissionSchema = z.object({
+  code: z.string(),
+  name: z.string(),
+  module: permissionModuleSchema,
+  sub_module: z.string(),
+  /** 权限来源：角色、临时授权，或两者叠加 */
+  sources: z.array(z.enum(['role', 'grant'])),
+  /** 临时授权的到期时间；只来自角色时为 null */
+  effective_to: z.string().nullable(),
+})
+
+/** 当前用户生效中的全部权限（对应后端 MyPermissions） */
+export const myPermissionsSchema = z.object({
+  /** 系统管理员拥有全部权限，不受权限矩阵限制 */
+  is_super_admin: z.boolean(),
+  role: z
+    .object({
+      role_id: z.number(),
+      code: z.string(),
+      name: z.string(),
+    })
+    .nullable(),
+  permissions: z.array(myPermissionSchema),
+})
+
+/** 当前用户生效中的全部权限 */
+export type MyPermissions = z.infer<typeof myPermissionsSchema>
 
 /** 登录表单 schema */
 export const loginSchema = z.object({
@@ -93,5 +123,12 @@ export const logout = async (input: LogoutInput): Promise<LogoutResult> => {
 export const currentUserQueryOptions = queryOptions({
   queryKey: ['auth', 'me'],
   queryFn: () => getJson('v1/users/me', envelope(currentUserSchema)),
+  staleTime: 5 * 60_000,
+})
+
+/** 当前用户权限查询配置；key 挂在 ['auth','me'] 下，登录/改密/登出时随用户信息一并失效 */
+export const myPermissionsQueryOptions = queryOptions({
+  queryKey: ['auth', 'me', 'permissions'],
+  queryFn: () => getJson('v1/users/me/permissions', envelope(myPermissionsSchema)),
   staleTime: 5 * 60_000,
 })

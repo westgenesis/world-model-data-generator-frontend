@@ -11,8 +11,10 @@ import {
 } from '@/api/departments'
 import { PageHeader } from '@/components/PageHeader'
 import { StatGrid } from '@/components/StatCard'
+import { PERMISSION } from '@/constants/permissions'
 import { useActionMutation } from '@/hooks/use-action-mutation'
 import { useDrawerState } from '@/hooks/use-drawer-state'
+import { usePermissions } from '@/hooks/use-permissions'
 import { DepartmentFormDrawer } from './components/DepartmentFormDrawer'
 import { DepartmentTable } from './components/DepartmentTable'
 
@@ -21,6 +23,7 @@ export const DepartmentManagementPage = () => {
   const { modal } = App.useApp()
   const { data, isPending, isFetching } = useQuery(departmentListQueryOptions)
   const drawer = useDrawerState<Department>()
+  const { has } = usePermissions()
 
   const departments = useMemo(() => data ?? [], [data])
 
@@ -62,13 +65,15 @@ export const DepartmentManagementPage = () => {
         title="部门管理"
         description="维护组织架构中的部门，供用户归属与筛选；停用后新建用户不能再选择，已归属的用户不受影响。"
         extra={
-          <Button
-            type="primary"
-            icon={<Plus size={16} strokeWidth={1.75} />}
-            onClick={() => drawer.show()}
-          >
-            新增部门
-          </Button>
+          has(PERMISSION.departmentCreate) && (
+            <Button
+              type="primary"
+              icon={<Plus size={16} strokeWidth={1.75} />}
+              onClick={() => drawer.show()}
+            >
+              新增部门
+            </Button>
+          )
         }
       />
 

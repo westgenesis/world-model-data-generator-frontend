@@ -4,6 +4,8 @@ import type { User } from '@/api/users'
 import { SUPER_ADMIN_ROLE_CODE } from '@/api/users'
 import { EnumTag } from '@/components/EnumTag'
 import { UserStatus } from '@/constants/enums'
+import { PERMISSION } from '@/constants/permissions'
+import { usePermissions } from '@/hooks/use-permissions'
 import { EMPTY_TEXT, formatDateTime } from '@/lib/format'
 
 interface UserTableProps {
@@ -36,11 +38,25 @@ export const UserTable = ({
   onUnlock,
   onToggleStatus,
 }: UserTableProps) => {
+  const { has } = usePermissions()
+  const canUpdate = has(PERMISSION.userUpdate)
+  const canGrant = has(PERMISSION.userPermissionGrant)
+  const canResetPassword = has(PERMISSION.userPasswordReset)
+  const canUnlock = has(PERMISSION.userUnlock)
+  const hasRowActions = canUpdate || canGrant || canResetPassword || canUnlock
+
+  /**
+   * 当前行是否可打开「更多」菜单
+   * @param user - 用户
+   * @returns 是否有可用的更多操作
+   */
+  const canOpenMore = (user: User) => canResetPassword || (canUnlock && user.login_throttled)
+
   /** 「更多」菜单：重置密码，登录被限流时追加解锁 */
   const moreMenu = (user: User): MenuProps => ({
     items: [
-      { key: 'reset-password', label: '重置密码' },
-      ...(user.login_throttled ? [{ key: 'unlock', label: '解除登录限流' }] : []),
+      ...(canResetPassword ? [{ key: 'reset-password', label: '重置密码' }] : []),
+      ...(canUnlock && user.login_throttled ? [{ key: 'unlock', label: '解除登录限流' }] : []),
     ],
     onClick: ({ key }) => {
       if (key === 'reset-password') onResetPassword(user)
@@ -48,7 +64,7 @@ export const UserTable = ({
     },
   })
 
-  const columns: TableProps<User>['columns'] = [
+  const allColumns: NonNullable<TableProps<User>['columns']> = [
     {
       title: '用户',
       dataIndex: 'full_name',
@@ -112,32 +128,42 @@ export const UserTable = ({
         return (
           <Tooltip title={locked ? '超级管理员账号不允许操作' : undefined}>
             <div className="-ms-2 flex items-center">
-              <Button type="link" size="small" disabled={locked} onClick={() => onEdit(user)}>
-                编辑
-              </Button>
-              <Button type="link" size="small" disabled={locked} onClick={() => onGrant(user)}>
-                授权
-              </Button>
-              <Button
-                type="link"
-                size="small"
-                disabled={locked}
-                danger={user.status === 'active'}
-                onClick={() => onToggleStatus(user)}
-              >
-                {user.status === 'active' ? '停用' : '启用'}
-              </Button>
-              <Dropdown menu={moreMenu(user)} trigger={['click']} disabled={locked}>
-                <Button type="link" size="small" disabled={locked}>
-                  更多
+              {canUpdate && (
+                <Button type="link" size="small" disabled={locked} onClick={() => onEdit(user)}>
+                  编辑
                 </Button>
-              </Dropdown>
+              )}
+              {canGrant && (
+                <Button type="link" size="small" disabled={locked} onClick={() => onGrant(user)}>
+                  授权
+                </Button>
+              )}
+              {canUpdate && (
+                <Button
+                  type="link"
+                  size="small"
+                  disabled={locked}
+                  danger={user.status === 'active'}
+                  onClick={() => onToggleStatus(user)}
+                >
+                  {user.status === 'active' ? '停用' : '启用'}
+                </Button>
+              )}
+              {canOpenMore(user) && (
+                <Dropdown menu={moreMenu(user)} trigger={['click']} disabled={locked}>
+                  <Button type="link" size="small" disabled={locked}>
+                    更多
+                  </Button>
+                </Dropdown>
+              )}
             </div>
           </Tooltip>
         )
       },
     },
   ]
+
+  const columns = allColumns.filter((column) => hasRowActions || column.key !== 'actions')
 
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-card shadow-card">

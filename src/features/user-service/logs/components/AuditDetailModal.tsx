@@ -5,6 +5,8 @@ import type { AuditDetail, AuditItem } from '@/api/audits'
 import { auditDetailQueryOptions } from '@/api/audits'
 import { EnumTag } from '@/components/EnumTag'
 import { AuditRiskLevel, AuditStatus, LogSource } from '@/constants/enums'
+import { PERMISSION } from '@/constants/permissions'
+import { usePermissions } from '@/hooks/use-permissions'
 import { EMPTY_TEXT, formatDateTime } from '@/lib/format'
 import { getErrorMessage } from '@/lib/http'
 
@@ -22,6 +24,8 @@ interface AuditDetailModalProps {
  * @param props - 打开状态、审计记录、关闭与处置回调
  */
 export const AuditDetailModal = ({ open, audit, onClose, onHandle }: AuditDetailModalProps) => {
+  const { has } = usePermissions()
+  const canHandle = has(PERMISSION.auditHandle)
   const { data, isPending, isError, error } = useQuery(
     auditDetailQueryOptions(audit?.audit_id, open),
   )
@@ -36,14 +40,16 @@ export const AuditDetailModal = ({ open, audit, onClose, onHandle }: AuditDetail
       footer={
         <div className="flex justify-end gap-2">
           <Button onClick={onClose}>关闭</Button>
-          <Button
-            type="primary"
-            disabled={!data}
-            icon={<ShieldCheck size={15} strokeWidth={1.75} />}
-            onClick={() => data && onHandle(data)}
-          >
-            处置
-          </Button>
+          {canHandle && (
+            <Button
+              type="primary"
+              disabled={!data}
+              icon={<ShieldCheck size={15} strokeWidth={1.75} />}
+              onClick={() => data && onHandle(data)}
+            >
+              处置
+            </Button>
+          )}
         </div>
       }
     >

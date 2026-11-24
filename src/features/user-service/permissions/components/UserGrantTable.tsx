@@ -3,6 +3,8 @@ import { Button, Table, Tooltip } from 'antd'
 import type { UserGrant } from '@/api/user-grants'
 import { EnumTag } from '@/components/EnumTag'
 import { UserGrantStatus } from '@/constants/enums'
+import { PERMISSION } from '@/constants/permissions'
+import { usePermissions } from '@/hooks/use-permissions'
 import { EMPTY_TEXT, formatDateTime } from '@/lib/format'
 
 interface UserGrantTableProps {
@@ -40,7 +42,12 @@ export const UserGrantTable = ({
   onExtend,
   onRevoke,
 }: UserGrantTableProps) => {
-  const columns: TableProps<UserGrant>['columns'] = [
+  const { has } = usePermissions()
+  const canExtend = has(PERMISSION.userPermissionExtend)
+  const canRevoke = has(PERMISSION.userPermissionRevoke)
+  const hasRowActions = canExtend || canRevoke
+
+  const allColumns: NonNullable<TableProps<UserGrant>['columns']> = [
     {
       title: '用户',
       dataIndex: 'full_name',
@@ -111,24 +118,35 @@ export const UserGrantTable = ({
         return (
           <Tooltip title={operable ? undefined : '已过期或已撤销的授权不可操作'}>
             <div className="-ms-2 flex items-center">
-              <Button type="link" size="small" disabled={!operable} onClick={() => onExtend(grant)}>
-                延期
-              </Button>
-              <Button
-                type="link"
-                size="small"
-                danger
-                disabled={!operable}
-                onClick={() => onRevoke(grant)}
-              >
-                收回
-              </Button>
+              {canExtend && (
+                <Button
+                  type="link"
+                  size="small"
+                  disabled={!operable}
+                  onClick={() => onExtend(grant)}
+                >
+                  延期
+                </Button>
+              )}
+              {canRevoke && (
+                <Button
+                  type="link"
+                  size="small"
+                  danger
+                  disabled={!operable}
+                  onClick={() => onRevoke(grant)}
+                >
+                  收回
+                </Button>
+              )}
             </div>
           </Tooltip>
         )
       },
     },
   ]
+
+  const columns = allColumns.filter((column) => hasRowActions || column.key !== 'actions')
 
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-card shadow-card">
@@ -139,12 +157,16 @@ export const UserGrantTable = ({
         loading={loading}
         pagination={{ ...pagination, className: 'px-4' }}
         scroll={{ x: 1100 }}
-        rowSelection={{
-          selectedRowKeys,
-          preserveSelectedRowKeys: false,
-          onChange: (keys) => onSelectionChange(keys as number[]),
-          getCheckboxProps: (grant) => ({ disabled: !isGrantOperable(grant) }),
-        }}
+        rowSelection={
+          hasRowActions
+            ? {
+                selectedRowKeys,
+                preserveSelectedRowKeys: false,
+                onChange: (keys) => onSelectionChange(keys as number[]),
+                getCheckboxProps: (grant) => ({ disabled: !isGrantOperable(grant) }),
+              }
+            : undefined
+        }
         locale={{ emptyText: '暂无临时授权记录' }}
       />
     </div>
