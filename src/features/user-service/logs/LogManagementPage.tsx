@@ -12,6 +12,7 @@ import { LogCategory as LogCategoryEnum, LogLevel as LogLevelEnum } from '@/cons
 import { useActionMutation } from '@/hooks/use-action-mutation'
 import { useDrawerState } from '@/hooks/use-drawer-state'
 import { useListParams } from '@/hooks/use-list-params'
+import { AuditTab } from './components/AuditTab'
 import { LogContextModal } from './components/LogContextModal'
 import { LogDetailModal } from './components/LogDetailModal'
 import { LogStats } from './components/LogStats'
@@ -173,6 +174,11 @@ export const LogManagementPage = () => {
                 />
               </>
             ),
+          },
+          {
+            key: 'audit',
+            label: '安全审计',
+            children: <AuditTab />,
           },
           {
             key: 'storage',

@@ -150,3 +150,28 @@ export const LogSource = defineEnum([
   { value: 'worker', label: '任务进程', tone: 'purple' },
 ])
 export type LogSource = EnumValue<typeof LogSource>
+
+/* -------------------------------- 安全审计 -------------------------------- */
+
+/** 安全审计处置状态（对应后端 AuditStatus） */
+export const AuditStatus = defineEnum([
+  { value: 'pending', label: '待处置', tone: 'warning' },
+  { value: 'handled', label: '已处理', tone: 'success' },
+  { value: 'ignored', label: '已忽略', tone: 'default' },
+])
+export type AuditStatus = EnumValue<typeof AuditStatus>
+
+/** 安全审计处置结果：仅「已处理」与「已忽略」两种 */
+export const AuditHandleStatus = defineEnum([
+  { value: 'handled', label: '标记已处理', tone: 'success' },
+  { value: 'ignored', label: '标记忽略', tone: 'default' },
+])
+export type AuditHandleStatus = EnumValue<typeof AuditHandleStatus>
+
+/** 安全审计风险等级 */
+export const AuditRiskLevel = defineEnum([
+  { value: 'high', label: '高', tone: 'danger' },
+  { value: 'medium', label: '中', tone: 'warning' },
+  { value: 'low', label: '低', tone: 'info' },
+])
+export type AuditRiskLevel = EnumValue<typeof AuditRiskLevel>
