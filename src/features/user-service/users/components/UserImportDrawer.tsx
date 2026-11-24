@@ -1,8 +1,13 @@
 import type { TableProps } from 'antd'
 import { App, Button, Drawer, Spin, Table, Upload } from 'antd'
-import { AlertCircle, CheckCircle2, Download, FileSpreadsheet } from 'lucide-react'
+import { Download, FileSpreadsheet } from 'lucide-react'
 import { useState } from 'react'
-import type { UserImportAccepted, UserImportPreview, UserImportTemplateFile } from '@/api/users'
+import type {
+  UserImportAccepted,
+  UserImportPreview,
+  UserImportRow,
+  UserImportTemplateFile,
+} from '@/api/users'
 import {
   downloadUserImportTemplate,
   previewUserImport,
@@ -16,11 +21,56 @@ interface UserImportDrawerProps {
   onClose: () => void
 }
 
-/** 校验问题表格列 */
-const ISSUE_COLUMNS: TableProps<UserImportPreview['issues'][number]>['columns'] = [
-  { title: '行号', dataIndex: 'row', width: 88, render: (row: number) => `第 ${row} 行` },
-  { title: '列名', dataIndex: 'column', width: 140 },
-  { title: '问题', dataIndex: 'message' },
+/** 空单元格占位 */
+const EMPTY_CELL = <span className="text-fg-3">—</span>
+
+/** 逐行预览表格列 */
+const ROW_COLUMNS: TableProps<UserImportRow>['columns'] = [
+  { title: '姓名', dataIndex: 'full_name', width: 88, ellipsis: true },
+  {
+    title: '账号',
+    dataIndex: 'username',
+    width: 110,
+    ellipsis: true,
+    render: (username: string) => username || EMPTY_CELL,
+  },
+  {
+    title: '部门',
+    dataIndex: 'department',
+    width: 110,
+    ellipsis: true,
+    render: (department: string) => department || EMPTY_CELL,
+  },
+  {
+    title: '角色',
+    dataIndex: 'role',
+    width: 96,
+    ellipsis: true,
+    render: (role: string) => role || EMPTY_CELL,
+  },
+  {
+    title: '校验结果',
+    dataIndex: 'valid',
+    width: 168,
+    render: (valid: boolean, row) => {
+      if (valid) {
+        return (
+          <span className="inline-block rounded-full bg-success-soft px-2 py-0.5 text-xs text-success">
+            通过
+          </span>
+        )
+      }
+      const reason = row.issues.map((issue) => issue.message).join('；')
+      return (
+        <span
+          className="inline-block rounded-full bg-danger-soft px-2 py-0.5 text-xs text-danger"
+          title={reason || undefined}
+        >
+          {reason || '未通过校验'}
+        </span>
+      )
+    },
+  },
 ]
 
 /**
@@ -35,32 +85,6 @@ const saveFile = ({ blob, filename }: UserImportTemplateFile) => {
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 0)
 }
-
-/** 预览统计中的单项 */
-const StatItem = ({
-  label,
-  value,
-  tone,
-}: {
-  label: string
-  value: number
-  tone?: 'success' | 'danger'
-}) => (
-  <div className="px-4 py-3">
-    <div className="text-xs text-fg-3">{label}</div>
-    <div
-      className={
-        tone === 'success'
-          ? 'mt-1 text-lg font-semibold text-success tabular-nums'
-          : tone === 'danger'
-            ? 'mt-1 text-lg font-semibold text-danger tabular-nums'
-            : 'mt-1 text-lg font-semibold text-fg tabular-nums'
-      }
-    >
-      {value}
-    </div>
-  </div>
-)
 
 /**
  * 批量导入用户抽屉：下载模板 → 上传文件获取校验预览 → 按 file_id 提交导入任务
@@ -89,7 +113,7 @@ export const UserImportDrawer = ({ open, onClose }: UserImportDrawerProps) => {
     onSuccess: onClose,
   })
 
-  const canSubmit = Boolean(preview && preview.valid > 0)
+  const canSubmit = Boolean(preview && preview.valid > 0 && preview.invalid === 0)
 
   return (
     <Drawer
@@ -102,7 +126,11 @@ export const UserImportDrawer = ({ open, onClose }: UserImportDrawerProps) => {
       footer={
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-fg-3">
-            {preview ? `将导入校验通过的 ${preview.valid} 行` : '请先上传导入文件'}
+            {!preview
+              ? '请先上传导入文件'
+              : preview.invalid > 0
+                ? `有 ${preview.invalid} 行未通过校验，请修正后重新上传`
+                : `将导入校验通过的 ${preview.valid} 行`}
           </span>
           <div className="flex gap-2">
             <Button onClick={onClose}>取消</Button>
@@ -172,44 +200,19 @@ export const UserImportDrawer = ({ open, onClose }: UserImportDrawerProps) => {
             正在校验文件…
           </div>
         ) : preview ? (
-          <div className="space-y-3">
-            <div className="grid grid-cols-3 divide-x divide-line rounded-lg border border-line">
-              <StatItem label="总行数" value={preview.total} />
-              <StatItem label="校验通过" value={preview.valid} tone="success" />
-              <StatItem
-                label="问题行"
-                value={preview.invalid}
-                tone={preview.invalid > 0 ? 'danger' : undefined}
+          preview.rows.length > 0 ? (
+            <div className="overflow-hidden rounded-lg border border-line">
+              <Table<UserImportRow>
+                rowKey="row"
+                size="small"
+                columns={ROW_COLUMNS}
+                dataSource={preview.rows}
+                pagination={false}
               />
             </div>
-
-            {preview.invalid > 0 ? (
-              <p className="flex items-start gap-1.5 text-sm text-warning">
-                <AlertCircle size={15} className="mt-0.5 shrink-0" />有 {preview.invalid}{' '}
-                行未通过校验，确认导入时仅导入校验通过的 {preview.valid} 行。
-              </p>
-            ) : preview.total > 0 ? (
-              <p className="flex items-center gap-1.5 text-sm text-success">
-                <CheckCircle2 size={15} className="shrink-0" />
-                全部 {preview.total} 行校验通过。
-              </p>
-            ) : (
-              <p className="text-sm text-fg-3">文件中没有可导入的数据。</p>
-            )}
-
-            {preview.issues.length > 0 && (
-              <div className="overflow-hidden rounded-lg border border-line">
-                <Table<UserImportPreview['issues'][number]>
-                  rowKey={(issue) => `${issue.row}-${issue.column}`}
-                  size="small"
-                  columns={ISSUE_COLUMNS}
-                  dataSource={preview.issues}
-                  pagination={false}
-                  scroll={{ y: 220 }}
-                />
-              </div>
-            )}
-          </div>
+          ) : (
+            <p className="py-6 text-center text-sm text-fg-3">文件中没有可导入的数据。</p>
+          )
         ) : (
           <p className="py-6 text-center text-sm text-fg-3">上传文件后将在此展示校验结果</p>
         )}

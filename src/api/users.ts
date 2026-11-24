@@ -120,14 +120,41 @@ export const userUnlockedSchema = z.object({
   cleared_failures: z.number().int(),
 })
 
-/** 批量导入的逐行问题 */
+/** 批量导入中某一列的校验问题 */
 export const userImportIssueSchema = z.object({
-  /** Excel 行号，从 1 开始 */
-  row: z.number().int().positive(),
   /** 出问题的列名 */
   column: z.string(),
+  /** 问题描述 */
   message: z.string(),
 })
+
+/** 批量导入中某一列的校验问题 */
+export type UserImportIssue = z.infer<typeof userImportIssueSchema>
+
+/** 批量导入预览中的一行（按模板填写的内容 + 校验结果） */
+export const userImportRowSchema = z.object({
+  /** Excel 行号，从 1 开始 */
+  row: z.number().int().positive(),
+  /** 姓名 */
+  full_name: z.string(),
+  /** 登录账号 */
+  username: z.string(),
+  /** 手机号，未填写时为空字符串 */
+  phone: z.string(),
+  /** 邮箱，未填写时为空字符串 */
+  email: z.string(),
+  /** 部门名称，未填写时为空字符串 */
+  department: z.string(),
+  /** 角色名称，未填写时为空字符串 */
+  role: z.string(),
+  /** 是否通过校验 */
+  valid: z.boolean(),
+  /** 未通过校验的原因，通过时为空数组 */
+  issues: z.array(userImportIssueSchema),
+})
+
+/** 批量导入预览中的一行 */
+export type UserImportRow = z.infer<typeof userImportRowSchema>
 
 /** 批量导入预览结果 */
 export const userImportPreviewSchema = z.object({
@@ -141,8 +168,8 @@ export const userImportPreviewSchema = z.object({
   valid: z.number().int().nonnegative(),
   /** 存在问题的行数 */
   invalid: z.number().int().nonnegative(),
-  /** 逐行问题，每行最多一条 */
-  issues: z.array(userImportIssueSchema),
+  /** 逐行预览结果，顺序与文件一致 */
+  rows: z.array(userImportRowSchema),
 })
 
 /** 批量导入预览结果 */
