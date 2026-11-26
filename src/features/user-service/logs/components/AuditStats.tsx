@@ -1,12 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import {
-  CalendarDays,
-  CircleAlert,
-  ClockAlert,
-  Info,
-  ShieldAlert,
-  TriangleAlert,
-} from 'lucide-react'
+import { CalendarDays, CircleAlert, Info, ShieldAlert, TriangleAlert } from 'lucide-react'
 import { auditStatisticsQueryOptions } from '@/api/audits'
 import { StatGrid } from '@/components/StatCard'
 import { EMPTY_TEXT, formatNumber } from '@/lib/format'
@@ -14,7 +7,7 @@ import { EMPTY_TEXT, formatNumber } from '@/lib/format'
 /** 统计卡片图标尺寸与线宽，与页面其他图标保持一致 */
 const ICON_SIZE = 16
 
-/** 安全审计统计指标 */
+/** 日志统计指标 */
 export const AuditStats = () => {
   const { data, isPending } = useQuery(auditStatisticsQueryOptions)
   const total = data?.total ?? 0
@@ -33,12 +26,10 @@ export const AuditStats = () => {
       items={[
         {
           key: 'total',
-          label: '审计总数',
+          label: '日志总数',
           value: data?.total,
           icon: <ShieldAlert size={ICON_SIZE} strokeWidth={1.75} />,
-          sub: data
-            ? `已处理 ${formatNumber(data.handled)} · 已忽略 ${formatNumber(data.ignored)}`
-            : EMPTY_TEXT,
+          sub: data ? `保留 ${data.retention_days} 天` : EMPTY_TEXT,
         },
         {
           key: 'today',
@@ -47,14 +38,6 @@ export const AuditStats = () => {
           value: data?.today,
           icon: <CalendarDays size={ICON_SIZE} strokeWidth={1.75} />,
           sub: share(data?.today),
-        },
-        {
-          key: 'pending',
-          label: '待处置',
-          tone: 'warning',
-          value: data?.pending,
-          icon: <ClockAlert size={ICON_SIZE} strokeWidth={1.75} />,
-          sub: share(data?.pending),
         },
         {
           key: 'high',

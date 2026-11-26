@@ -1,43 +1,40 @@
 import { useQuery } from '@tanstack/react-query'
-import type { TabsProps } from 'antd'
-import { Button, DatePicker, Input, Result, Select, Tabs } from 'antd'
+import { Button, DatePicker, Input, Select } from 'antd'
 import type { Dayjs } from 'dayjs'
-import dayjs from 'dayjs'
 import { Download } from 'lucide-react'
-import type { LogExportFile, LogFilterParams, LogItem, LogListParams } from '@/api/logs'
-import { exportLogs, logListQueryOptions } from '@/api/logs'
+import type { AuditExportFile, AuditFilterParams, AuditItem, AuditListParams } from '@/api/audits'
+import { auditListQueryOptions, exportAudits } from '@/api/audits'
 import { FilterBar, FilterField } from '@/components/FilterBar'
 import { PageHeader } from '@/components/PageHeader'
-import type { LogCategory, LogLevel } from '@/constants/enums'
-import { LogCategory as LogCategoryEnum, LogLevel as LogLevelEnum } from '@/constants/enums'
-import { PERMISSION } from '@/constants/permissions'
+import { AuditRiskLevel } from '@/constants/enums'
 import { useActionMutation } from '@/hooks/use-action-mutation'
 import { useDrawerState } from '@/hooks/use-drawer-state'
 import { useListParams } from '@/hooks/use-list-params'
-import { usePermissions } from '@/hooks/use-permissions'
-import { AuditTab } from './components/AuditTab'
-import { LogContextModal } from './components/LogContextModal'
-import { LogDetailModal } from './components/LogDetailModal'
-import { LogStats } from './components/LogStats'
-import { LogStorageTab } from './components/LogStorageTab'
-import { LogTable } from './components/LogTable'
+import { AuditDetailModal } from './components/AuditDetailModal'
+import { AuditStats } from './components/AuditStats'
+import { AuditTable } from './components/AuditTable'
 
-/** 日志列表筛选条件 */
-interface LogFilters {
-  /** 时间范围，默认当天 */
+/** 日志筛选条件 */
+interface AuditFilters {
+  /** 时间范围，默认不限 */
   period: [Dayjs | null, Dayjs | null] | null
-  category?: LogCategory
-  level?: LogLevel
-  /** 事件模块，如 user */
+  riskLevel?: AuditRiskLevel
+  /** 大模块，如 user */
   module: string
-  /** 内容 / 事件 key 关键词 */
+  /** 操作人用户名，精确匹配 */
+  operatorName: string
+  /** 链路标识 */
+  traceId: string
+  /** 描述 / 事件 key / 对象名关键词 */
   keyword: string
 }
 
-/** 筛选条件初始值：当天 0 点至当前时间 */
-const createInitialFilters = (): LogFilters => ({
-  period: [dayjs().startOf('day'), dayjs()],
+/** 筛选条件初始值 */
+const createInitialFilters = (): AuditFilters => ({
+  period: null,
   module: '',
+  operatorName: '',
+  traceId: '',
   keyword: '',
 })
 
@@ -46,12 +43,13 @@ const createInitialFilters = (): LogFilters => ({
  * @param filters - 界面筛选条件
  * @returns 日志筛选参数
  */
-const toFilterParams = (filters: LogFilters): LogFilterParams => ({
+const toFilterParams = (filters: AuditFilters): AuditFilterParams => ({
   start: filters.period?.[0]?.toISOString(),
   end: filters.period?.[1]?.toISOString(),
-  category: filters.category,
-  level: filters.level,
+  riskLevel: filters.riskLevel,
   module: filters.module.trim() || undefined,
+  operatorName: filters.operatorName.trim() || undefined,
+  traceId: filters.traceId.trim() || undefined,
   keyword: filters.keyword.trim() || undefined,
 })
 
@@ -59,7 +57,7 @@ const toFilterParams = (filters: LogFilters): LogFilterParams => ({
  * 触发浏览器下载文件
  * @param file - 文件内容与文件名
  */
-const saveFile = ({ blob, filename }: LogExportFile) => {
+const saveFile = ({ blob, filename }: AuditExportFile) => {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -68,147 +66,119 @@ const saveFile = ({ blob, filename }: LogExportFile) => {
   setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 
-/** 日志管理页面（接口：/v1/logs，参考 docs/原型/M1用户服务管理_原型.html） */
+/** 日志管理页面（接口：/v1/audits，参考 docs/原型/M1用户服务管理_原型.html） */
 export const LogManagementPage = () => {
-  const { filters, setFilter, submit, reset, params, getPagination } = useListParams<LogFilters>(
+  const { filters, setFilter, submit, reset, params, getPagination } = useListParams<AuditFilters>(
     createInitialFilters(),
     { manualSearch: true },
   )
-  const { has } = usePermissions()
 
-  const listParams: LogListParams = {
+  const listParams: AuditListParams = {
     ...toFilterParams(params),
     page: params.page,
     pageSize: params.pageSize,
   }
-  const { data, isFetching } = useQuery(logListQueryOptions(listParams))
-  const detailDrawer = useDrawerState<LogItem>()
-  const contextDrawer = useDrawerState<LogItem>()
+  const { data, isFetching } = useQuery(auditListQueryOptions(listParams))
+  const detailModal = useDrawerState<AuditItem>()
 
-  const exportMutation = useActionMutation<void, LogExportFile>({
-    mutationFn: () => exportLogs(toFilterParams(params)),
+  const exportMutation = useActionMutation<void, AuditExportFile>({
+    mutationFn: () => exportAudits(toFilterParams(params)),
     successMessage: '已开始导出，请留意浏览器下载',
     onSuccess: saveFile,
   })
-
-  const canViewLog = has(PERMISSION.logRead)
-  const canViewAudit = has(PERMISSION.auditRead)
-
-  const tabs: TabsProps['items'] = [
-    ...(canViewLog
-      ? [
-          {
-            key: 'query',
-            label: '日志查询',
-            children: (
-              <>
-                <LogStats />
-                <FilterBar onSearch={submit} onReset={reset}>
-                  <FilterField label="时间范围">
-                    <DatePicker.RangePicker
-                      className="w-96"
-                      showTime={{ format: 'HH:mm' }}
-                      format="YYYY-MM-DD HH:mm"
-                      allowClear
-                      value={filters.period}
-                      onChange={(value) => setFilter('period', value)}
-                    />
-                  </FilterField>
-                  <FilterField label="分类">
-                    <Select
-                      className="w-32"
-                      placeholder="全部"
-                      allowClear
-                      value={filters.category}
-                      onChange={(value) => setFilter('category', value)}
-                      options={LogCategoryEnum.options}
-                    />
-                  </FilterField>
-                  <FilterField label="级别">
-                    <Select
-                      className="w-32"
-                      placeholder="全部"
-                      allowClear
-                      value={filters.level}
-                      onChange={(value) => setFilter('level', value)}
-                      options={LogLevelEnum.options}
-                    />
-                  </FilterField>
-                  <FilterField label="模块">
-                    <Input
-                      className="w-32"
-                      placeholder="如 user"
-                      allowClear
-                      value={filters.module}
-                      onChange={(e) => setFilter('module', e.target.value)}
-                      onPressEnter={submit}
-                    />
-                  </FilterField>
-                  <FilterField label="关键词">
-                    <Input
-                      className="w-52"
-                      placeholder="内容 / 事件 key"
-                      allowClear
-                      value={filters.keyword}
-                      onChange={(e) => setFilter('keyword', e.target.value)}
-                      onPressEnter={submit}
-                    />
-                  </FilterField>
-                </FilterBar>
-
-                <LogTable
-                  data={data?.items ?? []}
-                  loading={isFetching}
-                  pagination={getPagination(data?.total)}
-                  onDetail={detailDrawer.show}
-                  onContext={contextDrawer.show}
-                />
-              </>
-            ),
-          },
-        ]
-      : []),
-    ...(canViewAudit ? [{ key: 'audit', label: '安全审计', children: <AuditTab /> }] : []),
-    ...(canViewLog ? [{ key: 'storage', label: '收集与存储', children: <LogStorageTab /> }] : []),
-  ]
 
   return (
     <>
       <PageHeader
         title="日志管理"
-        description="记录用户操作、业务事件与运行异常，支持按时间、分类与级别查询并导出。"
+        description="记录平台内的日志事件，支持按时间、风险等级与关键词查询并导出。"
         extra={
-          canViewLog && (
-            <Button
-              icon={<Download size={16} strokeWidth={1.75} />}
-              loading={exportMutation.isPending}
-              onClick={() => exportMutation.mutate()}
-            >
-              导出日志
-            </Button>
-          )
+          <Button
+            icon={<Download size={16} strokeWidth={1.75} />}
+            loading={exportMutation.isPending}
+            onClick={() => exportMutation.mutate()}
+          >
+            导出
+          </Button>
         }
       />
 
-      {tabs.length > 0 ? (
-        <Tabs defaultActiveKey={tabs[0].key} items={tabs} />
-      ) : (
-        <Result
-          status="info"
-          title="暂无可查看的日志内容"
-          subTitle="当前账号没有日志或安全审计的查看权限。"
-        />
-      )}
+      <AuditStats />
 
-      <LogDetailModal
-        open={detailDrawer.open}
-        log={detailDrawer.record}
-        onClose={detailDrawer.close}
+      <FilterBar onSearch={submit} onReset={reset}>
+        <FilterField label="时间范围">
+          <DatePicker.RangePicker
+            className="w-96"
+            showTime={{ format: 'HH:mm' }}
+            format="YYYY-MM-DD HH:mm"
+            allowClear
+            value={filters.period}
+            onChange={(value) => setFilter('period', value)}
+          />
+        </FilterField>
+        <FilterField label="风险等级">
+          <Select
+            className="w-28"
+            placeholder="全部"
+            allowClear
+            value={filters.riskLevel}
+            onChange={(value) => setFilter('riskLevel', value)}
+            options={AuditRiskLevel.options}
+          />
+        </FilterField>
+        <FilterField label="模块">
+          <Input
+            className="w-32"
+            placeholder="如 user / system"
+            allowClear
+            value={filters.module}
+            onChange={(e) => setFilter('module', e.target.value)}
+            onPressEnter={submit}
+          />
+        </FilterField>
+        <FilterField label="操作人">
+          <Input
+            className="w-36"
+            placeholder="操作人用户名"
+            allowClear
+            value={filters.operatorName}
+            onChange={(e) => setFilter('operatorName', e.target.value)}
+            onPressEnter={submit}
+          />
+        </FilterField>
+        <FilterField label="TraceID">
+          <Input
+            className="w-40"
+            placeholder="链路标识"
+            allowClear
+            value={filters.traceId}
+            onChange={(e) => setFilter('traceId', e.target.value)}
+            onPressEnter={submit}
+          />
+        </FilterField>
+        <FilterField label="关键词">
+          <Input
+            className="w-52"
+            placeholder="描述 / 事件 key / 对象名"
+            allowClear
+            value={filters.keyword}
+            onChange={(e) => setFilter('keyword', e.target.value)}
+            onPressEnter={submit}
+          />
+        </FilterField>
+      </FilterBar>
+
+      <AuditTable
+        data={data?.items ?? []}
+        loading={isFetching}
+        pagination={getPagination(data?.total)}
+        onDetail={detailModal.show}
       />
-      <LogContextModal
-        open={contextDrawer.open}
-        log={contextDrawer.record}
-        onClose={contextDrawer.close}
+
+      <AuditDetailModal
+        open={detailModal.open}
+        audit={detailModal.record}
+        onClose={detailModal.close}
       />
     </>
   )

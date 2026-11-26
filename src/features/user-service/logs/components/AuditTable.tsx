@@ -1,30 +1,22 @@
 import type { TablePaginationConfig, TableProps } from 'antd'
 import { Button, Table } from 'antd'
 import type { AuditItem } from '@/api/audits'
-import { EnumTag } from '@/components/EnumTag'
-import { AuditRiskLevel, AuditStatus } from '@/constants/enums'
-import { PERMISSION } from '@/constants/permissions'
-import { usePermissions } from '@/hooks/use-permissions'
 import { EMPTY_TEXT, formatDateTime } from '@/lib/format'
+import { RiskLevelTag } from './RiskLevelTag'
 
 interface AuditTableProps {
   data: AuditItem[]
   loading: boolean
   pagination: TablePaginationConfig
-  /** 查看审计详情 */
+  /** 查看日志详情 */
   onDetail: (audit: AuditItem) => void
-  /** 处置审计记录 */
-  onHandle: (audit: AuditItem) => void
 }
 
 /**
- * 安全审计列表表格
- * @param props - 数据、分页与行操作回调
+ * 日志列表表格：仅展示重要字段，完整字段在详情弹窗中查看
+ * @param props - 数据、分页与详情回调
  */
-export const AuditTable = ({ data, loading, pagination, onDetail, onHandle }: AuditTableProps) => {
-  const { has } = usePermissions()
-  const canHandle = has(PERMISSION.auditHandle)
-
+export const AuditTable = ({ data, loading, pagination, onDetail }: AuditTableProps) => {
   const columns: TableProps<AuditItem>['columns'] = [
     {
       title: '时间',
@@ -38,65 +30,78 @@ export const AuditTable = ({ data, loading, pagination, onDetail, onHandle }: Au
     },
     {
       title: '风险等级',
-      dataIndex: 'risk_level',
+      key: 'risk_level',
       width: 110,
-      render: (value: AuditItem['risk_level']) => (
-        <EnumTag enumDef={AuditRiskLevel} value={value} />
-      ),
+      render: (_, audit) => <RiskLevelTag audit={audit} />,
     },
     {
-      title: '事件类型',
-      key: 'security',
-      width: 200,
+      title: '模块',
+      key: 'module',
+      width: 130,
       render: (_, audit) => (
         <div className="flex flex-col leading-5">
-          <span className="text-fg-2">{audit.security_name || audit.security_type}</span>
-          {audit.security_name && (
-            <span className="font-mono text-[11px] text-fg-3">{audit.security_type}</span>
-          )}
+          <span className="font-mono text-[12px] text-fg-2">{audit.module}</span>
+          <span className="text-[12px] text-fg-3">{audit.sub_module}</span>
         </div>
       ),
     },
     {
-      title: '描述',
-      dataIndex: 'description',
-      ellipsis: { showTitle: true },
+      title: '事件',
+      key: 'event',
+      width: 200,
+      render: (_, audit) => (
+        <div className="flex flex-col leading-5">
+          <span className="font-mono text-[12px] text-fg-2">{audit.event}</span>
+          <span className="text-[12px] text-fg-3">{audit.action}</span>
+        </div>
+      ),
     },
     {
-      title: '操作人',
-      key: 'operator',
-      width: 140,
+      title: '对象',
+      key: 'object',
+      width: 150,
       render: (_, audit) => {
-        const operator = audit.operator
-        const name = operator?.full_name || operator?.username
-        return name ? (
-          <span title={operator?.username}>{name}</span>
-        ) : (
-          <span className="text-fg-3">{EMPTY_TEXT}</span>
+        const { object_name: name, object_type: type, object_id: id } = audit
+        if (!name && !type && id == null) {
+          return <span className="text-fg-3">{EMPTY_TEXT}</span>
+        }
+        return (
+          <div className="flex flex-col leading-5">
+            {name && <span className="text-[13px] text-fg-2">{name}</span>}
+            <span className="text-[12px] text-fg-3">
+              {type ?? EMPTY_TEXT}
+              {id != null && ` #${id}`}
+            </span>
+          </div>
         )
       },
     },
     {
-      title: '状态',
-      dataIndex: 'status',
-      width: 110,
-      render: (value: AuditItem['status']) => <EnumTag enumDef={AuditStatus} value={value} />,
+      title: '操作人',
+      key: 'operator',
+      width: 120,
+      render: (_, audit) =>
+        audit.operator_name ? (
+          <span>{audit.operator_name}</span>
+        ) : (
+          <span className="text-fg-3">{EMPTY_TEXT}</span>
+        ),
+    },
+    {
+      title: '描述',
+      dataIndex: 'message',
+      ellipsis: { showTitle: true },
     },
     {
       title: '操作',
       key: 'actions',
-      width: 130,
+      width: 90,
       fixed: 'end',
       render: (_, audit) => (
-        <div className="-ms-2 flex items-center">
+        <div className="-ms-2">
           <Button type="link" size="small" onClick={() => onDetail(audit)}>
             详情
           </Button>
-          {canHandle && (
-            <Button type="link" size="small" onClick={() => onHandle(audit)}>
-              处置
-            </Button>
-          )}
         </div>
       ),
     },
@@ -110,7 +115,7 @@ export const AuditTable = ({ data, loading, pagination, onDetail, onHandle }: Au
         dataSource={data}
         loading={loading}
         pagination={{ ...pagination, className: 'px-4' }}
-        scroll={{ x: 1080 }}
+        scroll={{ x: 1120 }}
       />
     </div>
   )

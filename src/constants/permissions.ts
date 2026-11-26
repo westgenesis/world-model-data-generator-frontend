@@ -27,7 +27,6 @@ export const PERMISSION = {
   /** 日志与安全审计 */
   logRead: 'log:read',
   auditRead: 'audit:read',
-  auditHandle: 'audit:handle',
   /** 系统配置 */
   settingRead: 'setting:read',
   settingUpdate: 'setting:update',

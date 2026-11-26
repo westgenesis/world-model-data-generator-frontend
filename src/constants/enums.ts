@@ -126,24 +126,6 @@ export type ProjectDetailTab = EnumValue<typeof ProjectDetailTab>
 
 /* ---------------------------------- 日志 ---------------------------------- */
 
-/** 日志大类：操作日志 / 业务日志 / 运行异常 */
-export const LogCategory = defineEnum([
-  { value: 'operation', label: '操作日志', tone: 'info' },
-  { value: 'business', label: '业务日志', tone: 'success' },
-  { value: 'runtime', label: '运行异常', tone: 'danger' },
-])
-export type LogCategory = EnumValue<typeof LogCategory>
-
-/** 日志级别 */
-export const LogLevel = defineEnum([
-  { value: 'DEBUG', label: 'DEBUG' },
-  { value: 'INFO', label: 'INFO', tone: 'info' },
-  { value: 'WARNING', label: 'WARNING', tone: 'warning' },
-  { value: 'ERROR', label: 'ERROR', tone: 'danger' },
-  { value: 'CRITICAL', label: 'CRITICAL', tone: 'danger' },
-])
-export type LogLevel = EnumValue<typeof LogLevel>
-
 /** 日志写入进程：Web 服务 / Celery 任务进程 */
 export const LogSource = defineEnum([
   { value: 'api', label: 'Web 服务', tone: 'info' },
@@ -152,21 +134,6 @@ export const LogSource = defineEnum([
 export type LogSource = EnumValue<typeof LogSource>
 
 /* -------------------------------- 安全审计 -------------------------------- */
-
-/** 安全审计处置状态（对应后端 AuditStatus） */
-export const AuditStatus = defineEnum([
-  { value: 'pending', label: '待处置', tone: 'warning' },
-  { value: 'handled', label: '已处理', tone: 'success' },
-  { value: 'ignored', label: '已忽略', tone: 'default' },
-])
-export type AuditStatus = EnumValue<typeof AuditStatus>
-
-/** 安全审计处置结果：仅「已处理」与「已忽略」两种 */
-export const AuditHandleStatus = defineEnum([
-  { value: 'handled', label: '标记已处理', tone: 'success' },
-  { value: 'ignored', label: '标记忽略', tone: 'default' },
-])
-export type AuditHandleStatus = EnumValue<typeof AuditHandleStatus>
 
 /** 安全审计风险等级 */
 export const AuditRiskLevel = defineEnum([
