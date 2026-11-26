@@ -75,3 +75,34 @@ export const AuditRiskLevel = defineEnum([
   { value: 'low', label: '低', tone: 'info' },
 ])
 export type AuditRiskLevel = EnumValue<typeof AuditRiskLevel>
+
+/* -------------------------------- 数据分类 -------------------------------- */
+
+/** 数据集类型：分类体系顶层固定两支（对应后端 DataType） */
+export const DatasetType = defineEnum([
+  { value: 'seed', label: '种子数据集', tone: 'info' },
+  { value: 'synthetic', label: '合成数据集', tone: 'purple' },
+])
+export type DatasetType = EnumValue<typeof DatasetType>
+
+/** 数据集 / 标签集启用状态（对应后端 EnabledState） */
+export const EnabledState = defineEnum([
+  { value: 'enabled', label: '启用', tone: 'success' },
+  { value: 'disabled', label: '停用', tone: 'default' },
+])
+export type EnabledState = EnumValue<typeof EnabledState>
+
+/** 标签集类型（对应后端 TagSetType） */
+export const TagSetType = defineEnum([
+  { value: 'enum_type', label: '枚举型', tone: 'info' },
+  { value: 'numeric_type', label: '数值型', tone: 'warning' },
+])
+export type TagSetType = EnumValue<typeof TagSetType>
+
+/** 打标来源（对应后端 TagSource） */
+export const TagSource = defineEnum([
+  { value: 'auto_rule', label: '自动规则', tone: 'info' },
+  { value: 'manual', label: '手动标注', tone: 'warning' },
+  { value: 'ingest', label: '数据接入', tone: 'purple' },
+])
+export type TagSource = EnumValue<typeof TagSource>

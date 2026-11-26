@@ -145,6 +145,7 @@ export const NAV_TREE: NavNode[] = [
     description: '数据接入、处理、合成与质量反馈的资产管理',
     accent: 'purple',
     children: [
+      page('数据分类管理', '/dataset/categories', Tags),
       page('数据接入', '/dataset/ingestion', FolderInput),
       page('数据处理', '/dataset/processing', DatabaseZap),
       page('种子数据', '/dataset/seed', Sprout),

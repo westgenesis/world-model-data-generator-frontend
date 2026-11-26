@@ -7,7 +7,7 @@ export type ThemeMode = 'system' | 'light' | 'dark'
 interface AppState {
   /** 侧栏是否收起为图标栏 */
   sidebarCollapsed: boolean
-  /** 当前选中的项目 ID；空字符串表示「全部项目」（不按项目筛选） */
+  /** 当前选中的项目 ID；未选择（尚无项目）时为空字符串 */
   currentProjectId: string
   /** 主题模式 */
   themeMode: ThemeMode

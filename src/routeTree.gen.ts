@@ -25,6 +25,7 @@ import { Route as AppDataGenSchedulesRouteImport } from './routes/_app/data-gen/
 import { Route as AppDataGenTaskTemplatesRouteImport } from './routes/_app/data-gen/task-templates'
 import { Route as AppDataGenTasksRouteImport } from './routes/_app/data-gen/tasks'
 import { Route as AppDatasetIndexRouteImport } from './routes/_app/dataset/index'
+import { Route as AppDatasetCategoriesRouteImport } from './routes/_app/dataset/categories'
 import { Route as AppDatasetFeedbackRouteImport } from './routes/_app/dataset/feedback'
 import { Route as AppDatasetIngestionRouteImport } from './routes/_app/dataset/ingestion'
 import { Route as AppDatasetProcessingRouteImport } from './routes/_app/dataset/processing'
@@ -121,6 +122,11 @@ const AppDatasetIndexRoute = AppDatasetIndexRouteImport.update({
   path: '/dataset/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDatasetCategoriesRoute = AppDatasetCategoriesRouteImport.update({
+  id: '/dataset/categories',
+  path: '/dataset/categories',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDatasetFeedbackRoute = AppDatasetFeedbackRouteImport.update({
   id: '/dataset/feedback',
   path: '/dataset/feedback',
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/data-gen/schedules': typeof AppDataGenSchedulesRoute
   '/data-gen/task-templates': typeof AppDataGenTaskTemplatesRoute
   '/data-gen/tasks': typeof AppDataGenTasksRoute
+  '/dataset/categories': typeof AppDatasetCategoriesRoute
   '/dataset/feedback': typeof AppDatasetFeedbackRoute
   '/dataset/ingestion': typeof AppDatasetIngestionRoute
   '/dataset/processing': typeof AppDatasetProcessingRoute
@@ -247,6 +254,7 @@ export interface FileRoutesByTo {
   '/data-gen/schedules': typeof AppDataGenSchedulesRoute
   '/data-gen/task-templates': typeof AppDataGenTaskTemplatesRoute
   '/data-gen/tasks': typeof AppDataGenTasksRoute
+  '/dataset/categories': typeof AppDatasetCategoriesRoute
   '/dataset/feedback': typeof AppDatasetFeedbackRoute
   '/dataset/ingestion': typeof AppDatasetIngestionRoute
   '/dataset/processing': typeof AppDatasetProcessingRoute
@@ -281,6 +289,7 @@ export interface FileRoutesById {
   '/_app/data-gen/schedules': typeof AppDataGenSchedulesRoute
   '/_app/data-gen/task-templates': typeof AppDataGenTaskTemplatesRoute
   '/_app/data-gen/tasks': typeof AppDataGenTasksRoute
+  '/_app/dataset/categories': typeof AppDatasetCategoriesRoute
   '/_app/dataset/feedback': typeof AppDatasetFeedbackRoute
   '/_app/dataset/ingestion': typeof AppDatasetIngestionRoute
   '/_app/dataset/processing': typeof AppDatasetProcessingRoute
@@ -315,6 +324,7 @@ export interface FileRouteTypes {
     | '/data-gen/schedules'
     | '/data-gen/task-templates'
     | '/data-gen/tasks'
+    | '/dataset/categories'
     | '/dataset/feedback'
     | '/dataset/ingestion'
     | '/dataset/processing'
@@ -347,6 +357,7 @@ export interface FileRouteTypes {
     | '/data-gen/schedules'
     | '/data-gen/task-templates'
     | '/data-gen/tasks'
+    | '/dataset/categories'
     | '/dataset/feedback'
     | '/dataset/ingestion'
     | '/dataset/processing'
@@ -380,6 +391,7 @@ export interface FileRouteTypes {
     | '/_app/data-gen/schedules'
     | '/_app/data-gen/task-templates'
     | '/_app/data-gen/tasks'
+    | '/_app/dataset/categories'
     | '/_app/dataset/feedback'
     | '/_app/dataset/ingestion'
     | '/_app/dataset/processing'
@@ -520,6 +532,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDatasetIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/dataset/categories': {
+      id: '/_app/dataset/categories'
+      path: '/dataset/categories'
+      fullPath: '/dataset/categories'
+      preLoaderRoute: typeof AppDatasetCategoriesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dataset/feedback': {
       id: '/_app/dataset/feedback'
       path: '/dataset/feedback'
@@ -639,6 +658,7 @@ interface AppRouteChildren {
   AppDataGenSchedulesRoute: typeof AppDataGenSchedulesRoute
   AppDataGenTaskTemplatesRoute: typeof AppDataGenTaskTemplatesRoute
   AppDataGenTasksRoute: typeof AppDataGenTasksRoute
+  AppDatasetCategoriesRoute: typeof AppDatasetCategoriesRoute
   AppDatasetFeedbackRoute: typeof AppDatasetFeedbackRoute
   AppDatasetIngestionRoute: typeof AppDatasetIngestionRoute
   AppDatasetProcessingRoute: typeof AppDatasetProcessingRoute
@@ -669,6 +689,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDataGenSchedulesRoute: AppDataGenSchedulesRoute,
   AppDataGenTaskTemplatesRoute: AppDataGenTaskTemplatesRoute,
   AppDataGenTasksRoute: AppDataGenTasksRoute,
+  AppDatasetCategoriesRoute: AppDatasetCategoriesRoute,
   AppDatasetFeedbackRoute: AppDatasetFeedbackRoute,
   AppDatasetIngestionRoute: AppDatasetIngestionRoute,
   AppDatasetProcessingRoute: AppDatasetProcessingRoute,
