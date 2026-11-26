@@ -18,5 +18,7 @@ services:
       - '${WEB_PORT:-8081}:80'
     environment:
       API_UPSTREAM: ${API_UPSTREAM:-http://host.docker.internal:8000}
+    # Linux 上 Docker 默认没有 host.docker.internal，靠这条把宿主网关写进容器的 /etc/hosts；
+    # nginx 启动时按 /etc/hosts 解析上游地址，所以这条不能删
     extra_hosts:
       - 'host.docker.internal:host-gateway'

@@ -1,7 +1,3 @@
-# 由官方镜像在启动时通过 envsubst 渲染：
-#   ${API_UPSTREAM}         后端服务地址
-#   ${NGINX_LOCAL_RESOLVERS} 容器内 DNS（NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 自动生成）
-
 server {
     listen 80;
     listen [::]:80;
@@ -29,12 +25,9 @@ server {
         return 200 "ok\n";
     }
 
-    # 接口反向代理；使用变量 + resolver，后端暂不可用时 nginx 仍能启动
-    resolver ${NGINX_LOCAL_RESOLVERS} valid=30s ipv6=off;
-    set $api_upstream ${API_UPSTREAM};
-
+    # 接口反向代理。地址末尾不带 URI，请求路径原样透传（/api 前缀保留）
     location /api/ {
-        proxy_pass $api_upstream;
+        proxy_pass ${API_UPSTREAM};
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

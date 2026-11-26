@@ -26,9 +26,9 @@ RUN pnpm build
 # ---------- 运行阶段 ----------
 FROM nginx:stable-alpine AS runtime
 
-# 后端服务地址，容器启动时注入到 nginx 配置
-ENV API_UPSTREAM=http://backend:8000 \
-    NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1
+# 后端服务地址，容器启动时注入到 nginx 配置；
+# nginx 在启动时解析该地址（走 /etc/hosts，因此 host.docker.internal 可用）
+ENV API_UPSTREAM=http://backend:8000
 
 COPY deploy/nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html

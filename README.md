@@ -63,16 +63,17 @@ pnpm docker:down --env prod
 - **本机覆盖 / 敏感配置**：新建 `deploy/env/<环境>.local.env`（不入库），其中的值会覆盖同名配置。
 - 各环境使用不同的 `COMPOSE_PROJECT_NAME` 与端口，可在同一台机器并存。
 
-| 变量                       | 说明                                                        |
-| -------------------------- | ----------------------------------------------------------- |
-| `API_UPSTREAM`             | `/api/*` 转发的后端地址（路径原样透传，不去掉 `/api` 前缀） |
-| `WEB_PORT`                 | 宿主机对外端口                                              |
-| `IMAGE_NAME` / `IMAGE_TAG` | 镜像名与标签                                                |
-| `COMPOSE_PROJECT_NAME`     | Compose 项目名，区分同机的多套环境                          |
-| `NPM_REGISTRY`             | 构建时使用的 npm 源，默认 `https://registry.npmmirror.com`  |
+| 变量                       | 说明                                                                                                                             |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `API_UPSTREAM`             | `/api/*` 转发的后端地址（路径原样透传，不去掉 `/api` 前缀；nginx 启动时解析，需是可解析的 IP / 容器名 / `host.docker.internal`） |
+| `WEB_PORT`                 | 宿主机对外端口                                                                                                                   |
+| `IMAGE_NAME` / `IMAGE_TAG` | 镜像名与标签                                                                                                                     |
+| `COMPOSE_PROJECT_NAME`     | Compose 项目名，区分同机的多套环境                                                                                               |
+| `NPM_REGISTRY`             | 构建时使用的 npm 源，默认 `https://registry.npmmirror.com`                                                                       |
 
 - 不使用脚本时：`docker compose -f deploy/docker-compose.yml --env-file deploy/env/dev.env up -d --build`。
-- 只用镜像时：`docker run -d -p 8081:80 -e API_UPSTREAM=http://backend:8000 <镜像>`。
+- 只用镜像时：`docker run -d -p 8081:80 --add-host=host.docker.internal:host-gateway -e API_UPSTREAM=http://host.docker.internal:8899 <镜像>`。
+- 上游解析：`API_UPSTREAM` 在 nginx **启动时**用 `getaddrinfo` 解析（会读容器内 `/etc/hosts`）。地址不可解析时容器会启动失败并报 `host not found in upstream`；compose 已用 `extra_hosts` 保证 `host.docker.internal` 可用。不要改成 `set $upstream` + `resolver` 的写法：带变量的 `proxy_pass` 走 Docker 内置 DNS（127.0.0.11），它不读 `/etc/hosts`，`host.docker.internal` 会解析失败并全部返 502。
 - 健康检查：`GET /healthz` 返回 `ok`，镜像已内置 `HEALTHCHECK`。
 - 缓存策略：`/assets/*` 长期缓存，`index.html` 不缓存，发版后刷新即生效。
 - 配置文件：`deploy/docker-compose.yml`、`deploy/nginx/default.conf.template`、`scripts/docker.mjs`。
