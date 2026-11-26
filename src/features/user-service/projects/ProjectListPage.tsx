@@ -1,44 +1,47 @@
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Button, Input, Select } from 'antd'
+import { Button, Select } from 'antd'
 import { Plus } from 'lucide-react'
-import type { ProjectDetail } from '@/api/projects'
+import { useMemo } from 'react'
+import type { Project } from '@/api/projects'
 import { projectListQueryOptions } from '@/api/projects'
 import { userOptionsQueryOptions } from '@/api/users'
 import { FilterBar, FilterField } from '@/components/FilterBar'
 import { PageHeader } from '@/components/PageHeader'
-import { ProjectStatusFilter } from '@/constants/enums'
+import type { ProjectStatus } from '@/constants/enums'
+import { ProjectStatus as ProjectStatusEnum } from '@/constants/enums'
 import { useDrawerState } from '@/hooks/use-drawer-state'
 import { useListParams } from '@/hooks/use-list-params'
-import { ProjectArchiveDrawer } from './components/ProjectArchiveDrawer'
 import { ProjectFormDrawer } from './components/ProjectFormDrawer'
-import { ProjectStats } from './components/ProjectStats'
 import { ProjectTable } from './components/ProjectTable'
+import { useArchiveProject } from './hooks/use-archive-project'
+import { useDeleteProject } from './hooks/use-delete-project'
 import { useRestoreProject } from './hooks/use-restore-project'
 
 /** 项目列表筛选条件 */
 interface ProjectFilters {
-  status?: ProjectStatusFilter
-  ownerId?: string
-  keyword: string
+  status?: ProjectStatus
 }
 
-/** 项目管理列表页（参考 docs/原型/M1用户服务管理_原型.html） */
+/** 项目管理列表页（接口：/v1/projects） */
 export const ProjectListPage = () => {
-  const { filters, setFilter, reset, params, getPagination } = useListParams<ProjectFilters>({
-    keyword: '',
-  })
+  const { filters, setFilter, submit, reset, params, getPagination } =
+    useListParams<ProjectFilters>({}, { manualSearch: true })
   const { data, isFetching } = useQuery(projectListQueryOptions(params))
   const { data: users = [] } = useQuery(userOptionsQueryOptions)
 
-  const formDrawer = useDrawerState<ProjectDetail>()
-  const archiveDrawer = useDrawerState<ProjectDetail>()
+  /** 负责人 ID → 姓名映射 */
+  const ownerNames = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users])
+
+  const formDrawer = useDrawerState<Project>()
+  const remove = useDeleteProject()
+  const archive = useArchiveProject()
   const restore = useRestoreProject()
 
   return (
     <>
       <PageHeader
         title="项目管理"
-        description="项目是数据的归属容器与权限作用域，单层不嵌套。数据生成与数据集管理模块的「所属项目」均引用此处维护的项目，不在各自模块内新建。"
+        description="项目是数据归属的容器与权限作用域；数据生成与数据集管理模块的「所属项目」均引用此处维护的项目。"
         extra={
           <Button
             type="primary"
@@ -50,16 +53,7 @@ export const ProjectListPage = () => {
         }
       />
 
-      <Alert
-        className="mb-4"
-        type="info"
-        showIcon
-        title="资源消耗按项目统计，在「项目详情 · 资源消耗」中查看：只记录已用量并与参考值比对提醒，不拦截、不扣减、不限制任何操作。"
-      />
-
-      <ProjectStats />
-
-      <FilterBar onReset={reset}>
+      <FilterBar onSearch={submit} onReset={reset}>
         <FilterField label="状态">
           <Select
             className="w-32"
@@ -67,49 +61,26 @@ export const ProjectListPage = () => {
             allowClear
             value={filters.status}
             onChange={(value) => setFilter('status', value)}
-            options={ProjectStatusFilter.options}
-          />
-        </FilterField>
-        <FilterField label="负责人">
-          <Select
-            className="w-36"
-            placeholder="全部"
-            allowClear
-            showSearch={{ optionFilterProp: 'label' }}
-            value={filters.ownerId}
-            onChange={(value) => setFilter('ownerId', value)}
-            options={users.map((u) => ({ value: u.id, label: u.name }))}
-          />
-        </FilterField>
-        <FilterField label="关键词">
-          <Input
-            className="w-56"
-            placeholder="项目名称 / 标识"
-            allowClear
-            value={filters.keyword}
-            onChange={(e) => setFilter('keyword', e.target.value)}
+            options={ProjectStatusEnum.options}
           />
         </FilterField>
       </FilterBar>
 
       <ProjectTable
-        data={data?.list ?? []}
+        data={data?.items ?? []}
         loading={isFetching}
         pagination={getPagination(data?.total)}
+        ownerNames={ownerNames}
         onEdit={formDrawer.show}
-        onArchive={archiveDrawer.show}
+        onArchive={archive}
         onRestore={restore}
+        onDelete={remove}
       />
 
       <ProjectFormDrawer
         open={formDrawer.open}
         project={formDrawer.record}
         onClose={formDrawer.close}
-      />
-      <ProjectArchiveDrawer
-        open={archiveDrawer.open}
-        project={archiveDrawer.record}
-        onClose={archiveDrawer.close}
       />
     </>
   )

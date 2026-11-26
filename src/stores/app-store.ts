@@ -1,16 +1,13 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-/** 「全部项目」汇总视图的特殊项目 ID */
-export const ALL_PROJECTS_ID = '__all__'
-
 /** 主题模式：跟随系统 / 亮色 / 暗色 */
 export type ThemeMode = 'system' | 'light' | 'dark'
 
 interface AppState {
   /** 侧栏是否收起为图标栏 */
   sidebarCollapsed: boolean
-  /** 当前选中的项目 ID */
+  /** 当前选中的项目 ID；空字符串表示「全部项目」（不按项目筛选） */
   currentProjectId: string
   /** 主题模式 */
   themeMode: ThemeMode
@@ -27,7 +24,7 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       sidebarCollapsed: false,
-      currentProjectId: ALL_PROJECTS_ID,
+      currentProjectId: '',
       themeMode: 'system',
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setCurrentProject: (projectId) => set({ currentProjectId: projectId }),

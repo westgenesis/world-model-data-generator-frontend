@@ -1,31 +1,36 @@
 import { Link } from '@tanstack/react-router'
 import type { TablePaginationConfig, TableProps } from 'antd'
-import { Button, Table } from 'antd'
-import type { ProjectDetail } from '@/api/projects'
-import { formatDate, formatNumber } from '@/lib/format'
-import { ProjectStatusTag } from './ProjectStatusTag'
+import { Button, Table, Tag } from 'antd'
+import type { Project } from '@/api/projects'
+import { EnumTag } from '@/components/EnumTag'
+import { ProjectStatus, ProjectVisibility } from '@/constants/enums'
+import { EMPTY_TEXT, formatDateTime, formatNumber } from '@/lib/format'
 
 interface ProjectTableProps {
-  data: ProjectDetail[]
+  data: Project[]
   loading: boolean
   pagination: TablePaginationConfig
+  /** 负责人 ID → 姓名 */
+  ownerNames: Map<string, string>
   /** 编辑项目 */
-  onEdit: (project: ProjectDetail) => void
+  onEdit: (project: Project) => void
   /** 归档项目 */
-  onArchive: (project: ProjectDetail) => void
-  /** 恢复已归档项目 */
-  onRestore: (project: ProjectDetail) => void
+  onArchive: (project: Project) => void
+  /** 恢复归档项目 */
+  onRestore: (project: Project) => void
+  /** 删除项目 */
+  onDelete: (project: Project) => void
 }
 
 /**
  * 渲染右对齐的数值单元格
  * @param value - 数值
  * @param unit - 单位
+ * @param fractionDigits - 最多保留的小数位
  */
-const renderNum = (value: number | null, unit = '') => (
+const renderNum = (value: number | null, unit = '', fractionDigits = 0) => (
   <span className="tabular-nums">
-    {formatNumber(value, 1)}
-    {value !== null && unit}
+    {value === null ? EMPTY_TEXT : `${formatNumber(value, fractionDigits)} ${unit}`.trim()}
   </span>
 )
 
@@ -37,107 +42,129 @@ export const ProjectTable = ({
   data,
   loading,
   pagination,
+  ownerNames,
   onEdit,
   onArchive,
   onRestore,
+  onDelete,
 }: ProjectTableProps) => {
-  const columns: TableProps<ProjectDetail>['columns'] = [
+  const columns: TableProps<Project>['columns'] = [
     {
-      title: '项目名称 / 标识',
+      title: '项目名称',
       dataIndex: 'name',
       render: (_, project) => (
         <div className="flex flex-col">
           <Link
             to="/user-service/projects/$projectId"
-            params={{ projectId: project.id }}
+            params={{ projectId: String(project.id) }}
             className="font-medium text-fg hover:text-primary"
           >
             {project.name}
           </Link>
-          <span className="font-mono text-xs text-fg-3">{project.code}</span>
+          {project.description && (
+            <span className="max-w-72 truncate text-xs text-fg-3">{project.description}</span>
+          )}
         </div>
       ),
     },
-    { title: '负责人', dataIndex: 'ownerName', width: 100 },
     {
-      title: '成员数',
-      dataIndex: 'memberCount',
-      align: 'end',
-      render: (v: number) => renderNum(v),
-    },
-    {
-      title: '数据量',
-      dataIndex: 'dataSizeTb',
-      align: 'end',
-      render: (v: number) => renderNum(v, ' TB'),
-    },
-    {
-      title: '任务数',
-      dataIndex: 'taskCount',
-      align: 'end',
-      render: (v: number | null) => renderNum(v),
-    },
-    {
-      title: '场景数',
-      dataIndex: 'sceneCount',
-      align: 'end',
-      render: (v: number | null) => renderNum(v),
+      title: '负责人',
+      dataIndex: 'owner_id',
+      width: 110,
+      render: (ownerId: number) =>
+        ownerNames.get(String(ownerId)) ?? <span className="text-fg-3">#{ownerId}</span>,
     },
     {
       title: '状态',
-      key: 'status',
+      dataIndex: 'status',
       width: 100,
-      render: (_, project) => <ProjectStatusTag project={project} />,
+      render: (status: Project['status']) => <EnumTag enumDef={ProjectStatus} value={status} />,
+    },
+    {
+      title: '可见范围',
+      dataIndex: 'visibility',
+      width: 130,
+      render: (visibility: Project['visibility']) => (
+        <EnumTag enumDef={ProjectVisibility} value={visibility} />
+      ),
+    },
+    {
+      title: '默认项目',
+      dataIndex: 'is_default',
+      width: 90,
+      align: 'center',
+      render: (isDefault: boolean) =>
+        isDefault ? (
+          <Tag variant="filled" color="processing" className="me-0">
+            默认
+          </Tag>
+        ) : (
+          EMPTY_TEXT
+        ),
+    },
+    {
+      title: '存储参考值',
+      dataIndex: 'storage_ref_tb',
+      width: 120,
+      align: 'end',
+      render: (value: number | null) => renderNum(value, 'TB', 1),
+    },
+    {
+      title: '算力参考值',
+      dataIndex: 'gpu_ref_hours',
+      width: 120,
+      align: 'end',
+      render: (value: number | null) => renderNum(value, '卡时'),
     },
     {
       title: '创建时间',
-      dataIndex: 'createdAt',
-      width: 120,
-      render: (v: string) => <span className="text-fg-2 tabular-nums">{formatDate(v)}</span>,
+      dataIndex: 'created_at',
+      width: 130,
+      render: (value: string) => (
+        <span className="text-fg-2 tabular-nums">{formatDateTime(value)}</span>
+      ),
     },
     {
       title: '操作',
       key: 'actions',
-      width: 170,
+      width: 210,
       fixed: 'end',
-      render: (_, project) => {
-        const archived = project.status === 'archived'
-        return (
-          <div className="-ms-2 flex">
-            <Link to="/user-service/projects/$projectId" params={{ projectId: project.id }}>
-              <Button type="link" size="small">
-                详情
-              </Button>
-            </Link>
-            {archived ? (
-              <Button type="link" size="small" onClick={() => onRestore(project)}>
-                恢复
-              </Button>
-            ) : (
-              <Button type="link" size="small" onClick={() => onEdit(project)}>
-                编辑
-              </Button>
-            )}
-            {!archived && !project.isDefault && (
-              <Button type="link" size="small" danger onClick={() => onArchive(project)}>
-                归档
-              </Button>
-            )}
-          </div>
-        )
-      },
+      render: (_, project) => (
+        <div className="-ms-2 flex">
+          <Link to="/user-service/projects/$projectId" params={{ projectId: String(project.id) }}>
+            <Button type="link" size="small">
+              详情
+            </Button>
+          </Link>
+          <Button type="link" size="small" onClick={() => onEdit(project)}>
+            编辑
+          </Button>
+          {project.status === 'archived' ? (
+            <Button type="link" size="small" onClick={() => onRestore(project)}>
+              恢复
+            </Button>
+          ) : (
+            <Button type="link" size="small" onClick={() => onArchive(project)}>
+              归档
+            </Button>
+          )}
+          <Button type="link" size="small" danger onClick={() => onDelete(project)}>
+            删除
+          </Button>
+        </div>
+      ),
     },
   ]
 
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-card shadow-card">
-      <Table<ProjectDetail>
+      <Table<Project>
         rowKey="id"
         columns={columns}
         dataSource={data}
         loading={loading}
         pagination={{ ...pagination, className: 'px-4' }}
-        scroll={{ x: 1000 }}
+        scroll={{ x: 1080 }}
       />
     </div>
   )
