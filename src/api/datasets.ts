@@ -210,6 +210,8 @@ export const TAG_SEEDS_QUERY_KEY = ['cls', 'tag-seeds'] as const
 
 /** 数据集列表查询参数 */
 export interface DatasetListParams extends PageParams {
+  /** 按项目筛选 */
+  project_id?: number
   /** 按类型筛选 */
   type?: DatasetType
   /** 按状态筛选 */
@@ -233,6 +235,7 @@ export const datasetListQueryOptions = (params: DatasetListParams) =>
     queryKey: [...DATASETS_QUERY_KEY, 'list', params],
     queryFn: () =>
       getJson('v1/datasets', envelope(pagedSchema(datasetSchema)), {
+        project_id: params.project_id,
         type: params.type,
         state: params.state,
         keyword: params.keyword,

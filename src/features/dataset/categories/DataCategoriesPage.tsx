@@ -16,6 +16,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { useActionMutation } from '@/hooks/use-action-mutation'
 import { useDrawerState } from '@/hooks/use-drawer-state'
 import { useListParams } from '@/hooks/use-list-params'
+import { useAppStore } from '@/stores/app-store'
 import { DatasetDetail } from './components/DatasetDetail'
 import { DatasetFormDrawer } from './components/DatasetFormDrawer'
 import { DatasetPanel } from './components/DatasetPanel'
@@ -43,8 +44,12 @@ export const DataCategoriesPage = () => {
 
   /* ------------------------------ 数据集面板 ------------------------------ */
 
+  const currentProjectId = useAppStore((s) => s.currentProjectId)
+  /** 顶栏当前项目对应的数字 ID；未选择项目时为 undefined */
+  const projectId = Number(currentProjectId) || undefined
+
   const { data, isPending } = useQuery(
-    datasetListQueryOptions({ page: 1, pageSize: DATASET_PANEL_SIZE }),
+    datasetListQueryOptions({ page: 1, pageSize: DATASET_PANEL_SIZE, project_id: projectId }),
   )
   const datasets = useMemo(() => data?.items ?? [], [data])
 

@@ -1,6 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
-import { Form, Input, Radio, Select } from 'antd'
-import { useMemo } from 'react'
+import { Form, Input, Radio } from 'antd'
 import type { Dataset } from '@/api/datasets'
 import {
   DATASETS_QUERY_KEY,
@@ -9,9 +7,8 @@ import {
   toDatasetCreateInput,
   updateDataset,
 } from '@/api/datasets'
-import { projectsQueryOptions } from '@/api/projects'
 import { FormDrawer } from '@/components/FormDrawer'
-import { DatasetType, EnabledState } from '@/constants/enums'
+import { DatasetType } from '@/constants/enums'
 import { useActionMutation } from '@/hooks/use-action-mutation'
 import { zodRule } from '@/lib/form'
 import { useAppStore } from '@/stores/app-store'
@@ -23,13 +20,11 @@ interface DatasetFormDrawerProps {
   onClose: () => void
 }
 
-/** 新增与编辑共用的表单值：新增含 project_id / type，编辑含 state */
+/** 新增与编辑共用的表单值 */
 interface DatasetFormValues {
-  project_id?: number
   type?: DatasetType
   name: string
   description: string
-  state?: EnabledState
 }
 
 /**
@@ -39,15 +34,9 @@ interface DatasetFormValues {
 export const DatasetFormDrawer = ({ open, dataset, onClose }: DatasetFormDrawerProps) => {
   const isEdit = Boolean(dataset)
   const shape = datasetCreateSchema.shape
-  const { data: projects = [] } = useQuery(projectsQueryOptions)
   const currentProjectId = useAppStore((s) => s.currentProjectId)
-
-  /** 默认所属项目：优先当前全局项目，未匹配时取第一个项目 */
-  const defaultProjectId = useMemo(() => {
-    if (projects.length === 0) return undefined
-    const current = projects.find((project) => String(project.id) === currentProjectId)
-    return current ? current.id : projects[0].id
-  }, [projects, currentProjectId])
+  /** 当前项目对应的数字 ID；未选择项目时为 undefined */
+  const projectId = Number(currentProjectId) || undefined
 
   const mutation = useActionMutation({
     mutationFn: (values: DatasetFormValues) =>
@@ -55,11 +44,10 @@ export const DatasetFormDrawer = ({ open, dataset, onClose }: DatasetFormDrawerP
         ? updateDataset(dataset.id, {
             name: values.name,
             description: values.description.trim() || null,
-            state: values.state,
           })
         : createDataset(
             toDatasetCreateInput({
-              project_id: values.project_id!,
+              project_id: projectId!,
               type: values.type!,
               name: values.name,
               description: values.description,
@@ -82,41 +70,15 @@ export const DatasetFormDrawer = ({ open, dataset, onClose }: DatasetFormDrawerP
           ? {
               name: dataset.name,
               description: dataset.description ?? '',
-              state: dataset.state,
             }
-          : { project_id: defaultProjectId, type: 'seed', name: '', description: '' }
+          : { type: 'seed', name: '', description: '' }
       }
       submitText={isEdit ? '保存' : '创建'}
     >
-      {isEdit ? (
-        <Form.Item
-          name="state"
-          label="状态"
-          className="sm:col-span-2"
-          extra="停用后标签不再命中，存量保留。"
-        >
-          <Radio.Group options={EnabledState.options} />
+      {!isEdit && (
+        <Form.Item name="type" label="类型" required rules={[zodRule(shape.type)]}>
+          <Radio.Group options={DatasetType.options} />
         </Form.Item>
-      ) : (
-        <>
-          <Form.Item
-            name="project_id"
-            label="所属项目"
-            required
-            rules={[zodRule(shape.project_id)]}
-            extra="默认取顶栏当前项目。"
-          >
-            <Select
-              placeholder="选择所属项目"
-              options={projects.map((project) => ({ value: project.id, label: project.name }))}
-              showSearch
-              optionFilterProp="label"
-            />
-          </Form.Item>
-          <Form.Item name="type" label="类型" required rules={[zodRule(shape.type)]}>
-            <Radio.Group options={DatasetType.options} />
-          </Form.Item>
-        </>
       )}
 
       <Form.Item
